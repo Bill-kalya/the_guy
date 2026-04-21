@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../providers/provider_job_provider.dart';
-import '../../../shared/widgets/loading_widget.dart';
+import '../../providers/provider_job_provider.dart';
+import '../../models/provider_job_model.dart';
+import '../../../../shared/widgets/loading_widget.dart';
 
 class IncomingJobScreen extends ConsumerStatefulWidget {
   const IncomingJobScreen({super.key});
@@ -13,18 +14,18 @@ class IncomingJobScreen extends ConsumerStatefulWidget {
 
 class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
-  
+
   @override
   void initState() {
     super.initState();
     _playNotificationSound();
     _listenForJobTimeout();
   }
-  
+
   void _playNotificationSound() async {
     await _audioPlayer.play(AssetSource('sounds/incoming_job.mp3'));
   }
-  
+
   void _listenForJobTimeout() {
     Future.delayed(const Duration(seconds: 30), () {
       final currentJob = ref.read(providerJobProvider).incomingJob;
@@ -33,34 +34,34 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
       }
     });
   }
-  
+
   void _autoDeclineJob(ProviderJob job) async {
     await ref.read(providerJobProvider.notifier).declineJob(job.id);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Job automatically declined after 30 seconds')),
+        const SnackBar(
+          content: Text('Job automatically declined after 30 seconds'),
+        ),
       );
       Navigator.pop(context);
     }
   }
-  
+
   @override
   void dispose() {
     _audioPlayer.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final jobState = ref.watch(providerJobProvider);
     final job = jobState.incomingJob;
-    
+
     if (job == null) {
-      return const Scaffold(
-        body: Center(child: Text('No incoming jobs')),
-      );
+      return const Scaffold(body: Center(child: Text('No incoming jobs')));
     }
-    
+
     return Scaffold(
       backgroundColor: Colors.black87,
       body: Center(
@@ -92,7 +93,7 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
       ),
     );
   }
-  
+
   Widget _buildHeader() {
     return Column(
       children: [
@@ -125,7 +126,7 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
       ],
     );
   }
-  
+
   Widget _buildJobDetails(ProviderJob job) {
     return Column(
       children: [
@@ -133,15 +134,23 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
         const Divider(),
         _buildDetailRow(Icons.description, 'Description', job.description),
         const Divider(),
-        _buildDetailRow(Icons.location_on, 'Distance', '${job.distance} km away'),
+        _buildDetailRow(
+          Icons.location_on,
+          'Distance',
+          '${job.distance} km away',
+        ),
         const Divider(),
         _buildDetailRow(Icons.attach_money, 'Price', 'KES ${job.price}'),
         const Divider(),
-        _buildDetailRow(Icons.access_time, 'Requested', _formatTime(job.requestedAt)),
+        _buildDetailRow(
+          Icons.access_time,
+          'Requested',
+          _formatTime(job.requestedAt),
+        ),
       ],
     );
   }
-  
+
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -156,17 +165,12 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
         ],
       ),
     );
   }
-  
+
   Widget _buildActionButtons(ProviderJob job) {
     return Row(
       children: [
@@ -184,14 +188,19 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('DECLINE', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'DECLINE',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: ElevatedButton(
             onPressed: () async {
-              final accepted = await ref.read(providerJobProvider.notifier).acceptJob(job.id);
+              final accepted = await ref
+                  .read(providerJobProvider.notifier)
+                  .acceptJob(job.id);
               if (accepted && mounted) {
                 Navigator.pushReplacementNamed(context, '/provider/active-job');
               }
@@ -204,18 +213,21 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('ACCEPT', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'ACCEPT',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ],
     );
   }
-  
+
   String _formatTime(String timestamp) {
     final date = DateTime.parse(timestamp);
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inMinutes < 1) return 'Just now';
     if (difference.inMinutes < 60) return '${difference.inMinutes} min ago';
     return '${difference.inHours} hours ago';

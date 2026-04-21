@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import '../providers/job_provider.dart';
+import '../models/job_state.dart';
 import '../../../shared/widgets/loading_widget.dart';
 
 class MatchingScreen extends ConsumerStatefulWidget {
   final String jobId;
-  
+
   const MatchingScreen({super.key, required this.jobId});
-  
+
   @override
   ConsumerState<MatchingScreen> createState() => _MatchingScreenState();
 }
@@ -19,7 +20,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
     super.initState();
     _listenForMatch();
   }
-  
+
   void _listenForMatch() {
     Future.delayed(const Duration(seconds: 30), () {
       if (ref.read(jobProvider).status == JobStatus.matching) {
@@ -27,14 +28,16 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
       }
     });
   }
-  
+
   void _showNoProvidersFound() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('No Providers Found'),
-        content: const Text('No available providers in your area. Please try again later.'),
+        content: const Text(
+          'No available providers in your area. Please try again later.',
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -47,20 +50,20 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final jobState = ref.watch(jobProvider);
-    
+
     return Scaffold(
       body: Center(
-        child: jobState.status == JobStatus.matched
-            ? _buildMatchedScreen(jobState.provider)
+        child: jobState.status == JobStatus.matched && jobState.provider != null
+            ? _buildMatchedScreen(jobState.provider!)
             : _buildMatchingScreen(),
       ),
     );
   }
-  
+
   Widget _buildMatchingScreen() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -73,10 +76,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
         const SizedBox(height: 32),
         const Text(
           'Finding the best provider...',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         const Text(
@@ -89,25 +89,18 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
       ],
     );
   }
-  
+
   Widget _buildMatchedScreen(Map<String, dynamic> provider) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 80,
-          ),
+          const Icon(Icons.check_circle, color: Colors.green, size: 80),
           const SizedBox(height: 24),
           const Text(
             'Provider Found!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 32),
           Card(
@@ -134,7 +127,9 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                     children: [
                       const Icon(Icons.star, color: Colors.amber, size: 20),
                       const SizedBox(width: 4),
-                      Text('${provider['rating']} (${provider['reviews']} reviews)'),
+                      Text(
+                        '${provider['rating']} (${provider['reviews']} reviews)',
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),

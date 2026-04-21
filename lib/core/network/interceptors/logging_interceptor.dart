@@ -15,12 +15,14 @@ class LoggingInterceptor extends Interceptor {
     }
     return handler.next(options);
   }
-  
+
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (Env.enableLogging) {
       print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print('✅ RESPONSE: ${response.statusCode} ${response.requestOptions.path}');
+      print(
+        '✅ RESPONSE: ${response.statusCode} ${response.requestOptions.path}',
+      );
       if (response.data != null) {
         print('📦 DATA: ${response.data}');
       }
@@ -28,7 +30,7 @@ class LoggingInterceptor extends Interceptor {
     }
     return handler.next(response);
   }
-  
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (Env.enableLogging) {

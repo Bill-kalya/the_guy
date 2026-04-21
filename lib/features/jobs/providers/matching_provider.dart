@@ -2,23 +2,22 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/job_state.dart';
 
-final matchingProvider = StateNotifierProvider<MatchingNotifier, MatchingState>((ref) {
-  return MatchingNotifier();
-});
+final matchingProvider = NotifierProvider<MatchingNotifier, MatchingState>(
+  MatchingNotifier.new,
+);
 
-class MatchingNotifier extends StateNotifier<MatchingState> {
+class MatchingNotifier extends Notifier<MatchingState> {
   Timer? _timer;
   int _elapsedSeconds = 0;
 
-  MatchingNotifier() : super(MatchingState.initial());
+  @override
+  MatchingState build() {
+    return MatchingState.initial();
+  }
 
   void startMatching(String jobId) {
-    state = state.copyWith(
-      jobId: jobId,
-      isMatching: true,
-      elapsedSeconds: 0,
-    );
-    
+    state = state.copyWith(jobId: jobId, isMatching: true, elapsedSeconds: 0);
+
     _startTimer();
   }
 
@@ -27,7 +26,7 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _elapsedSeconds++;
       state = state.copyWith(elapsedSeconds: _elapsedSeconds);
-      
+
       // Auto-cancel after 60 seconds
       if (_elapsedSeconds >= 60) {
         stopMatching('No providers found in your area');
@@ -37,10 +36,7 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
 
   void stopMatching([String? reason]) {
     _timer?.cancel();
-    state = state.copyWith(
-      isMatching: false,
-      error: reason,
-    );
+    state = state.copyWith(isMatching: false, error: reason);
   }
 
   void providerFound(Map<String, dynamic> provider) {
@@ -56,12 +52,6 @@ class MatchingNotifier extends StateNotifier<MatchingState> {
     _timer?.cancel();
     _elapsedSeconds = 0;
     state = MatchingState.initial();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
   }
 }
 

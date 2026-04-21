@@ -15,7 +15,10 @@ class AvailabilityToggleWidget extends ConsumerWidget {
       child: Card(
         elevation: 2,
         child: SwitchListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           title: Text(
             isOnline ? 'You are Online' : 'You are Offline',
             style: TextStyle(

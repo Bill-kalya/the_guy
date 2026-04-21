@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AuthButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
   final bool isOutlined;
   final IconData? icon;
@@ -55,11 +55,7 @@ class AuthButton extends StatelessWidget {
     if (icon != null) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 8),
-          Text(text),
-        ],
+        children: [Icon(icon, size: 20), const SizedBox(width: 8), Text(text)],
       );
     }
 

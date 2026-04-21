@@ -4,13 +4,13 @@ class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     String errorMessage = _handleError(err);
-    
+
     // You can show a toast or snackbar here
     print('Error: $errorMessage');
-    
+
     return handler.next(err);
   }
-  
+
   String _handleError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -29,7 +29,7 @@ class ErrorInterceptor extends Interceptor {
         return 'Something went wrong. Please try again.';
     }
   }
-  
+
   String _handleStatusCode(int? statusCode) {
     switch (statusCode) {
       case 400:

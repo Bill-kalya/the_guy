@@ -18,14 +18,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  
+
   bool _isLoading = false;
   String _selectedRole = 'customer';
   bool _agreeToTerms = false;
 
   final List<Map<String, dynamic>> _roles = [
-    {'value': 'customer', 'label': 'Customer - Get services', 'icon': Icons.person},
-    {'value': 'provider', 'label': 'Provider - Offer services', 'icon': Icons.handyman},
+    {
+      'value': 'customer',
+      'label': 'Customer - Get services',
+      'icon': Icons.person,
+    },
+    {
+      'value': 'provider',
+      'label': 'Provider - Offer services',
+      'icon': Icons.handyman,
+    },
   ];
 
   @override
@@ -87,19 +95,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             color: Colors.blue.shade50,
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.person_add,
-            size: 40,
-            color: Colors.blue,
-          ),
+          child: const Icon(Icons.person_add, size: 40, color: Colors.blue),
         ),
         const SizedBox(height: 16),
         const Text(
           'Join The Guy',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -119,7 +120,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         prefixIcon: Icon(Icons.person),
         border: OutlineInputBorder(),
       ),
-      validator: (value) => Validators.validateName(value, fieldName: 'Full name'),
+      validator: (value) =>
+          Validators.validateName(value, fieldName: 'Full name'),
     );
   }
 
@@ -242,9 +244,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       onPressed: _isLoading || !_agreeToTerms ? null : _register,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: _isLoading
           ? const SizedBox(
@@ -278,19 +278,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      
+
       // Get current location if available
       final locationState = ref.read(locationProvider);
       final location = locationState.currentPosition;
-      
-      final response = await apiClient.post('/auth/register', data: {
-        'name': _nameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-        'role': _selectedRole,
-        'latitude': location?.latitude,
-        'longitude': location?.longitude,
-      });
+
+      final response = await apiClient.post(
+        '/auth/register',
+        data: {
+          'name': _nameController.text.trim(),
+          'phone': _phoneController.text.trim(),
+          'email': _emailController.text.trim().isEmpty
+              ? null
+              : _emailController.text.trim(),
+          'role': _selectedRole,
+          'latitude': location?.latitude,
+          'longitude': location?.longitude,
+        },
+      );
 
       if (response.statusCode == 201) {
         if (mounted) {

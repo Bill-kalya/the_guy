@@ -4,32 +4,30 @@ import '../../../core/network/websocket_service.dart';
 import '../models/provider_job_model.dart';
 import '../../../core/network/endpoints.dart';
 
-final providerJobProvider = StateNotifierProvider<ProviderJobNotifier, ProviderJobState>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  final webSocket = ref.watch(webSocketServiceProvider);
-  return ProviderJobNotifier(apiClient, webSocket, ref);
-});
+final providerJobProvider =
+    NotifierProvider<ProviderJobNotifier, ProviderJobState>(
+      ProviderJobNotifier.new,
+    );
 
-class ProviderJobNotifier extends StateNotifier<ProviderJobState> {
-  final ApiClient _apiClient;
-  final WebSocketService _webSocket;
-  final Ref _ref;
+class ProviderJobNotifier extends Notifier<ProviderJobState> {
+  late final ApiClient _apiClient;
+  late final WebSocketService _webSocket;
 
-  ProviderJobNotifier(this._apiClient, this._webSocket, this._ref) 
-      : super(ProviderJobState.initial()) {
+  @override
+  ProviderJobState build() {
+    _apiClient = ref.watch(apiClientProvider);
+    _webSocket = ref.watch(webSocketServiceProvider);
     _listenForIncomingJobs();
+    return ProviderJobState.initial();
   }
 
   void _listenForIncomingJobs() {
     _webSocket.onIncomingJob = (jobData) {
       final job = ProviderJob.fromJson(jobData);
-      state = state.copyWith(
-        incomingJob: job,
-        hasIncomingJob: true,
-      );
+      state = state.copyWith(incomingJob: job, hasIncomingJob: true);
     };
 
-    _webSocket.onJobUpdate = (jobData) {
+    _webSocket.onJobStatusUpdate = (jobData) {
       final updatedJob = ProviderJob.fromJson(jobData);
       if (state.activeJob?.id == updatedJob.id) {
         state = state.copyWith(activeJob: updatedJob);
@@ -42,10 +40,10 @@ class ProviderJobNotifier extends StateNotifier<ProviderJobState> {
 
   Future<bool> acceptJob(String jobId) async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       final response = await _apiClient.patch('${Endpoints.acceptJob}/$jobId');
-      
+
       if (response.statusCode == 200) {
         final acceptedJob = ProviderJob.fromJson(response.data);
         state = state.copyWith(
@@ -57,18 +55,15 @@ class ProviderJobNotifier extends StateNotifier<ProviderJobState> {
         return true;
       }
     } catch (e) {
-      state = state.copyWith(
-        error: 'Failed to accept job',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'Failed to accept job', isLoading: false);
     }
-    
+
     return false;
   }
 
   Future<void> declineJob(String jobId) async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       await _apiClient.patch('${Endpoints.declineJob}/$jobId');
       state = state.copyWith(
@@ -77,10 +72,7 @@ class ProviderJobNotifier extends StateNotifier<ProviderJobState> {
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        error: 'Failed to decline job',
-        isLoading: false,
-      );
+      state = state.copyWith(error: 'Failed to decline job', isLoading: false);
     }
   }
 
@@ -90,7 +82,7 @@ class ProviderJobNotifier extends StateNotifier<ProviderJobState> {
         '${Endpoints.updateJobStatus}/$jobId',
         data: {'status': status},
       );
-      
+
       if (response.statusCode == 200) {
         final updatedJob = ProviderJob.fromJson(response.data);
         state = state.copyWith(activeJob: updatedJob);
@@ -113,10 +105,7 @@ class ProviderJobNotifier extends StateNotifier<ProviderJobState> {
   }
 
   void clearIncomingJob() {
-    state = state.copyWith(
-      incomingJob: null,
-      hasIncomingJob: false,
-    );
+    state = state.copyWith(incomingJob: null, hasIncomingJob: false);
   }
 
   void clearActiveJob() {

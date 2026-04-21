@@ -45,10 +45,7 @@ class _PriceEstimatorState extends State<PriceEstimator> {
           children: [
             const Text(
               'Price Estimate',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -70,7 +67,9 @@ class _PriceEstimatorState extends State<PriceEstimator> {
                     ),
                     onChanged: (value) {
                       final price = double.tryParse(value);
-                      if (price != null && price >= widget.minPrice && price <= widget.maxPrice) {
+                      if (price != null &&
+                          price >= widget.minPrice &&
+                          price <= widget.maxPrice) {
                         setState(() {
                           _currentPrice = price;
                         });

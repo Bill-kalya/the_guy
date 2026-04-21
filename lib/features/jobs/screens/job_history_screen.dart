@@ -24,11 +24,11 @@ class _JobHistoryScreenState extends ConsumerState<JobHistoryScreen> {
 
   Future<void> _loadJobHistory() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.get(Endpoints.jobHistory);
-      
+
       if (response.statusCode == 200) {
         setState(() {
           _jobs = List<Map<String, dynamic>>.from(response.data);
@@ -85,19 +85,19 @@ class _JobHistoryScreenState extends ConsumerState<JobHistoryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _filteredJobs.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  itemCount: _filteredJobs.length,
-                  itemBuilder: (context, index) {
-                    final job = _filteredJobs[index];
-                    return JobCard(
-                      job: job,
-                      onTap: () {
-                        // Navigate to job details
-                      },
-                    );
+          ? _buildEmptyState()
+          : ListView.builder(
+              itemCount: _filteredJobs.length,
+              itemBuilder: (context, index) {
+                final job = _filteredJobs[index];
+                return JobCard(
+                  job: job,
+                  onTap: () {
+                    // Navigate to job details
                   },
-                ),
+                );
+              },
+            ),
     );
   }
 
@@ -106,11 +106,7 @@ class _JobHistoryScreenState extends ConsumerState<JobHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.history,
-            size: 64,
-            color: Colors.grey.shade400,
-          ),
+          Icon(Icons.history, size: 64, color: Colors.grey.shade400),
           const SizedBox(height: 16),
           const Text(
             'No jobs found',

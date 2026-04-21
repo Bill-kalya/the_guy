@@ -31,21 +31,14 @@ class JobState {
 
   factory JobState.loading() => const JobState(status: JobStatus.loading);
 
-  factory JobState.matching(String jobId) => JobState(
-        status: JobStatus.matching,
-        jobId: jobId,
-      );
+  factory JobState.matching(String jobId) =>
+      JobState(status: JobStatus.matching, jobId: jobId);
 
-  factory JobState.matched(String jobId, Map<String, dynamic> provider) => JobState(
-        status: JobStatus.matched,
-        jobId: jobId,
-        provider: provider,
-      );
+  factory JobState.matched(String jobId, Map<String, dynamic> provider) =>
+      JobState(status: JobStatus.matched, jobId: jobId, provider: provider);
 
-  factory JobState.error(String message) => JobState(
-        status: JobStatus.error,
-        error: message,
-      );
+  factory JobState.error(String message) =>
+      JobState(status: JobStatus.error, error: message);
 
   JobState copyWith({
     JobStatus? status,

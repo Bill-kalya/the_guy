@@ -59,14 +59,11 @@ class IncomingJobCard extends StatelessWidget {
                   ),
                   Icon(Icons.timer, color: Colors.white),
                   SizedBox(width: 4),
-                  Text(
-                    '30s',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  Text('30s', style: TextStyle(color: Colors.white)),
                 ],
               ),
             ),
-            
+
             // Content
             Padding(
               padding: const EdgeInsets.all(16),
@@ -118,10 +115,7 @@ class IncomingJobCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    job.description,
-                    style: const TextStyle(fontSize: 14),
-                  ),
+                  Text(job.description, style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -129,7 +123,10 @@ class IncomingJobCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${job.distance.toStringAsFixed(1)} km away',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),

@@ -19,20 +19,15 @@ class AuthState {
 
   factory AuthState.loading() => const AuthState(isLoading: true);
 
-  factory AuthState.authenticated(UserModel user) => AuthState(
-        user: user,
-        isAuthenticated: true,
-      );
+  factory AuthState.authenticated(UserModel user) =>
+      AuthState(user: user, isAuthenticated: true);
 
   factory AuthState.unauthenticated() => const AuthState();
 
-  factory AuthState.otpSent(String phoneNumber) => AuthState(
-        pendingPhoneNumber: phoneNumber,
-      );
+  factory AuthState.otpSent(String phoneNumber) =>
+      AuthState(pendingPhoneNumber: phoneNumber);
 
-  factory AuthState.error(String message) => AuthState(
-        error: message,
-      );
+  factory AuthState.error(String message) => AuthState(error: message);
 
   AuthState copyWith({
     bool? isLoading,

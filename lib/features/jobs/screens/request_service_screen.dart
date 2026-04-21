@@ -9,7 +9,8 @@ class RequestServiceScreen extends ConsumerStatefulWidget {
   const RequestServiceScreen({super.key});
 
   @override
-  ConsumerState<RequestServiceScreen> createState() => _RequestServiceScreenState();
+  ConsumerState<RequestServiceScreen> createState() =>
+      _RequestServiceScreenState();
 }
 
 class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
@@ -33,9 +34,7 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Request Service'),
-      ),
+      appBar: AppBar(title: const Text('Request Service')),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -65,10 +64,7 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
       ),
       value: _selectedCategory,
       items: _categories.map((category) {
-        return DropdownMenuItem(
-          value: category,
-          child: Text(category),
-        );
+        return DropdownMenuItem(value: category, child: Text(category));
       }).toList(),
       onChanged: (value) {
         setState(() {
@@ -127,7 +123,7 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
   void _estimatePrice() {
     // Simple price estimation logic
     double basePrice = 0;
-    
+
     switch (_selectedCategory) {
       case 'Plumbing':
         basePrice = 1000;
@@ -141,11 +137,11 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
       default:
         basePrice = 500;
     }
-    
+
     // Adjust based on description length (more details = higher estimate)
     final descriptionLength = _descriptionController.text.length;
     final adjustment = (descriptionLength / 100) * 200;
-    
+
     setState(() {
       _estimatedPrice = basePrice + adjustment.clamp(0, 2000);
     });
@@ -170,11 +166,14 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.post(Endpoints.requestJob, data: {
-        'category': _selectedCategory,
-        'description': _descriptionController.text,
-        'estimatedPrice': _estimatedPrice,
-      });
+      final response = await apiClient.post(
+        Endpoints.requestJob,
+        data: {
+          'category': _selectedCategory,
+          'description': _descriptionController.text,
+          'estimatedPrice': _estimatedPrice,
+        },
+      );
 
       if (response.statusCode == 201) {
         if (mounted) {

@@ -4,7 +4,7 @@ import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../providers/availability_provider.dart';
-import '../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/loading_widget.dart';
 
 class ProviderHomeScreen extends ConsumerStatefulWidget {
   const ProviderHomeScreen({super.key});
@@ -38,22 +38,22 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
             children: [
               // Availability toggle
               AvailabilityToggleWidget(),
-              
+
               // Stats cards
               _buildStatsCards(),
-              
+
               const SizedBox(height: 16),
-              
+
               // Active job section
               _buildActiveJobSection(jobState),
-              
+
               const SizedBox(height: 16),
-              
+
               // Today's earnings preview
               _buildEarningsPreview(),
             ],
           ),
-          
+
           // Incoming job popup
           if (jobState.hasIncomingJob && jobState.incomingJob != null)
             Positioned(
@@ -63,10 +63,14 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
               child: IncomingJobCard(
                 job: jobState.incomingJob!,
                 onAccept: () {
-                  ref.read(providerJobProvider.notifier).acceptJob(jobState.incomingJob!.id);
+                  ref
+                      .read(providerJobProvider.notifier)
+                      .acceptJob(jobState.incomingJob!.id);
                 },
                 onDecline: () {
-                  ref.read(providerJobProvider.notifier).declineJob(jobState.incomingJob!.id);
+                  ref
+                      .read(providerJobProvider.notifier)
+                      .declineJob(jobState.incomingJob!.id);
                 },
               ),
             ),
@@ -261,7 +265,10 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Jobs'),
-        BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: 'Earnings'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.attach_money),
+          label: 'Earnings',
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
     );

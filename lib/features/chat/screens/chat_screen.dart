@@ -55,10 +55,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         title: Text(widget.providerName),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: Colors.grey.shade200,
-          ),
+          child: Container(height: 1, color: Colors.grey.shade200),
         ),
       ),
       body: Column(
@@ -67,16 +64,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: chatState.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : chatState.messages.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        itemCount: chatState.messages.length,
-                        itemBuilder: (context, index) {
-                          final message = chatState.messages[index];
-                          return MessageBubble(message: message);
-                        },
-                      ),
+                ? _buildEmptyState()
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    itemCount: chatState.messages.length,
+                    itemBuilder: (context, index) {
+                      final message = chatState.messages[index];
+                      return MessageBubble(message: message);
+                    },
+                  ),
           ),
           ChatInputField(
             onSend: (text) {

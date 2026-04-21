@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Customer routes
-import '../features/auth/screens/login_screen.dart';
-import '../features/auth/screens/otp_verification_screen.dart';
+import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/otp_verification_screen.dart' as otp;
 import '../features/home/screens/home_screen.dart';
 import '../features/jobs/screens/request_service_screen.dart';
 import '../features/jobs/screens/matching_screen.dart';
@@ -19,20 +19,25 @@ import '../features/provider/presentation/screens/incoming_job_screen.dart';
 import '../features/provider/presentation/screens/active_jobs_screen.dart';
 import '../features/provider/presentation/screens/earnings_screen.dart';
 
+// Providers
+import '../features/auth/providers/auth_provider.dart';
+import '../core/storage/secure_storage.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
-  final userRole = ref.read(secureStorageProvider).getUserRole();
-  
+  final userRoleFuture = ref.read(secureStorageProvider).getUserRole();
+  final userRole = userRoleFuture == 'provider';
+
   return GoRouter(
     initialLocation: '/',
-    redirect: (context, state) {
-      final isAuthenticated = authState is AuthenticatedState;
+redirect: (context, state) async {
+      final isAuthenticated = authState.isAuthenticated;
       final isLoginRoute = state.matchedLocation == '/login';
-      
+
       if (!isAuthenticated && !isLoginRoute) {
         return '/login';
       }
-      
+
       if (isAuthenticated && isLoginRoute) {
         // Redirect based on user role
         if (userRole == 'provider') {
@@ -41,7 +46,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           return '/home';
         }
       }
-      
+
       return null;
     },
     routes: [
@@ -56,10 +61,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/otp',
         builder: (context, state) {
           final phoneNumber = state.extra as String;
-          return OTPScreen(phoneNumber: phoneNumber);
+          return otp.OTPScreen(phoneNumber: phoneNumber);
         },
+
       ),
-      
+
       // Customer routes
       GoRoute(
         name: 'home',
@@ -92,8 +98,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chat/:jobId',
         builder: (context, state) {
           final jobId = state.pathParameters['jobId']!;
-          return ChatScreen(jobId: jobId);
+          final extraData = state.extra as Map<String, dynamic>?;
+          final providerName = extraData?['providerName'] ?? 'Provider';
+          return ChatScreen(
+            jobId: jobId,
+            providerName: providerName,
+          );
         },
+
       ),
       GoRoute(
         name: 'payment',
@@ -108,7 +120,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
       ),
-      
+
       // Provider routes
       GoRoute(
         name: 'provider-home',

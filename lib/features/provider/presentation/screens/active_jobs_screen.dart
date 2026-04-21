@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/provider_job_provider.dart';
-import '../../../shared/widgets/loading_widget.dart';
+import '../../models/provider_job_model.dart';
+import '../../../../shared/widgets/loading_widget.dart';
 
 class ActiveJobsScreen extends ConsumerStatefulWidget {
   const ActiveJobsScreen({super.key});
@@ -17,9 +18,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
     final activeJob = jobState.activeJob;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Active Jobs'),
-      ),
+      appBar: AppBar(title: const Text('Active Jobs')),
       body: activeJob == null
           ? Center(
               child: Column(
@@ -52,19 +51,19 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
           // Status timeline
           _buildStatusTimeline(job.status),
           const SizedBox(height: 24),
-          
+
           // Customer info
           _buildCustomerInfo(job),
           const SizedBox(height: 16),
-          
+
           // Job details
           _buildJobDetails(job),
           const SizedBox(height: 16),
-          
+
           // Location info
           _buildLocationInfo(job),
           const SizedBox(height: 24),
-          
+
           // Action buttons based on status
           _buildActionButtons(job),
         ],
@@ -73,9 +72,15 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
   }
 
   Widget _buildStatusTimeline(String status) {
-    final steps = ['accepted', 'en_route', 'arrived', 'in_progress', 'completed'];
+    final steps = [
+      'accepted',
+      'en_route',
+      'arrived',
+      'in_progress',
+      'completed',
+    ];
     final currentIndex = steps.indexOf(status);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -135,9 +140,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const CircleAvatar(
-                  child: Icon(Icons.person),
-                ),
+                const CircleAvatar(child: Icon(Icons.person)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -189,15 +192,15 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-              _buildDetailRow('Service', job.category),
-              _buildDetailRow('Description', job.description),
-              _buildDetailRow('Price', 'KES ${job.price}'),
-              _buildDetailRow('Requested', _formatDate(job.requestedAt)),
-            ],
-          ),
+            _buildDetailRow('Service', job.category),
+            _buildDetailRow('Description', job.description),
+            _buildDetailRow('Price', 'KES ${job.price}'),
+            _buildDetailRow('Requested', _formatDate(job.requestedAt)),
+          ],
         ),
-      );
-    }
+      ),
+    );
+  }
 
   Widget _buildLocationInfo(ProviderJob job) {
     return Card(
@@ -233,7 +236,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
 
   Widget _buildActionButtons(ProviderJob job) {
     final notifier = ref.read(providerJobProvider.notifier);
-    
+
     switch (job.status) {
       case 'accepted':
         return Row(
@@ -249,7 +252,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
             ),
           ],
         );
-        
+
       case 'en_route':
         return Row(
           children: [
@@ -264,7 +267,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
             ),
           ],
         );
-        
+
       case 'arrived':
         return Row(
           children: [
@@ -279,7 +282,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
             ),
           ],
         );
-        
+
       case 'in_progress':
         return Row(
           children: [
@@ -290,14 +293,12 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
                 },
                 icon: const Icon(Icons.check_circle),
                 label: const Text('Complete Job'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               ),
             ),
           ],
         );
-        
+
       default:
         return const SizedBox();
     }

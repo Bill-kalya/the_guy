@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/auth_button.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/auth_state.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -62,19 +63,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             color: Colors.blue.shade50,
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.handyman,
-            size: 40,
-            color: Colors.blue,
-          ),
+          child: const Icon(Icons.handyman, size: 40, color: Colors.blue),
         ),
         const SizedBox(height: 24),
         const Text(
           'Welcome to The Guy',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         const Text(
@@ -137,7 +131,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       text: 'Continue',
       onPressed: _agreeToTerms && _formKey.currentState?.validate() == true
           ? () {
-              ref.read(authProvider.notifier).loginWithPhone(_phoneController.text);
+              ref
+                  .read(authProvider.notifier)
+                  .loginWithPhone(_phoneController.text);
             }
           : null,
       isLoading: authState.isLoading,

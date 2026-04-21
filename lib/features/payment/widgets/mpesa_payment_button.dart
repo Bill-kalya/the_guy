@@ -35,24 +35,21 @@ class _MpesaPaymentButtonState extends ConsumerState<MpesaPaymentButton> {
   @override
   Widget build(BuildContext context) {
     final paymentState = ref.watch(paymentProvider);
-    
+
     return Column(
       children: [
-        if (_showPhoneDialog)
-          _buildPhoneDialog(),
-        
+        if (_showPhoneDialog) _buildPhoneDialog(),
+
         if (!_showPhoneDialog && !paymentState.isPendingVerification)
           ElevatedButton.icon(
-            onPressed: paymentState.isProcessing ? null : () {
-              setState(() {
-                _showPhoneDialog = true;
-              });
-            },
-            icon: Image.asset(
-              'assets/images/mpesa.png',
-              height: 24,
-              width: 24,
-            ),
+            onPressed: paymentState.isProcessing
+                ? null
+                : () {
+                    setState(() {
+                      _showPhoneDialog = true;
+                    });
+                  },
+            icon: Image.asset('assets/images/mpesa.png', height: 24, width: 24),
             label: paymentState.isProcessing
                 ? const SizedBox(
                     height: 20,
@@ -69,15 +66,12 @@ class _MpesaPaymentButtonState extends ConsumerState<MpesaPaymentButton> {
               ),
             ),
           ),
-        
-        if (paymentState.isPendingVerification)
-          _buildPendingVerification(),
-        
-        if (paymentState.isCompleted)
-          _buildSuccessWidget(),
-        
-        if (paymentState.isFailed)
-          _buildFailureWidget(paymentState.error),
+
+        if (paymentState.isPendingVerification) _buildPendingVerification(),
+
+        if (paymentState.isCompleted) _buildSuccessWidget(),
+
+        if (paymentState.isFailed) _buildFailureWidget(paymentState.error),
       ],
     );
   }
@@ -147,23 +141,19 @@ class _MpesaPaymentButtonState extends ConsumerState<MpesaPaymentButton> {
   void _processPayment() async {
     final phoneError = Validators.validatePhoneNumber(_phoneController.text);
     if (phoneError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(phoneError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(phoneError)));
       return;
     }
-    
+
     setState(() {
       _showPhoneDialog = false;
     });
-    
+
     final paymentNotifier = ref.read(paymentProvider.notifier);
-    await paymentNotifier.initiateMpesaPayment(
-      widget.jobId,
-      widget.amount,
-      _phoneController.text,
-    );
-    
+    await paymentNotifier.initiateMpesaPayment(widget.jobId);
+
     _phoneController.clear();
   }
 

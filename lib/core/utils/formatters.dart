@@ -10,7 +10,7 @@ class Formatters {
     );
     return formatter.format(amount);
   }
-  
+
   // Short currency format (e.g., KES 1.2K)
   static String formatShortCurrency(double amount) {
     if (amount >= 1000000) {
@@ -21,24 +21,24 @@ class Formatters {
       return 'KES ${amount.toStringAsFixed(0)}';
     }
   }
-  
+
   // Date formatters
   static String formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);
   }
-  
+
   static String formatDateTime(DateTime date) {
     return DateFormat('MMM dd, yyyy • hh:mm a').format(date);
   }
-  
+
   static String formatTime(DateTime date) {
     return DateFormat('hh:mm a').format(date);
   }
-  
+
   static String formatRelativeTime(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 365) {
       return '${(difference.inDays / 365).floor()}y ago';
     } else if (difference.inDays > 30) {
@@ -55,22 +55,22 @@ class Formatters {
       return 'Just now';
     }
   }
-  
+
   // Phone number formatter
   static String formatPhoneNumber(String phone) {
     // Remove any non-digit characters
     final digits = phone.replaceAll(RegExp(r'\D'), '');
-    
+
     if (digits.length == 10) {
       return '${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6, 10)}';
     } else if (digits.length == 12 && digits.startsWith('254')) {
       final local = digits.substring(3);
       return '+254 ${local.substring(0, 3)} ${local.substring(3, 6)} ${local.substring(6, 10)}';
     }
-    
+
     return phone;
   }
-  
+
   // Distance formatter
   static String formatDistance(double meters) {
     if (meters < 1000) {
@@ -79,7 +79,7 @@ class Formatters {
       return '${(meters / 1000).toStringAsFixed(1)}km';
     }
   }
-  
+
   // Duration formatter
   static String formatDuration(Duration duration) {
     if (duration.inHours > 0) {
@@ -90,7 +90,7 @@ class Formatters {
       return '${duration.inSeconds}s';
     }
   }
-  
+
   // File size formatter
   static String formatFileSize(int bytes) {
     if (bytes < 1024) {
@@ -103,42 +103,43 @@ class Formatters {
       return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
     }
   }
-  
+
   // Rating formatter
   static String formatRating(double rating) {
     return rating.toStringAsFixed(1);
   }
-  
+
   // Capitalize first letter
   static String capitalize(String text) {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
-  
+
   // Title case
   static String toTitleCase(String text) {
     if (text.isEmpty) return text;
     return text.split(' ').map((word) => capitalize(word)).join(' ');
   }
-  
+
   // Truncate text
   static String truncate(String text, int maxLength, {String suffix = '...'}) {
     if (text.length <= maxLength) return text;
     return '${text.substring(0, maxLength)}$suffix';
   }
-  
+
   // Mask email
   static String maskEmail(String email) {
     final parts = email.split('@');
     if (parts.length != 2) return email;
-    
+
     final name = parts[0];
     if (name.length <= 2) return email;
-    
-    final maskedName = '${name[0]}${'*' * (name.length - 2)}${name[name.length - 1]}';
+
+    final maskedName =
+        '${name[0]}${'*' * (name.length - 2)}${name[name.length - 1]}';
     return '$maskedName@${parts[1]}';
   }
-  
+
   // Mask phone
   static String maskPhone(String phone) {
     if (phone.length <= 4) return phone;

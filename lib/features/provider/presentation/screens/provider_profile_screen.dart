@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/availability_provider.dart';
-import '../../../core/storage/secure_storage.dart';
-import '../../../features/auth/providers/auth_provider.dart';
+import '../../../../core/storage/secure_storage.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 class ProviderProfileScreen extends ConsumerStatefulWidget {
   const ProviderProfileScreen({super.key});
 
   @override
-  ConsumerState<ProviderProfileScreen> createState() => _ProviderProfileScreenState();
+  ConsumerState<ProviderProfileScreen> createState() =>
+      _ProviderProfileScreenState();
 }
 
 class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final availabilityState = ref.watch(availabilityProvider);
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Provider Profile'),
-      ),
+      appBar: AppBar(title: const Text('Provider Profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -51,10 +50,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Plumbing Specialist',
-          style: TextStyle(color: Colors.grey),
-        ),
+        const Text('Plumbing Specialist', style: TextStyle(color: Colors.grey)),
         const SizedBox(height: 4),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -132,10 +128,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           value,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
   }
@@ -220,11 +213,15 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
               ],
             ),
           );
-          
+
           if (confirmed == true) {
             await ref.read(authProvider.notifier).logout();
             if (mounted) {
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
             }
           }
         },

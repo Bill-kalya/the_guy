@@ -10,7 +10,7 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMine = message.isMine;
-    
+
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -45,9 +45,7 @@ class MessageBubble extends StatelessWidget {
               ),
             Text(
               message.content,
-              style: TextStyle(
-                color: isMine ? Colors.white : Colors.black,
-              ),
+              style: TextStyle(color: isMine ? Colors.white : Colors.black),
             ),
             const SizedBox(height: 4),
             Text(

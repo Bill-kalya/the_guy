@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/job_provider.dart';
+import '../models/job_state.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../payment/screens/payment_screen.dart';
 import '../../../shared/widgets/rating_stars.dart';
 
 class ActiveJobScreen extends ConsumerStatefulWidget {
   final String jobId;
-  
+
   const ActiveJobScreen({super.key, required this.jobId});
-  
+
   @override
   ConsumerState<ActiveJobScreen> createState() => _ActiveJobScreenState();
 }
@@ -18,7 +19,7 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
   @override
   Widget build(BuildContext context) {
     final jobState = ref.watch(jobProvider);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Active Job'),
@@ -29,7 +30,10 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ChatScreen(jobId: widget.jobId),
+                  builder: (context) => ChatScreen(
+                    jobId: widget.jobId,
+                    providerName: jobState.provider?['name'] ?? 'Provider',
+                  ),
                 ),
               );
             },
@@ -58,21 +62,21 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
       ),
     );
   }
-  
-  Widget _buildStatusTimeline(String status) {
-    final steps = ['assigned', 'en_route', 'in_progress', 'completed'];
+
+  Widget _buildStatusTimeline(JobStatus status) {
+    final steps = [
+      JobStatus.accepted,
+      JobStatus.enRoute,
+      JobStatus.inProgress,
+      JobStatus.completed,
+    ];
     final currentIndex = steps.indexOf(status);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 4,
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 4)],
       ),
       child: Row(
         children: List.generate(steps.length, (index) {
@@ -98,7 +102,9 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
                   _getTitleForStep(steps[index]),
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isCompleted
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     color: isCompleted ? Colors.green : Colors.grey,
                   ),
                 ),
@@ -109,10 +115,10 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
       ),
     );
   }
-  
+
   Widget _buildProviderInfo(Map<String, dynamic>? provider) {
     if (provider == null) return const SizedBox();
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -158,10 +164,10 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
       ),
     );
   }
-  
-  Widget _buildActionButtons(String status) {
+
+  Widget _buildActionButtons(JobStatus status) {
     switch (status) {
-      case 'completed':
+      case JobStatus.completed:
         return ElevatedButton(
           onPressed: () {
             Navigator.push(
@@ -176,8 +182,8 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
           ),
           child: const Text('Proceed to Payment'),
         );
-      
-      case 'in_progress':
+
+      case JobStatus.inProgress:
         return OutlinedButton(
           onPressed: () {
             // Mark as completed
@@ -188,45 +194,45 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
           ),
           child: const Text('Mark as Completed'),
         );
-      
+
       default:
         return const SizedBox();
     }
   }
-  
-  IconData _getIconForStep(String step) {
+
+  IconData _getIconForStep(JobStatus step) {
     switch (step) {
-      case 'assigned':
+      case JobStatus.accepted:
         return Icons.person;
-      case 'en_route':
+      case JobStatus.enRoute:
         return Icons.directions_car;
-      case 'in_progress':
+      case JobStatus.inProgress:
         return Icons.build;
-      case 'completed':
+      case JobStatus.completed:
         return Icons.check;
       default:
         return Icons.circle;
     }
   }
-  
-  String _getTitleForStep(String step) {
+
+  String _getTitleForStep(JobStatus step) {
     switch (step) {
-      case 'assigned':
+      case JobStatus.accepted:
         return 'Assigned';
-      case 'en_route':
+      case JobStatus.enRoute:
         return 'En Route';
-      case 'in_progress':
+      case JobStatus.inProgress:
         return 'In Progress';
-      case 'completed':
+      case JobStatus.completed:
         return 'Completed';
       default:
         return '';
     }
   }
-  
+
   Widget _buildJobDetails(Map<String, dynamic>? jobDetails) {
     if (jobDetails == null) return const SizedBox();
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -235,10 +241,7 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
           children: [
             const Text(
               'Job Details',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _buildDetailRow('Service', jobDetails['category']),
@@ -250,7 +253,7 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
       ),
     );
   }
-  
+
   Widget _buildDetailRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -273,7 +276,7 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
       ),
     );
   }
-  
+
   String _formatTime(String? timestamp) {
     if (timestamp == null) return 'N/A';
     final date = DateTime.parse(timestamp);

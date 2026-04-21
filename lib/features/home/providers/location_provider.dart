@@ -3,16 +3,18 @@ import 'package:geolocator/geolocator.dart';
 import '../../../core/utils/location_utils.dart';
 import '../../../core/storage/shared_prefs.dart';
 
-final locationProvider = StateNotifierProvider<LocationNotifier, LocationState>((ref) {
-  final sharedPrefs = ref.watch(sharedPrefsProvider);
-  return LocationNotifier(sharedPrefs);
-});
+final locationProvider = NotifierProvider<LocationNotifier, LocationState>(
+  LocationNotifier.new,
+);
 
-class LocationNotifier extends StateNotifier<LocationState> {
-  final SharedPrefs _sharedPrefs;
+class LocationNotifier extends Notifier<LocationState> {
+  late final SharedPrefs _sharedPrefs;
 
-  LocationNotifier(this._sharedPrefs) : super(LocationState.initial()) {
+  @override
+  LocationState build() {
+    _sharedPrefs = ref.watch(sharedPrefsProvider);
     _loadSavedLocation();
+    return LocationState.initial();
   }
 
   void _loadSavedLocation() {
@@ -29,6 +31,8 @@ class LocationNotifier extends StateNotifier<LocationState> {
           heading: 0,
           speed: 0,
           speedAccuracy: 0,
+          altitudeAccuracy: 0,
+          headingAccuracy: 0,
         ),
       );
     }
@@ -36,9 +40,9 @@ class LocationNotifier extends StateNotifier<LocationState> {
 
   Future<void> getCurrentLocation() async {
     state = state.copyWith(isLoading: true);
-    
+
     final position = await LocationUtils.getCurrentLocation();
-    
+
     if (position != null) {
       _sharedPrefs.setLastLocation(position.latitude, position.longitude);
       state = state.copyWith(
@@ -64,11 +68,7 @@ class LocationState {
   final bool isLoading;
   final String? error;
 
-  LocationState({
-    this.currentPosition,
-    this.isLoading = false,
-    this.error,
-  });
+  LocationState({this.currentPosition, this.isLoading = false, this.error});
 
   factory LocationState.initial() {
     return LocationState();

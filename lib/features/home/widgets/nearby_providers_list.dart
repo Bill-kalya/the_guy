@@ -22,7 +22,7 @@ class NearbyProvidersList extends StatelessWidget {
           child: ListView.builder(
             itemCount: 5,
             itemBuilder: (context, index) {
-              return _buildProviderCard();
+              return _buildProviderCard(index);
             },
           ),
         ),
@@ -30,13 +30,11 @@ class NearbyProvidersList extends StatelessWidget {
     );
   }
 
-  Widget _buildProviderCard() {
+  Widget _buildProviderCard(int index) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
-        leading: const CircleAvatar(
-          child: Icon(Icons.handyman),
-        ),
+        leading: const CircleAvatar(child: Icon(Icons.handyman)),
         title: const Text('John Doe'),
         subtitle: Row(
           children: [

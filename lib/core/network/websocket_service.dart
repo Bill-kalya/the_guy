@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
-import 'package:stomp_dart_client/stomp_config.dart';
-import 'package:stomp_dart_client/stomp_frame.dart';
 import '../storage/secure_storage.dart';
 import 'endpoints.dart';
+import '../../features/jobs/providers/job_provider.dart';
+import '../../features/chat/providers/chat_provider.dart';
 
 final webSocketServiceProvider = Provider<WebSocketService>((ref) {
   return WebSocketService(ref);
@@ -24,9 +24,10 @@ class WebSocketService {
     final token = await _ref.read(secureStorageProvider).getAccessToken();
 
     _client = StompClient(
-      config: StompConfig.SockJS(
+      config: StompConfig(
         url: '${Endpoints.wsUrl}/ws',
-        headers: {'Authorization': 'Bearer $token'},
+        stompConnectHeaders: {'Authorization': 'Bearer $token'},
+        webSocketConnectHeaders: {'Authorization': 'Bearer $token'},
         onConnect: (frame) {
           _isConnected = true;
           print('WebSocket connected');
@@ -126,7 +127,7 @@ class WebSocketService {
     );
   }
 
-  void disconnect() {
+  Future<void> disconnect() async {
     _client?.deactivate();
     _isConnected = false;
   }

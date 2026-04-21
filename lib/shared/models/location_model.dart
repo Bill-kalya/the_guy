@@ -63,6 +63,11 @@ class LocationModel {
 
   @override
   String toString() {
-    return [address, city, state, country].where((e) => e != null && e!.isNotEmpty).join(', ');
+    return [
+      address,
+      city,
+      state,
+      country,
+    ].where((e) => e != null && e!.isNotEmpty).join(', ');
   }
 }

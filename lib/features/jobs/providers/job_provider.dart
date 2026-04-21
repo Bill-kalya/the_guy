@@ -2,22 +2,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../models/job_state.dart';
 
-final jobProvider = StateNotifierProvider<JobNotifier, JobState>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  return JobNotifier(apiClient);
-});
+final jobProvider = NotifierProvider<JobNotifier, JobState>(JobNotifier.new);
 
-class JobNotifier extends StateNotifier<JobState> {
-  final ApiClient _apiClient;
-  
-  JobNotifier(this._apiClient) : super(JobState.initial());
-  
+class JobNotifier extends Notifier<JobState> {
+  late final ApiClient _apiClient;
+
+  @override
+  JobState build() {
+    _apiClient = ref.watch(apiClientProvider);
+    return JobState.initial();
+  }
+
   Future<void> createJob(Map<String, dynamic> jobData) async {
     state = state.copyWith(status: JobStatus.loading);
-    
+
     try {
       final response = await _apiClient.post('/jobs/request', data: jobData);
-      
+
       if (response.statusCode == 201) {
         state = state.copyWith(
           status: JobStatus.matching,
@@ -31,7 +32,7 @@ class JobNotifier extends StateNotifier<JobState> {
       );
     }
   }
-  
+
   void updateJobStatus(Map<String, dynamic> jobData) {
     state = state.copyWith(
       status: JobStatus.matched,
@@ -39,14 +40,11 @@ class JobNotifier extends StateNotifier<JobState> {
       jobDetails: jobData,
     );
   }
-  
+
   void providerAccepted(Map<String, dynamic> provider) {
-    state = state.copyWith(
-      status: JobStatus.accepted,
-      provider: provider,
-    );
+    state = state.copyWith(status: JobStatus.accepted, provider: provider);
   }
-  
+
   void updateStatus(String newStatus) {
     state = state.copyWith(
       status: JobStatus.values.firstWhere(
@@ -55,7 +53,7 @@ class JobNotifier extends StateNotifier<JobState> {
       ),
     );
   }
-  
+
   Future<void> completeJob() async {
     await _apiClient.patch('/jobs/${state.jobId}/complete');
     state = state.copyWith(status: JobStatus.completed);

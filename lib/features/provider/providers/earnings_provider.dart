@@ -3,28 +3,28 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
 import '../models/earnings_model.dart';
 
-final earningsProvider = StateNotifierProvider<EarningsNotifier, EarningsState>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  return EarningsNotifier(apiClient);
-});
+final earningsProvider = NotifierProvider<EarningsNotifier, EarningsState>(
+  EarningsNotifier.new,
+);
 
-class EarningsNotifier extends StateNotifier<EarningsState> {
-  final ApiClient _apiClient;
+class EarningsNotifier extends Notifier<EarningsState> {
+  late final ApiClient _apiClient;
 
-  EarningsNotifier(this._apiClient) : super(EarningsState.initial());
+  @override
+  EarningsState build() {
+    _apiClient = ref.watch(apiClientProvider);
+    return EarningsState.initial();
+  }
 
   Future<void> fetchEarnings() async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       final response = await _apiClient.get(Endpoints.providerEarnings);
-      
+
       if (response.statusCode == 200) {
         final earnings = EarningsModel.fromJson(response.data);
-        state = state.copyWith(
-          earnings: earnings,
-          isLoading: false,
-        );
+        state = state.copyWith(earnings: earnings, isLoading: false);
       }
     } catch (e) {
       state = state.copyWith(
@@ -44,11 +44,7 @@ class EarningsState {
   final bool isLoading;
   final String? error;
 
-  EarningsState({
-    this.earnings,
-    this.isLoading = false,
-    this.error,
-  });
+  EarningsState({this.earnings, this.isLoading = false, this.error});
 
   factory EarningsState.initial() {
     return EarningsState();

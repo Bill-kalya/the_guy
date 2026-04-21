@@ -5,10 +5,7 @@ import '../../models/earnings_model.dart';
 class EarningsChartWidget extends StatelessWidget {
   final List<DailyEarning> weeklyEarnings;
 
-  const EarningsChartWidget({
-    super.key,
-    required this.weeklyEarnings,
-  });
+  const EarningsChartWidget({super.key, required this.weeklyEarnings});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +29,7 @@ class EarningsChartWidget extends StatelessWidget {
                   barTouchData: BarTouchData(
                     enabled: true,
                     touchTooltipData: BarTouchTooltipData(
-                      tooltipBgColor: Colors.grey.shade800,
+                      getTooltipColor: (group) => Colors.grey[800]!,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         return BarTooltipItem(
                           'KES ${rod.toY.toStringAsFixed(2)}',
@@ -47,9 +44,12 @@ class EarningsChartWidget extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (value, meta) {
-                          if (value.toInt() >= 0 && value.toInt() < weeklyEarnings.length) {
+                          if (value.toInt() >= 0 &&
+                              value.toInt() < weeklyEarnings.length) {
                             return Text(
-                              weeklyEarnings[value.toInt()].day.substring(0, 3),
+                              weeklyEarnings[value.toInt()]
+                                  .day
+                                  .substring(0, 3),
                               style: const TextStyle(fontSize: 12),
                             );
                           }
@@ -89,7 +89,9 @@ class EarningsChartWidget extends StatelessWidget {
 
   double _getMaxY() {
     if (weeklyEarnings.isEmpty) return 100;
-    final maxAmount = weeklyEarnings.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
+    final maxAmount = weeklyEarnings
+        .map((e) => e.amount)
+        .reduce((a, b) => a > b ? a : b);
     return (maxAmount + 100).ceilToDouble();
   }
 

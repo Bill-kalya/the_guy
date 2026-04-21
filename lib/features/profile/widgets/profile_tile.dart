@@ -34,7 +34,9 @@ class ProfileTile extends StatelessWidget {
           ),
           title: Text(title),
           subtitle: subtitle != null ? Text(subtitle!) : null,
-          trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right) : null),
+          trailing:
+              trailing ??
+              (onTap != null ? const Icon(Icons.chevron_right) : null),
           onTap: onTap,
         ),
         if (showDivider)

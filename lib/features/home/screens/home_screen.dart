@@ -37,7 +37,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const RequestServiceScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const RequestServiceScreen(),
+                  ),
                 );
               },
               icon: const Icon(Icons.add),
@@ -62,10 +64,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 16),
             Text(locationState.error!),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _getLocation,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: _getLocation, child: const Text('Retry')),
           ],
         ),
       );
@@ -79,9 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Expanded(
               flex: 2,
-              child: MapWidget(
-                position: locationState.currentPosition,
-              ),
+              child: MapWidget(position: locationState.currentPosition),
             ),
             Expanded(
               flex: 1,
@@ -108,18 +105,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         });
       },
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history),
-          label: 'Jobs',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Jobs'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
     );
   }

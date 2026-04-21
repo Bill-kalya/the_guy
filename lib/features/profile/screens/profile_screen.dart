@@ -55,9 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(24),
-        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -68,7 +66,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 backgroundColor: Colors.blue.shade100,
                 child: Text(
                   user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                  style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Positioned(
@@ -88,16 +89,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 12),
           Text(
             user.name,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          Text(
-            user.phone,
-            style: const TextStyle(color: Colors.grey),
-          ),
+          Text(user.phone, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 8),
           if (user.rating > 0) ...[
             RatingStars(rating: user.rating),
@@ -120,31 +115,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildStatItem(
-              'Jobs',
-              '24',
-              Icons.work_outline,
-            ),
-            Container(
-              width: 1,
-              height: 40,
-              color: Colors.grey.shade200,
-            ),
-            _buildStatItem(
-              'Hours',
-              '48',
-              Icons.access_time,
-            ),
-            Container(
-              width: 1,
-              height: 40,
-              color: Colors.grey.shade200,
-            ),
-            _buildStatItem(
-              'Saved',
-              'KES 2,450',
-              Icons.savings,
-            ),
+            _buildStatItem('Jobs', '24', Icons.work_outline),
+            Container(width: 1, height: 40, color: Colors.grey.shade200),
+            _buildStatItem('Hours', '48', Icons.access_time),
+            Container(width: 1, height: 40, color: Colors.grey.shade200),
+            _buildStatItem('Saved', 'KES 2,450', Icons.savings),
           ],
         ),
       ),
@@ -158,15 +133,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
   }
@@ -252,7 +221,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Navigator.pop(context);
               await ref.read(authProvider.notifier).logout();
               if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class LocationPicker extends StatefulWidget {
   final Function(LatLng, String) onLocationSelected;
@@ -21,6 +22,7 @@ class _LocationPickerState extends State<LocationPicker> {
   LatLng? _selectedLocation;
   String _selectedAddress = '';
   bool _isLoading = false;
+  CameraPosition? _currentCameraPosition;
 
   static const CameraPosition _defaultPosition = CameraPosition(
     target: LatLng(-1.286389, 36.817223),
@@ -69,13 +71,13 @@ class _LocationPickerState extends State<LocationPicker> {
   Widget _buildMap() {
     return GoogleMap(
       initialCameraPosition: _selectedLocation != null
-          ? CameraPosition(
-              target: _selectedLocation!,
-              zoom: 15,
-            )
+          ? CameraPosition(target: _selectedLocation!, zoom: 15)
           : _defaultPosition,
       onMapCreated: (controller) {
         _mapController = controller;
+      },
+      onCameraMove: (position) {
+        _currentCameraPosition = position;
       },
       onCameraIdle: _onCameraIdle,
       myLocationEnabled: true,
@@ -89,11 +91,7 @@ class _LocationPickerState extends State<LocationPicker> {
       child: Center(
         child: Container(
           margin: const EdgeInsets.only(bottom: 30),
-          child: const Icon(
-            Icons.location_pin,
-            color: Colors.red,
-            size: 48,
-          ),
+          child: const Icon(Icons.location_pin, color: Colors.red, size: 48),
         ),
       ),
     );
@@ -156,64 +154,60 @@ class _LocationPickerState extends State<LocationPicker> {
   Widget _buildLoadingOverlay() {
     return Container(
       color: Colors.black54,
-      child: const Center(
-        child: CircularProgressIndicator(),
-      ),
+      child: const Center(child: CircularProgressIndicator()),
     );
   }
 
   Future<void> _onCameraIdle() async {
-    final cameraPosition = await _mapController?.getCameraPosition();
-    if (cameraPosition != null) {
-      final location = cameraPosition.target;
-      setState(() {
-        _selectedLocation = location;
-        _isLoading = true;
-      });
+    if (_currentCameraPosition == null) return;
 
-      // Get address from coordinates
-      try {
-        final placemarks = await Geolocator.placemarkFromCoordinates(
-          location.latitude,
-          location.longitude,
-        );
-        
-        if (placemarks.isNotEmpty) {
-          final placemark = placemarks.first;
-          final address = [
-            placemark.street,
-            placemark.subLocality,
-            placemark.locality,
-            placemark.administrativeArea,
-          ].where((e) => e != null && e.isNotEmpty).join(', ');
-          
-          setState(() {
-            _selectedAddress = address;
-          });
-        }
-      } catch (e) {
+    final location = _currentCameraPosition!.target;
+    setState(() {
+      _selectedLocation = location;
+      _isLoading = true;
+    });
+
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final placemark = placemarks.first;
+        final address = [
+          placemark.street,
+          placemark.subLocality,
+          placemark.locality,
+          placemark.administrativeArea,
+        ].where((e) => e != null && e.isNotEmpty).join(', ');
+
         setState(() {
-          _selectedAddress = 'Location selected';
-        });
-      } finally {
-        setState(() {
-          _isLoading = false;
+          _selectedAddress = address;
         });
       }
+    } catch (e) {
+      setState(() {
+        _selectedAddress = 'Location selected';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   Future<void> _getCurrentLocation() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
       );
-      
+
       final location = LatLng(position.latitude, position.longitude);
       _selectedLocation = location;
-      
+
       await _mapController?.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(target: location, zoom: 15),

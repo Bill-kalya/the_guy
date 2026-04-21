@@ -5,9 +5,9 @@ import '../../../shared/widgets/loading_widget.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   final String jobId;
-  
+
   const PaymentScreen({super.key, required this.jobId});
-  
+
   @override
   ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
 }
@@ -17,11 +17,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   Widget build(BuildContext context) {
     final paymentState = ref.watch(paymentProvider);
     final paymentNotifier = ref.read(paymentProvider.notifier);
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payment'),
-      ),
+      appBar: AppBar(title: const Text('Payment')),
       body: paymentState.isProcessing
           ? const LoadingWidget(message: 'Processing payment...')
           : Padding(
@@ -41,7 +39,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             ),
     );
   }
-  
+
   Widget _buildPaymentSummary(double amount) {
     return Card(
       child: Padding(
@@ -51,10 +49,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Service Fee',
-                  style: TextStyle(fontSize: 16),
-                ),
+                const Text('Service Fee', style: TextStyle(fontSize: 16)),
                 Text(
                   'KES ${amount.toStringAsFixed(2)}',
                   style: const TextStyle(fontSize: 16),
@@ -67,10 +62,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               children: [
                 const Text(
                   'Total',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'KES ${amount.toStringAsFixed(2)}',
@@ -87,7 +79,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       ),
     );
   }
-  
+
   Widget _buildMpesaSection() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -97,9 +89,23 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       ),
       child: Row(
         children: [
-          Image.asset(
-            'assets/images/mpesa.png',
+          Container(
+            width: 40,
             height: 40,
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Text(
+                'M',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           const Expanded(
@@ -108,28 +114,17 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               children: [
                 Text(
                   'M-PESA',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  'Pay using M-PESA',
-                  style: TextStyle(color: Colors.grey),
-                ),
+                Text('Pay using M-PESA', style: TextStyle(color: Colors.grey)),
               ],
             ),
-          ),
-          Radio(
-            value: true,
-            groupValue: true,
-            onChanged: (value) {},
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildPaymentButton(PaymentNotifier notifier) {
     return ElevatedButton(
       onPressed: () => notifier.initiateMpesaPayment(widget.jobId),
@@ -137,13 +132,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         minimumSize: const Size(double.infinity, 50),
         backgroundColor: Colors.green,
       ),
-      child: const Text(
-        'Pay with M-PESA',
-        style: TextStyle(fontSize: 16),
-      ),
+      child: const Text('Pay with M-PESA', style: TextStyle(fontSize: 16)),
     );
   }
-  
+
   Widget _buildPendingVerification() {
     return Container(
       margin: const EdgeInsets.only(top: 16),

@@ -4,11 +4,7 @@ class LoadingWidget extends StatelessWidget {
   final String? message;
   final bool fullScreen;
 
-  const LoadingWidget({
-    super.key,
-    this.message,
-    this.fullScreen = false,
-  });
+  const LoadingWidget({super.key, this.message, this.fullScreen = false});
 
   @override
   Widget build(BuildContext context) {
@@ -19,19 +15,14 @@ class LoadingWidget extends StatelessWidget {
           const CircularProgressIndicator(),
           if (message != null) ...[
             const SizedBox(height: 16),
-            Text(
-              message!,
-              style: const TextStyle(color: Colors.grey),
-            ),
+            Text(message!, style: const TextStyle(color: Colors.grey)),
           ],
         ],
       ),
     );
 
     if (fullScreen) {
-      return Scaffold(
-        body: content,
-      );
+      return Scaffold(body: content);
     }
 
     return content;

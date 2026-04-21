@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/auth_button.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/auth_state.dart';
 
 class OTPScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
@@ -13,7 +14,10 @@ class OTPScreen extends ConsumerStatefulWidget {
 }
 
 class _OTPScreenState extends ConsumerState<OTPScreen> {
-  final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   int _timerSeconds = 60;
   bool _canResend = false;
@@ -65,9 +69,7 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verify OTP'),
-      ),
+      appBar: AppBar(title: const Text('Verify OTP')),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -143,13 +145,17 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          _canResend ? 'Didn\'t receive code? ' : 'Resend code in $_timerSeconds seconds',
+          _canResend
+              ? 'Didn\'t receive code? '
+              : 'Resend code in $_timerSeconds seconds',
           style: TextStyle(color: _canResend ? Colors.black : Colors.grey),
         ),
         if (_canResend)
           TextButton(
             onPressed: () {
-              ref.read(authProvider.notifier).loginWithPhone(widget.phoneNumber);
+              ref
+                  .read(authProvider.notifier)
+                  .loginWithPhone(widget.phoneNumber);
               setState(() {
                 _timerSeconds = 60;
                 _canResend = false;
@@ -167,10 +173,9 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
       text: 'Verify',
       onPressed: _getOtp().length == 6
           ? () {
-              ref.read(authProvider.notifier).verifyOtp(
-                    widget.phoneNumber,
-                    _getOtp(),
-                  );
+              ref
+                  .read(authProvider.notifier)
+                  .verifyOtp(widget.phoneNumber, _getOtp());
             }
           : null,
       isLoading: authState.isLoading,

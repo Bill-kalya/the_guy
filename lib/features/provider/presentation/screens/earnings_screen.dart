@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/earnings_chart.dart';
 import '../../providers/earnings_provider.dart';
-import '../../../shared/widgets/loading_widget.dart';
+import '../../models/earnings_model.dart';
+import '../../../../shared/widgets/loading_widget.dart';
 
 class EarningsScreen extends ConsumerStatefulWidget {
   const EarningsScreen({super.key});
@@ -23,7 +24,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
   @override
   Widget build(BuildContext context) {
     final earningsState = ref.watch(earningsProvider);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Earnings'),
@@ -39,10 +40,10 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
       body: earningsState.isLoading
           ? const LoadingWidget()
           : earningsState.error != null
-              ? _buildErrorWidget(earningsState.error!)
-              : earningsState.earnings != null
-                  ? _buildEarningsContent(earningsState.earnings!)
-                  : const SizedBox(),
+          ? _buildErrorWidget(earningsState.error!)
+          : earningsState.earnings != null
+          ? _buildEarningsContent(earningsState.earnings!)
+          : const SizedBox(),
     );
   }
 
@@ -75,15 +76,15 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
           // Total earnings card
           _buildTotalEarningsCard(earnings),
           const SizedBox(height: 16),
-          
+
           // Stats grid
           _buildStatsGrid(earnings),
           const SizedBox(height: 24),
-          
+
           // Earnings chart
           EarningsChartWidget(weeklyEarnings: earnings.weeklyEarnings),
           const SizedBox(height: 24),
-          
+
           // Recent transactions
           _buildRecentTransactions(earnings),
         ],
@@ -151,7 +152,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
           'This Week',
           'KES ${earnings.thisWeekEarnings.toStringAsFixed(2)}',
           '${earnings.thisWeekJobs} jobs',
-          Icons.week,
+          Icons.calendar_view_week,
           Colors.green,
         ),
         _buildStatCard(
@@ -172,7 +173,13 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String amount, String subtitle, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String amount,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -193,10 +200,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
             const SizedBox(height: 8),
             Text(
               amount,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
               subtitle,
@@ -258,7 +262,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       return 'Today, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } else if (difference.inDays == 1) {

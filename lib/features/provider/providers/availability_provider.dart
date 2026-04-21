@@ -3,42 +3,42 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
 import '../../../core/storage/secure_storage.dart';
 
-final availabilityProvider = StateNotifierProvider<AvailabilityNotifier, AvailabilityState>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  final secureStorage = ref.watch(secureStorageProvider);
-  return AvailabilityNotifier(apiClient, secureStorage);
-});
+final availabilityProvider =
+    NotifierProvider<AvailabilityNotifier, AvailabilityState>(
+      AvailabilityNotifier.new,
+    );
 
-class AvailabilityNotifier extends StateNotifier<AvailabilityState> {
-  final ApiClient _apiClient;
-  final SecureStorage _secureStorage;
+class AvailabilityNotifier extends Notifier<AvailabilityState> {
+  late final ApiClient _apiClient;
+  late final SecureStorage _secureStorage;
 
-  AvailabilityNotifier(this._apiClient, this._secureStorage) 
-      : super(AvailabilityState.initial()) {
+  @override
+  AvailabilityState build() {
+    _apiClient = ref.watch(apiClientProvider);
+    _secureStorage = ref.watch(secureStorageProvider);
     _loadInitialStatus();
+    return AvailabilityState.initial();
   }
 
   void _loadInitialStatus() async {
     // Load saved status or default to online
-    final savedStatus = await _secureStorage.getUserRole(); // You can store this
+    final savedStatus = await _secureStorage
+        .getUserRole(); // You can store this
     state = state.copyWith(isOnline: true); // Default online
   }
 
   Future<void> toggleAvailability() async {
     final newStatus = !state.isOnline;
     state = state.copyWith(isLoading: true);
-    
+
     try {
       final response = await _apiClient.patch(
         Endpoints.updateAvailability,
         data: {'isOnline': newStatus},
       );
-      
+
       if (response.statusCode == 200) {
-        state = state.copyWith(
-          isOnline: newStatus,
-          isLoading: false,
-        );
+        state = state.copyWith(isOnline: newStatus, isLoading: false);
       }
     } catch (e) {
       state = state.copyWith(
@@ -59,21 +59,13 @@ class AvailabilityState {
   final bool isLoading;
   final String? error;
 
-  AvailabilityState({
-    this.isOnline = true,
-    this.isLoading = false,
-    this.error,
-  });
+  AvailabilityState({this.isOnline = true, this.isLoading = false, this.error});
 
   factory AvailabilityState.initial() {
     return AvailabilityState();
   }
 
-  AvailabilityState copyWith({
-    bool? isOnline,
-    bool? isLoading,
-    String? error,
-  }) {
+  AvailabilityState copyWith({bool? isOnline, bool? isLoading, String? error}) {
     return AvailabilityState(
       isOnline: isOnline ?? this.isOnline,
       isLoading: isLoading ?? this.isLoading,

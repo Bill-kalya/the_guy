@@ -54,8 +54,12 @@ class JobModel {
       providerId: json['providerId'],
       providerName: json['providerName'],
       createdAt: DateTime.parse(json['createdAt']),
-      acceptedAt: json['acceptedAt'] != null ? DateTime.parse(json['acceptedAt']) : null,
-      completedAt: json['completedAt'] != null ? DateTime.parse(json['completedAt']) : null,
+      acceptedAt: json['acceptedAt'] != null
+          ? DateTime.parse(json['acceptedAt'])
+          : null,
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'])
+          : null,
     );
   }
 }

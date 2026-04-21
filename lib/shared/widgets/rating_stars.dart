@@ -19,7 +19,7 @@ class RatingStars extends StatelessWidget {
       children: List.generate(starCount, (index) {
         final starValue = index + 1;
         double fillValue;
-        
+
         if (rating >= starValue) {
           fillValue = 1.0;
         } else if (rating >= starValue - 0.5) {
@@ -27,15 +27,15 @@ class RatingStars extends StatelessWidget {
         } else {
           fillValue = 0.0;
         }
-        
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 1),
           child: Icon(
             fillValue == 1.0
                 ? Icons.star
                 : fillValue == 0.5
-                    ? Icons.star_half
-                    : Icons.star_border,
+                ? Icons.star_half
+                : Icons.star_border,
             size: size,
             color: Colors.amber,
           ),

@@ -49,5 +49,29 @@ class MessageModel {
     };
   }
 
-  bool get isMine => senderId == 'current_user'; // Will be set dynamically
+  bool get isMine => senderId == 'current_user';
+
+  MessageModel copyWith({
+    String? id,
+    String? jobId,
+    String? senderId,
+    String? senderName,
+    String? receiverId,
+    String? content,
+    DateTime? timestamp,
+    bool? isRead,
+    String? imageUrl,
+  }) {
+    return MessageModel(
+      id: id ?? this.id,
+      jobId: jobId ?? this.jobId,
+      senderId: senderId ?? this.senderId,
+      senderName: senderName ?? this.senderName,
+      receiverId: receiverId ?? this.receiverId,
+      content: content ?? this.content,
+      timestamp: timestamp ?? this.timestamp,
+      isRead: isRead ?? this.isRead,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
 }

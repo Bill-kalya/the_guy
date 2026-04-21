@@ -31,7 +31,7 @@ class ErrorHandler {
       ),
     );
   }
-  
+
   // Show error snackbar
   static void showErrorSnackBar(
     BuildContext context,
@@ -53,7 +53,7 @@ class ErrorHandler {
       ),
     );
   }
-  
+
   // Show success snackbar
   static void showSuccessSnackBar(
     BuildContext context,
@@ -75,7 +75,7 @@ class ErrorHandler {
       ),
     );
   }
-  
+
   // Show info snackbar
   static void showInfoSnackBar(
     BuildContext context,
@@ -97,7 +97,7 @@ class ErrorHandler {
       ),
     );
   }
-  
+
   // Parse error message from exception
   static String parseErrorMessage(dynamic error) {
     if (error is String) {
@@ -108,7 +108,7 @@ class ErrorHandler {
       return 'An unexpected error occurred. Please try again.';
     }
   }
-  
+
   // Get user-friendly error message
   static String getUserFriendlyMessage(String errorCode) {
     switch (errorCode) {
@@ -136,7 +136,7 @@ class ErrorHandler {
         return 'Something went wrong. Please try again.';
     }
   }
-  
+
   // Handle common exceptions
   static String handleException(dynamic exception) {
     if (exception.toString().contains('SocketException')) {
