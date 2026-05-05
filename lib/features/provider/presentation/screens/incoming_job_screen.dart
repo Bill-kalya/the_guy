@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../models/provider_job_model.dart';
-import '../../../../shared/widgets/loading_widget.dart';
 
 class IncomingJobScreen extends ConsumerStatefulWidget {
   const IncomingJobScreen({super.key});

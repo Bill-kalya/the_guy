@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/profile_tile.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
-import '../../../core/storage/secure_storage.dart';
 import '../../../shared/widgets/rating_stars.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {

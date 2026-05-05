@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/utils/location_utils.dart';
 
 class JobCard extends StatelessWidget {
   final Map<String, dynamic> job;

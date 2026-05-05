@@ -4,7 +4,6 @@ import '../../../home/providers/location_provider.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/network/endpoints.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});

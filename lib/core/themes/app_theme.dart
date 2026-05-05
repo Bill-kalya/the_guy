@@ -12,7 +12,6 @@ class AppTheme {
       secondary: AppColors.secondary,
       error: AppColors.error,
       surface: AppColors.surface,
-      background: AppColors.background,
     ),
 
     // AppBar Theme
@@ -149,7 +148,6 @@ class AppTheme {
       secondary: AppColors.secondary,
       error: AppColors.error,
       surface: Color(0xFF1E1E1E),
-      background: Colors.black,
     ),
     // Copy with dark mode adjustments
     appBarTheme: const AppBarTheme(

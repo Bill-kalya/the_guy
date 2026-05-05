@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../models/provider_job_model.dart';
-import '../../../../shared/widgets/loading_widget.dart';
 
 class ActiveJobsScreen extends ConsumerStatefulWidget {
   const ActiveJobsScreen({super.key});

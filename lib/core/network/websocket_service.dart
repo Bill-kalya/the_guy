@@ -45,7 +45,7 @@ class WebSocketService {
 
   void _subscribeToUserQueue() {
     final userId = _ref.read(secureStorageProvider).getUserId();
-    if (userId != null && _client != null) {
+    if (_client != null) {
       _client!.subscribe(
         destination: '/queue/customer/$userId',
         callback: (frame) {
@@ -57,7 +57,7 @@ class WebSocketService {
 
   void subscribeToProviderJobs() {
     final providerId = _ref.read(secureStorageProvider).getUserId();
-    if (providerId != null && _client != null) {
+    if (_client != null) {
       _client!.subscribe(
         destination: '/queue/provider/$providerId',
         callback: (frame) {

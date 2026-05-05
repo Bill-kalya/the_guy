@@ -37,7 +37,7 @@ class AvailabilityToggleWidget extends ConsumerWidget {
               : (value) {
                   ref.read(availabilityProvider.notifier).toggleAvailability();
                 },
-          activeColor: Colors.green,
+          activeThumbColor: Colors.green,
           inactiveThumbColor: Colors.red,
           inactiveTrackColor: Colors.red.shade100,
         ),

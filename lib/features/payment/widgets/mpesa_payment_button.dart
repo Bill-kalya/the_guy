@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/payment_provider.dart';
-import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
 
 class MpesaPaymentButton extends ConsumerStatefulWidget {

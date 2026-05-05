@@ -68,6 +68,6 @@ class LocationModel {
       city,
       state,
       country,
-    ].where((e) => e != null && e!.isNotEmpty).join(', ');
+    ].where((e) => e != null && e.isNotEmpty).join(', ');
   }
 }

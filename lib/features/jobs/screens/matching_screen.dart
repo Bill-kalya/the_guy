@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import '../providers/job_provider.dart';
 import '../models/job_state.dart';
-import '../../../shared/widgets/loading_widget.dart';
 
 class MatchingScreen extends ConsumerStatefulWidget {
   final String jobId;

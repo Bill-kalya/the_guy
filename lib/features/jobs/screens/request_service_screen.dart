@@ -62,7 +62,7 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
         labelText: 'Service Category',
         prefixIcon: Icon(Icons.category),
       ),
-      value: _selectedCategory,
+      initialValue: _selectedCategory,
       items: _categories.map((category) {
         return DropdownMenuItem(value: category, child: Text(category));
       }).toList(),

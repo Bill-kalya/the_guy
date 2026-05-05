@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/job_state.dart';
 
 final matchingProvider = NotifierProvider<MatchingNotifier, MatchingState>(
   MatchingNotifier.new,
