@@ -13,15 +13,12 @@ class LocationNotifier extends Notifier<LocationState> {
   @override
   LocationState build() {
     _sharedPrefs = ref.watch(sharedPrefsProvider);
-    _loadSavedLocation();
-    return LocationState.initial();
-  }
 
-  void _loadSavedLocation() {
     final lat = _sharedPrefs.getLastLatitude();
     final lng = _sharedPrefs.getLastLongitude();
+
     if (lat != null && lng != null) {
-      state = state.copyWith(
+      return LocationState(
         currentPosition: Position(
           latitude: lat,
           longitude: lng,
@@ -36,6 +33,8 @@ class LocationNotifier extends Notifier<LocationState> {
         ),
       );
     }
+
+    return LocationState.initial();
   }
 
   Future<void> getCurrentLocation() async {

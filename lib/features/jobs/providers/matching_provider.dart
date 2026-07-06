@@ -11,6 +11,9 @@ class MatchingNotifier extends Notifier<MatchingState> {
 
   @override
   MatchingState build() {
+    ref.onDispose(() {
+      _timer?.cancel();
+    });
     return MatchingState.initial();
   }
 

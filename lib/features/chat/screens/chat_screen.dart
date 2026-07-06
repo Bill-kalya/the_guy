@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/chat_input_field.dart';
@@ -49,6 +50,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider(widget.jobId));
     final chatNotifier = ref.read(chatProvider(widget.jobId).notifier);
+    final authState = ref.watch(authProvider);
+    final currentUserId = authState.user?.id ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -71,7 +74,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     itemCount: chatState.messages.length,
                     itemBuilder: (context, index) {
                       final message = chatState.messages[index];
-                      return MessageBubble(message: message);
+                      return MessageBubble(
+                        message: message,
+                        currentUserId: currentUserId,
+                      );
                     },
                   ),
           ),

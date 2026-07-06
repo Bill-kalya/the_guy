@@ -4,12 +4,17 @@ import '../models/message_model.dart';
 
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
+  final String currentUserId;
 
-  const MessageBubble({super.key, required this.message});
+  const MessageBubble({
+    super.key,
+    required this.message,
+    required this.currentUserId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isMine = message.isMine;
+    final isMine = message.isMine(currentUserId);
 
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,

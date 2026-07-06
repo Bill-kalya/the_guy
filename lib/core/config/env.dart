@@ -2,7 +2,7 @@ class Env {
   // API Configuration
   static const String apiUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://api.theguy.com',
+    defaultValue: 'https://api.theguy.com/api',
   );
 
   static const String wsUrl = String.fromEnvironment(
@@ -13,7 +13,7 @@ class Env {
   // Google Maps
   static const String googleMapsKey = String.fromEnvironment(
     'GOOGLE_MAPS_KEY',
-    defaultValue: 'YOUR_GOOGLE_MAPS_API_KEY',
+    defaultValue: '',
   );
 
   // Environment type

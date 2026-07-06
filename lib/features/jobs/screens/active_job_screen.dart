@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/job_provider.dart';
 import '../models/job_state.dart';
-import '../../chat/screens/chat_screen.dart';
-import '../../payment/screens/payment_screen.dart';
 import '../../../shared/widgets/rating_stars.dart';
 
 class ActiveJobScreen extends ConsumerStatefulWidget {
@@ -26,17 +25,10 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.chat),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChatScreen(
-                    jobId: widget.jobId,
-                    providerName: jobState.provider?['name'] ?? 'Provider',
-                  ),
-                ),
-              );
-            },
+            onPressed: () => context.push(
+              '/chat/${widget.jobId}',
+              extra: {'providerName': jobState.provider?['name'] ?? 'Provider'},
+            ),
           ),
         ],
       ),
@@ -169,14 +161,7 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
     switch (status) {
       case JobStatus.completed:
         return ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PaymentScreen(jobId: widget.jobId),
-              ),
-            );
-          },
+          onPressed: () => context.push('/payment/${widget.jobId}'),
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, 50),
           ),

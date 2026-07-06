@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Customer routes
 import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/auth/presentation/screens/otp_verification_screen.dart' as otp;
+import '../features/auth/presentation/screens/register_screen.dart';
+import '../features/auth/presentation/screens/otp_verification_screen.dart' as verify_email;
 import '../features/home/screens/home_screen.dart';
 import '../features/jobs/screens/request_service_screen.dart';
 import '../features/jobs/screens/matching_screen.dart';
@@ -20,35 +21,63 @@ import '../features/provider/presentation/screens/earnings_screen.dart';
 
 // Providers
 import '../features/auth/providers/auth_provider.dart';
-import '../core/storage/secure_storage.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
-  final userRoleFuture = ref.read(secureStorageProvider).getUserRole();
-  final userRole = userRoleFuture == 'provider';
 
   return GoRouter(
     initialLocation: '/',
-redirect: (context, state) async {
+    redirect: (context, state) async {
       final isAuthenticated = authState.isAuthenticated;
-      final isLoginRoute = state.matchedLocation == '/login';
+      final location = state.matchedLocation;
+      final isAuthRoute = location == '/login' ||
+          location == '/register' ||
+          location == '/verify-email';
+      final isHomeRoute = location == '/';
 
-      if (!isAuthenticated && !isLoginRoute) {
-        return '/login';
-      }
-
-      if (isAuthenticated && isLoginRoute) {
-        // Redirect based on user role
+      // If authenticated and on an auth route (login/register/verify-email), redirect to home
+      if (isAuthenticated && isAuthRoute) {
+        final userRole = authState.user?.role ?? 'customer';
         if (userRole == 'provider') {
           return '/provider/home';
-        } else {
-          return '/home';
         }
+        return '/';
+      }
+
+      // If on root path, always show home (public landing page)
+      if (isHomeRoute) {
+        return null;
+      }
+
+      // Auth-required routes - redirect to login if not authenticated
+      final authRequiredRoutes = [
+        '/request-service',
+        '/matching',
+        '/active-job',
+        '/chat',
+        '/payment',
+        '/profile',
+        '/provider',
+      ];
+
+      final isAuthRequired = authRequiredRoutes.any(
+        (route) => location.startsWith(route),
+      );
+
+      if (!isAuthenticated && isAuthRequired) {
+        return '/login';
       }
 
       return null;
     },
     routes: [
+      // Public landing page (root)
+      GoRoute(
+        name: 'home',
+        path: '/',
+        builder: (context, state) => const HomeScreen(),
+      ),
+
       // Auth routes
       GoRoute(
         name: 'login',
@@ -56,21 +85,20 @@ redirect: (context, state) async {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        name: 'otp',
-        path: '/otp',
-        builder: (context, state) {
-          final phoneNumber = state.extra as String;
-          return otp.OTPScreen(phoneNumber: phoneNumber);
-        },
-
+        name: 'register',
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
       ),
-
-      // Customer routes
       GoRoute(
-        name: 'home',
-        path: '/home',
-        builder: (context, state) => const HomeScreen(),
+        name: 'verify-email',
+        path: '/verify-email',
+        builder: (context, state) {
+          final email = state.extra as String;
+          return verify_email.EmailVerificationScreen(email: email);
+        },
       ),
+
+      // Customer routes (auth-required)
       GoRoute(
         name: 'request-service',
         path: '/request-service',
@@ -104,7 +132,6 @@ redirect: (context, state) async {
             providerName: providerName,
           );
         },
-
       ),
       GoRoute(
         name: 'payment',
@@ -120,7 +147,7 @@ redirect: (context, state) async {
         builder: (context, state) => const ProfileScreen(),
       ),
 
-      // Provider routes
+      // Provider routes (auth-required)
       GoRoute(
         name: 'provider-home',
         path: '/provider/home',

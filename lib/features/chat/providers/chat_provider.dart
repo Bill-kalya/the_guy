@@ -115,7 +115,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   @override
   void dispose() {
-    _webSocket.disconnect();
+    _webSocket.unsubscribeFromChat(jobId);
     super.dispose();
   }
 }

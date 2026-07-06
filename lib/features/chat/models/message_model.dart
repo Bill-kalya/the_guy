@@ -49,7 +49,7 @@ class MessageModel {
     };
   }
 
-  bool get isMine => senderId == 'current_user';
+  bool isMine(String currentUserId) => senderId == currentUserId;
 
   MessageModel copyWith({
     String? id,

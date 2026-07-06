@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../home/providers/location_provider.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/endpoints.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -15,31 +17,20 @@ class RegisterScreen extends ConsumerStatefulWidget {
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
   String _selectedRole = 'customer';
   bool _agreeToTerms = false;
 
-  final List<Map<String, dynamic>> _roles = [
-    {
-      'value': 'customer',
-      'label': 'Customer - Get services',
-      'icon': Icons.person,
-    },
-    {
-      'value': 'provider',
-      'label': 'Provider - Offer services',
-      'icon': Icons.handyman,
-    },
-  ];
-
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
     _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -50,7 +41,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         title: const Text('Create Account'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SafeArea(
@@ -65,10 +56,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 32),
                 _buildNameField(),
                 const SizedBox(height: 16),
-                _buildPhoneField(),
-                const SizedBox(height: 16),
                 _buildEmailField(),
                 const SizedBox(height: 16),
+                _buildPasswordField(),
+                const SizedBox(height: 16),
+                _buildConfirmPasswordField(),
+                const SizedBox(height: 24),
                 _buildRoleSelector(),
                 const SizedBox(height: 24),
                 _buildTermsCheckbox(),
@@ -113,6 +106,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget _buildNameField() {
     return TextFormField(
       controller: _nameController,
+      textInputAction: TextInputAction.next,
       decoration: const InputDecoration(
         labelText: 'Full Name',
         hintText: 'John Doe',
@@ -124,35 +118,53 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  Widget _buildPhoneField() {
-    return TextFormField(
-      controller: _phoneController,
-      keyboardType: TextInputType.phone,
-      decoration: const InputDecoration(
-        labelText: 'Phone Number',
-        hintText: '0712345678',
-        prefixIcon: Icon(Icons.phone),
-        prefixText: '+254 ',
-        border: OutlineInputBorder(),
-        helperText: 'Enter your Kenyan phone number',
-      ),
-      validator: (value) => Validators.validatePhoneNumber(value),
-    );
-  }
-
   Widget _buildEmailField() {
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
       decoration: const InputDecoration(
-        labelText: 'Email (Optional)',
+        labelText: 'Email',
         hintText: 'john@example.com',
         prefixIcon: Icon(Icons.email),
         border: OutlineInputBorder(),
       ),
+      validator: (value) => Validators.validateEmail(value),
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: true,
+      textInputAction: TextInputAction.next,
+      decoration: const InputDecoration(
+        labelText: 'Password',
+        hintText: 'At least 6 characters',
+        prefixIcon: Icon(Icons.lock),
+        border: OutlineInputBorder(),
+      ),
+      validator: (value) => Validators.validatePassword(value),
+    );
+  }
+
+  Widget _buildConfirmPasswordField() {
+    return TextFormField(
+      controller: _confirmPasswordController,
+      obscureText: true,
+      textInputAction: TextInputAction.done,
+      decoration: const InputDecoration(
+        labelText: 'Confirm Password',
+        hintText: 'Re-enter your password',
+        prefixIcon: Icon(Icons.lock_outline),
+        border: OutlineInputBorder(),
+      ),
       validator: (value) {
-        if (value != null && value.isNotEmpty) {
-          return Validators.validateEmail(value);
+        if (value == null || value.isEmpty) {
+          return 'Please confirm your password';
+        }
+        if (value != _passwordController.text) {
+          return 'Passwords do not match';
         }
         return null;
       },
@@ -165,42 +177,95 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       children: [
         const Text(
           'I want to:',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: _roles.map((role) {
-            final isSelected = _selectedRole == role['value'];
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: ChoiceChip(
-                  label: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(role['icon'], size: 20),
-                      const SizedBox(height: 4),
-                      Text(
-                        role['label'],
-                        style: const TextStyle(fontSize: 12),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedRole = role['value'];
-                      });
-                    }
-                  },
-                ),
-              ),
-            );
-          }).toList(),
+        const SizedBox(height: 12),
+        _buildRoleCard(
+          icon: Icons.person_outline,
+          title: 'Customer',
+          subtitle: 'Hire service pros',
+          value: 'customer',
+          isSelected: _selectedRole == 'customer',
+        ),
+        const SizedBox(height: 12),
+        _buildRoleCard(
+          icon: Icons.handyman_outlined,
+          title: 'Provider',
+          subtitle: 'Offer your skills',
+          value: 'provider',
+          isSelected: _selectedRole == 'provider',
         ),
       ],
+    );
+  }
+
+  Widget _buildRoleCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+    required bool isSelected,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedRole = value;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.shade50 : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.blue : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? Colors.blue.shade700 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: Colors.blue.shade600, size: 24),
+          ],
+        ),
+      ),
     );
   }
 
@@ -261,9 +326,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       children: [
         const Text('Already have an account? '),
         TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => context.pop(),
           child: const Text('Login'),
         ),
       ],
@@ -283,13 +346,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final location = locationState.currentPosition;
 
       final response = await apiClient.post(
-        '/auth/register',
+        Endpoints.register,
         data: {
           'name': _nameController.text.trim(),
-          'phone': _phoneController.text.trim(),
-          'email': _emailController.text.trim().isEmpty
-              ? null
-              : _emailController.text.trim(),
+          'email': _emailController.text.trim(),
+          'password': _passwordController.text,
           'role': _selectedRole,
           'latitude': location?.latitude,
           'longitude': location?.longitude,
@@ -298,12 +359,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       if (response.statusCode == 201) {
         if (mounted) {
-          // Navigate to OTP verification
-          Navigator.pushReplacementNamed(
-            context,
-            '/otp',
-            arguments: _phoneController.text.trim(),
-          );
+          // Navigate to email verification screen
+          context.push('/verify-email', extra: _emailController.text.trim());
         }
       }
     } catch (e) {

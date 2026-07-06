@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/auth_button.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/auth_state.dart';
 
-class OTPScreen extends ConsumerStatefulWidget {
-  final String phoneNumber;
+class EmailVerificationScreen extends ConsumerStatefulWidget {
+  final String email;
 
-  const OTPScreen({super.key, required this.phoneNumber});
+  const EmailVerificationScreen({super.key, required this.email});
 
   @override
-  ConsumerState<OTPScreen> createState() => _OTPScreenState();
+  ConsumerState<EmailVerificationScreen> createState() =>
+      _EmailVerificationScreenState();
 }
 
-class _OTPScreenState extends ConsumerState<OTPScreen> {
+class _EmailVerificationScreenState
+    extends ConsumerState<EmailVerificationScreen> {
   final List<TextEditingController> _otpControllers = List.generate(
     6,
     (_) => TextEditingController(),
@@ -21,40 +24,41 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   int _timerSeconds = 60;
   bool _canResend = false;
+  bool _disposed = false;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    // Auto-focus first field
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNodes[0].requestFocus();
+      if (mounted) _focusNodes[0].requestFocus();
     });
   }
 
   void _startTimer() {
-    Future.delayed(const Duration(seconds: 1), _updateTimer);
+    _tick();
   }
 
-  void _updateTimer() {
-    if (_timerSeconds > 0) {
-      setState(() {
-        _timerSeconds--;
-      });
-      Future.delayed(const Duration(seconds: 1), _updateTimer);
-    } else {
-      setState(() {
-        _canResend = true;
-      });
-    }
-  }
-
-  String _getOtp() {
-    return _otpControllers.map((c) => c.text).join();
+  void _tick() {
+    if (_disposed || !mounted) return;
+    Future.delayed(const Duration(seconds: 1), () {
+      if (_disposed || !mounted) return;
+      if (_timerSeconds > 0) {
+        setState(() {
+          _timerSeconds--;
+        });
+        _tick();
+      } else {
+        setState(() {
+          _canResend = true;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    _disposed = true;
     for (var controller in _otpControllers) {
       controller.dispose();
     }
@@ -64,28 +68,57 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
     super.dispose();
   }
 
+  String _getOtp() {
+    return _otpControllers.map((c) => c.text).join();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
+    // Listen for auth state changes
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.isAuthenticated && previous?.isAuthenticated == false) {
+        final userRole = next.user?.role ?? 'customer';
+        if (userRole == 'provider') {
+          context.go('/provider/home');
+        } else {
+          context.go('/');
+        }
+      }
+    });
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify OTP')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Spacer(flex: 1),
-            _buildHeader(),
-            const SizedBox(height: 32),
-            _buildOtpInputs(),
-            const SizedBox(height: 16),
-            _buildResendButton(),
-            const SizedBox(height: 24),
-            _buildVerifyButton(authState),
-            const Spacer(flex: 2),
-          ],
-        ),
+      appBar: AppBar(title: const Text('Verify Email')),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 24),
+                    _buildHeader(),
+                    const SizedBox(height: 32),
+                    _buildOtpInputs(),
+                    const SizedBox(height: 16),
+                    _buildResendButton(),
+                    const SizedBox(height: 24),
+                    _buildVerifyButton(authState),
+                    if (authState.error != null) ...[
+                      const SizedBox(height: 16),
+                      _buildErrorBanner(authState.error!),
+                    ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -93,15 +126,24 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        const Icon(Icons.sms, size: 64, color: Colors.blue),
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.mark_email_unread_outlined,
+              size: 40, color: Colors.blue),
+        ),
         const SizedBox(height: 16),
         const Text(
-          'Enter Verification Code',
+          'Verify Your Email',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
-          'We sent a 6-digit code to ${widget.phoneNumber}',
+          'We sent a 6-digit code to\n${widget.email}',
           style: const TextStyle(color: Colors.grey),
           textAlign: TextAlign.center,
         ),
@@ -110,33 +152,53 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
   }
 
   Widget _buildOtpInputs() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(6, (index) {
-        return SizedBox(
-          width: 50,
-          child: TextFormField(
-            controller: _otpControllers[index],
-            focusNode: _focusNodes[index],
-            textAlign: TextAlign.center,
-            keyboardType: TextInputType.number,
-            maxLength: 1,
-            decoration: InputDecoration(
-              counterText: '',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final itemWidth =
+            ((constraints.maxWidth - spacing * 5) / 6).clamp(48.0, 72.0);
+        final useWrap = constraints.maxWidth < (itemWidth * 6 + spacing * 5);
+
+        final inputs = List.generate(6, (index) {
+          return SizedBox(
+            width: itemWidth,
+            child: TextFormField(
+              controller: _otpControllers[index],
+              focusNode: _focusNodes[index],
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              maxLength: 1,
+              decoration: InputDecoration(
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
+              onChanged: (value) {
+                if (value.isNotEmpty && index < 5) {
+                  _focusNodes[index + 1].requestFocus();
+                } else if (value.isEmpty && index > 0) {
+                  _focusNodes[index - 1].requestFocus();
+                }
+              },
             ),
-            onChanged: (value) {
-              if (value.isNotEmpty && index < 5) {
-                _focusNodes[index + 1].requestFocus();
-              } else if (value.isEmpty && index > 0) {
-                _focusNodes[index - 1].requestFocus();
-              }
-            },
-          ),
+          );
+        });
+
+        if (useWrap) {
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            alignment: WrapAlignment.center,
+            children: inputs,
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: inputs,
         );
-      }),
+      },
     );
   }
 
@@ -146,7 +208,7 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
       children: [
         Text(
           _canResend
-              ? 'Didn\'t receive code? '
+              ? "Didn't receive code? "
               : 'Resend code in $_timerSeconds seconds',
           style: TextStyle(color: _canResend ? Colors.black : Colors.grey),
         ),
@@ -155,12 +217,12 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
             onPressed: () {
               ref
                   .read(authProvider.notifier)
-                  .loginWithPhone(widget.phoneNumber);
+                  .resendVerificationEmail(widget.email);
               setState(() {
                 _timerSeconds = 60;
                 _canResend = false;
-                _startTimer();
               });
+              _startTimer();
             },
             child: const Text('Resend'),
           ),
@@ -175,10 +237,33 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
           ? () {
               ref
                   .read(authProvider.notifier)
-                  .verifyOtp(widget.phoneNumber, _getOtp());
+                  .verifyEmail(widget.email, _getOtp());
             }
           : null,
       isLoading: authState.isLoading,
+    );
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              error,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

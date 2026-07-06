@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,7 +28,7 @@ class SecureStorage {
   Future<void> saveUserData(Map<String, dynamic> user) async {
     await _storage.write(key: 'user_id', value: user['id'].toString());
     await _storage.write(key: 'user_role', value: user['role']);
-    await _storage.write(key: 'user_data', value: user.toString());
+    await _storage.write(key: 'user_data', value: jsonEncode(user));
   }
 
   Future<String?> getUserId() async {
@@ -41,8 +42,7 @@ class SecureStorage {
   Future<Map<String, dynamic>?> getUserData() async {
     final data = await _storage.read(key: 'user_data');
     if (data != null) {
-      // Parse JSON string to Map
-      return {'id': await getUserId(), 'role': await getUserRole()};
+      return jsonDecode(data) as Map<String, dynamic>;
     }
     return null;
   }

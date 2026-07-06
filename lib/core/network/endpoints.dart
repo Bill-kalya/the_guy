@@ -5,10 +5,14 @@ class Endpoints {
   static final String wsUrl = Env.wsUrl;
 
   // Auth Endpoints
-  static const String sendOtp = '/auth/send-otp';
-  static const String verifyOtp = '/auth/verify-otp';
-  static const String refreshToken = '/auth/refresh-token';
+  static const String register = '/auth/register';
+  static const String login = '/auth/login';
+  static const String refreshToken = '/auth/refresh';
   static const String logout = '/auth/logout';
+  static const String verifyEmail = '/auth/verify';
+  static const String resendVerification = '/auth/resend-verification';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
 
   // User Endpoints
   static const String userProfile = '/users/profile';

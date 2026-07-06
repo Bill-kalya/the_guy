@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/websocket_service.dart';
+import '../../../core/utils/error_handler.dart';
 import '../models/provider_job_model.dart';
 import '../../../core/network/endpoints.dart';
 
@@ -88,7 +89,7 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
         state = state.copyWith(activeJob: updatedJob);
       }
     } catch (e) {
-      print('Error updating job status: $e');
+      ErrorHandler.logError('Error updating job status', e);
     }
   }
 

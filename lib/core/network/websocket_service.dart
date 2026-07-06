@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
@@ -5,6 +6,7 @@ import '../storage/secure_storage.dart';
 import 'endpoints.dart';
 import '../../features/jobs/providers/job_provider.dart';
 import '../../features/chat/providers/chat_provider.dart';
+import '../../core/utils/error_handler.dart' as error_handler;
 
 final webSocketServiceProvider = Provider<WebSocketService>((ref) {
   return WebSocketService(ref);
@@ -14,6 +16,10 @@ class WebSocketService {
   final Ref _ref;
   StompClient? _client;
   bool _isConnected = false;
+  final Set<String> _subscriptions = {};
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 5;
+  Timer? _reconnectTimer;
 
   Function(Map<String, dynamic>)? onIncomingJob;
   Function(Map<String, dynamic>)? onJobStatusUpdate;
@@ -22,6 +28,7 @@ class WebSocketService {
 
   Future<void> connect() async {
     final token = await _ref.read(secureStorageProvider).getAccessToken();
+    if (token == null) return;
 
     _client = StompClient(
       config: StompConfig(
@@ -30,11 +37,18 @@ class WebSocketService {
         webSocketConnectHeaders: {'Authorization': 'Bearer $token'},
         onConnect: (frame) {
           _isConnected = true;
-          print('WebSocket connected');
-          _subscribeToUserQueue();
+          _reconnectAttempts = 0;
+          _resubscribeAll();
         },
         onWebSocketError: (error) {
-          print('WebSocket error: $error');
+          _isConnected = false;
+          _scheduleReconnect();
+        },
+        onStompError: (frame) {
+          _isConnected = false;
+          _scheduleReconnect();
+        },
+        onDisconnect: (frame) {
           _isConnected = false;
         },
       ),
@@ -43,36 +57,74 @@ class WebSocketService {
     _client?.activate();
   }
 
+  void _scheduleReconnect() {
+    if (_reconnectAttempts >= _maxReconnectAttempts) return;
+    _reconnectTimer?.cancel();
+    final delay = Duration(seconds: _getBackoffDelay());
+    _reconnectTimer = Timer(delay, () {
+      _reconnectAttempts++;
+      connect();
+    });
+  }
+
+  int _getBackoffDelay() {
+    // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+    return (1 << _reconnectAttempts).clamp(1, 16);
+  }
+
+  void _resubscribeAll() {
+    for (final destination in _subscriptions) {
+      _performSubscribe(destination);
+    }
+  }
+
+  void _performSubscribe(String destination) {
+    _client?.subscribe(
+      destination: destination,
+      callback: (frame) {
+        _handleFrame(destination, frame);
+      },
+    );
+  }
+
+  void _handleFrame(String destination, StompFrame frame) {
+    try {
+      final data = jsonDecode(frame.body ?? '{}');
+
+      if (destination.startsWith('/queue/customer/')) {
+        _handleIncomingMessage(data);
+      } else if (destination.startsWith('/queue/provider/')) {
+        if (data['type'] == 'NEW_JOB_REQUEST') {
+          onIncomingJob?.call(data['job']);
+        } else if (data['type'] == 'JOB_UPDATE') {
+          onJobStatusUpdate?.call(data['job']);
+        }
+      } else if (destination.startsWith('/topic/chat/')) {
+        final jobId = destination.split('/').last;
+        _ref.read(chatProvider(jobId).notifier).addMessage(data);
+      }
+    } catch (e) {
+      error_handler.ErrorHandler.logError('WebSocket frame error', e);
+    }
+  }
+
   void _subscribeToUserQueue() {
     final userId = _ref.read(secureStorageProvider).getUserId();
-    if (_client != null) {
-      _client!.subscribe(
-        destination: '/queue/customer/$userId',
-        callback: (frame) {
-          _handleIncomingMessage(frame);
-        },
-      );
+    if (userId == null) return;
+    final destination = '/queue/customer/$userId';
+    _subscriptions.add(destination);
+    if (_isConnected) {
+      _performSubscribe(destination);
     }
   }
 
   void subscribeToProviderJobs() {
     final providerId = _ref.read(secureStorageProvider).getUserId();
-    if (_client != null) {
-      _client!.subscribe(
-        destination: '/queue/provider/$providerId',
-        callback: (frame) {
-          try {
-            final data = jsonDecode(frame.body ?? '{}');
-            if (data['type'] == 'NEW_JOB_REQUEST') {
-              onIncomingJob?.call(data['job']);
-            } else if (data['type'] == 'JOB_UPDATE') {
-              onJobStatusUpdate?.call(data['job']);
-            }
-          } catch (e) {
-            print('Error handling provider WebSocket message: $e');
-          }
-        },
-      );
+    if (providerId == null) return;
+    final destination = '/queue/provider/$providerId';
+    _subscriptions.add(destination);
+    if (_isConnected) {
+      _performSubscribe(destination);
     }
   }
 
@@ -86,11 +138,9 @@ class WebSocketService {
     );
   }
 
-  void _handleIncomingMessage(StompFrame frame) {
+  void _handleIncomingMessage(Map<String, dynamic> data) {
     try {
-      final data = jsonDecode(frame.body ?? '{}');
       final type = data['type'];
-
       switch (type) {
         case 'JOB_MATCHED':
           _ref.read(jobProvider.notifier).updateJobStatus(data['job']);
@@ -103,18 +153,21 @@ class WebSocketService {
           break;
       }
     } catch (e) {
-      print('Error handling WebSocket message: $e');
+      error_handler.ErrorHandler.logError('Message handling error', e);
     }
   }
 
   void subscribeToChat(String jobId) {
-    _client?.subscribe(
-      destination: '/topic/chat/$jobId',
-      callback: (frame) {
-        final message = jsonDecode(frame.body ?? '{}');
-        _ref.read(chatProvider(jobId).notifier).addMessage(message);
-      },
-    );
+    final destination = '/topic/chat/$jobId';
+    _subscriptions.add(destination);
+    if (_isConnected) {
+      _performSubscribe(destination);
+    }
+  }
+
+  void unsubscribeFromChat(String jobId) {
+    final destination = '/topic/chat/$jobId';
+    _subscriptions.remove(destination);
   }
 
   void sendMessage(String jobId, String message) {
@@ -128,6 +181,9 @@ class WebSocketService {
   }
 
   Future<void> disconnect() async {
+    _reconnectTimer?.cancel();
+    _subscriptions.clear();
+    _reconnectAttempts = 0;
     _client?.deactivate();
     _isConnected = false;
   }

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
+import '../../../core/utils/error_handler.dart';
 
 final paymentProvider = NotifierProvider<PaymentNotifier, PaymentState>(
   PaymentNotifier.new,
@@ -8,15 +10,22 @@ final paymentProvider = NotifierProvider<PaymentNotifier, PaymentState>(
 
 class PaymentNotifier extends Notifier<PaymentState> {
   late final ApiClient _apiClient;
+  Timer? _pollTimer;
+  int _pollAttempts = 0;
+  bool _disposed = false;
 
   @override
   PaymentState build() {
+    ref.onDispose(() {
+      _disposed = true;
+      _pollTimer?.cancel();
+    });
     _apiClient = ref.watch(apiClientProvider);
     return PaymentState.initial();
   }
 
   Future<void> initiateMpesaPayment(String jobId) async {
-    state = state.copyWith(isProcessing: true);
+    state = state.copyWith(isProcessing: true, error: null);
 
     try {
       final response = await _apiClient.post(
@@ -31,31 +40,45 @@ class PaymentNotifier extends Notifier<PaymentState> {
           status: 'pending_verification',
         );
 
-        // Start polling for payment status
-        _pollPaymentStatus(response.data['checkoutRequestId']);
+        _startPolling(response.data['checkoutRequestId']);
       }
     } catch (e) {
+      ErrorHandler.logError('Payment initiation failed', e);
       state = state.copyWith(
         isProcessing: false,
-        error: 'Failed to initiate payment',
+        error: 'Failed to initiate payment. Please try again.',
       );
     }
   }
 
-  Future<void> _pollPaymentStatus(String checkoutRequestId) async {
-    // Poll every 3 seconds for up to 60 seconds
-    int attempts = 0;
-    const maxAttempts = 20;
+  void _startPolling(String checkoutRequestId) {
+    _pollTimer?.cancel();
+    _pollAttempts = 0;
+    _pollNext(checkoutRequestId);
+  }
 
-    Future.delayed(const Duration(seconds: 3), () async {
-      attempts++;
+  void _pollNext(String checkoutRequestId) {
+    if (_disposed) return;
+    const maxAttempts = 20;
+    if (_pollAttempts >= maxAttempts) {
+      state = state.copyWith(
+        status: 'failed',
+        isProcessing: false,
+        error: 'Payment verification timed out. Please check your M-PESA.',
+      );
+      return;
+    }
+
+    _pollTimer = Timer(const Duration(seconds: 3), () async {
+      if (_disposed) return;
+      _pollAttempts++;
 
       try {
         final response = await _apiClient.get(
           '${Endpoints.checkPaymentStatus}/$checkoutRequestId',
         );
 
-        if (response.statusCode == 200) {
+        if (response.statusCode == 200 && !_disposed) {
           final status = response.data['status'];
 
           if (status == 'completed') {
@@ -64,33 +87,24 @@ class PaymentNotifier extends Notifier<PaymentState> {
               isProcessing: false,
               transactionId: response.data['transactionId'],
             );
-          } else if (status == 'failed') {
-            state = state.copyWith(
-              status: 'failed',
-              isProcessing: false,
-              error: response.data['message'] ?? 'Payment failed',
-            );
-          } else if (attempts < maxAttempts) {
-            // Still pending, poll again
-            _pollPaymentStatus(checkoutRequestId);
-          } else {
-            // Timeout
-            state = state.copyWith(
-              status: 'failed',
-              isProcessing: false,
-              error: 'Payment verification timeout',
-            );
+            return;
           }
+
+          if (status == 'failed') {
+            state = state.copyWith(
+              status: 'failed',
+              isProcessing: false,
+              error: response.data['message'] ?? 'Payment failed.',
+            );
+            return;
+          }
+
+          _pollNext(checkoutRequestId);
         }
       } catch (e) {
-        if (attempts >= maxAttempts) {
-          state = state.copyWith(
-            status: 'failed',
-            isProcessing: false,
-            error: 'Payment verification failed',
-          );
-        } else {
-          _pollPaymentStatus(checkoutRequestId);
+        ErrorHandler.logError('Payment poll error', e);
+        if (!_disposed) {
+          _pollNext(checkoutRequestId);
         }
       }
     });
@@ -98,10 +112,13 @@ class PaymentNotifier extends Notifier<PaymentState> {
 
   Future<void> checkPaymentStatus() async {
     if (state.checkoutRequestId == null) return;
-    await _pollPaymentStatus(state.checkoutRequestId!);
+    _pollAttempts = 0;
+    _pollNext(state.checkoutRequestId!);
   }
 
   void reset() {
+    _pollTimer?.cancel();
+    _pollAttempts = 0;
     state = PaymentState.initial();
   }
 }

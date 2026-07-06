@@ -1,6 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../config/env.dart';
 
 class ErrorHandler {
+  static void logError(String message, [dynamic error, StackTrace? stack]) {
+    if (Env.isDevelopment || kDebugMode) {
+      debugPrint('❌ $message');
+      if (error != null) debugPrint('   Error: $error');
+      if (stack != null) debugPrint('   Stack: $stack');
+    }
+  }
+
+  static void logInfo(String message) {
+    if (Env.isDevelopment || kDebugMode) {
+      debugPrint('ℹ️ $message');
+    }
+  }
   // Show error dialog
   static Future<void> showErrorDialog(
     BuildContext context,

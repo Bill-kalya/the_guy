@@ -1,16 +1,19 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError('Must be overridden in main.dart');
+});
+
 final sharedPrefsProvider = Provider<SharedPrefs>((ref) {
-  return SharedPrefs();
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return SharedPrefs(prefs);
 });
 
 class SharedPrefs {
-  late SharedPreferences _prefs;
+  final SharedPreferences _prefs;
 
-  Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
-  }
+  SharedPrefs(this._prefs);
 
   Future<void> setFirstLaunch(bool value) async {
     await _prefs.setBool('is_first_launch', value);

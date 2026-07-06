@@ -5,14 +5,18 @@ class AuthState {
   final UserModel? user;
   final bool isAuthenticated;
   final String? error;
-  final String? pendingPhoneNumber;
+  final String? pendingEmail;
+  final bool emailVerified;
+  final String? verificationToken;
 
   const AuthState({
     this.isLoading = false,
     this.user,
     this.isAuthenticated = false,
     this.error,
-    this.pendingPhoneNumber,
+    this.pendingEmail,
+    this.emailVerified = false,
+    this.verificationToken,
   });
 
   factory AuthState.initial() => const AuthState();
@@ -24,8 +28,11 @@ class AuthState {
 
   factory AuthState.unauthenticated() => const AuthState();
 
-  factory AuthState.otpSent(String phoneNumber) =>
-      AuthState(pendingPhoneNumber: phoneNumber);
+  factory AuthState.emailVerificationPending(String email) =>
+      AuthState(pendingEmail: email);
+
+  factory AuthState.verified(String email) =>
+      AuthState(pendingEmail: email, emailVerified: true);
 
   factory AuthState.error(String message) => AuthState(error: message);
 
@@ -34,14 +41,18 @@ class AuthState {
     UserModel? user,
     bool? isAuthenticated,
     String? error,
-    String? pendingPhoneNumber,
+    String? pendingEmail,
+    bool? emailVerified,
+    String? verificationToken,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       user: user ?? this.user,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       error: error ?? this.error,
-      pendingPhoneNumber: pendingPhoneNumber ?? this.pendingPhoneNumber,
+      pendingEmail: pendingEmail ?? this.pendingEmail,
+      emailVerified: emailVerified ?? this.emailVerified,
+      verificationToken: verificationToken ?? this.verificationToken,
     );
   }
 }
