@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import '../providers/job_provider.dart';
 import '../models/job_state.dart';
+import '../../../shared/widgets/service_quality_score.dart';
 
 class MatchingScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -120,17 +121,21 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${provider['rating']} (${provider['reviews']} reviews)',
-                      ),
-                    ],
-                  ),
+                   const SizedBox(height: 8),
+                   Row(
+                     mainAxisAlignment: MainAxisAlignment.center,
+                     children: [
+                       ServiceQualityScore(
+                         score: (provider['serviceQualityScore'] ?? provider['rating'] * 20).toDouble(),
+                         size: 40,
+                         showLabel: false,
+                       ),
+                       const SizedBox(width: 12),
+                       Text(
+                         '${provider['reviews']} reviews',
+                       ),
+                     ],
+                   ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../shared/widgets/service_quality_score.dart';
 
 class NearbyProvidersList extends StatelessWidget {
   final Position? position;
@@ -31,6 +32,9 @@ class NearbyProvidersList extends StatelessWidget {
   }
 
   Widget _buildProviderCard(int index) {
+    // Mock SQS score (in real app, this comes from provider data)
+    final sqsScore = 85.0 + (index * 2);
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
@@ -38,11 +42,15 @@ class NearbyProvidersList extends StatelessWidget {
         title: const Text('John Doe'),
         subtitle: Row(
           children: [
-            const Icon(Icons.star, size: 16, color: Colors.amber),
-            const SizedBox(width: 4),
-            const Text('4.8'),
-            const SizedBox(width: 8),
-            const Icon(Icons.location_on, size: 16),
+            // Service Quality Score
+            ServiceQualityScore(
+              score: sqsScore,
+              size: 40,
+              showLabel: false,
+            ),
+            const SizedBox(width: 12),
+            // Distance
+            const Icon(Icons.location_on, size: 16, color: Colors.grey),
             const SizedBox(width: 4),
             Text('${(index + 1) * 0.5} km away'),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/availability_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../shared/widgets/service_quality_score.dart';
 
 class ProviderProfileScreen extends ConsumerStatefulWidget {
   const ProviderProfileScreen({super.key});
@@ -54,12 +55,14 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.star, color: Colors.amber, size: 16),
-            const SizedBox(width: 4),
-            const Text('4.8'),
-            const SizedBox(width: 8),
+            ServiceQualityScore(
+              score: 94.0,
+              size: 50,
+              showLabel: false,
+            ),
+            const SizedBox(width: 12),
             const Text('•'),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             const Text('128 reviews'),
           ],
         ),
@@ -83,9 +86,23 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Statistics',
+              'Service Quality Score Breakdown',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 16),
+            const ScoreBreakdownList(
+              scores: {
+                'professionalism': 98.0,
+                'communication': 95.0,
+                'timeliness': 82.0,
+                'workQuality': 96.0,
+                'reliability': 94.0,
+                'courtesy': 99.0,
+                'value': 90.0,
+              },
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
             const SizedBox(height: 12),
             Row(
               children: [

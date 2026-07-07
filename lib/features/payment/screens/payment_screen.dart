@@ -22,19 +22,24 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       appBar: AppBar(title: const Text('Payment')),
       body: paymentState.isProcessing
           ? const LoadingWidget(message: 'Processing payment...')
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPaymentSummary(paymentState.amount),
-                  const SizedBox(height: 24),
-                  _buildMpesaSection(),
-                  const SizedBox(height: 24),
-                  _buildPaymentButton(paymentNotifier),
-                  if (paymentState.status == 'pending_verification')
-                    _buildPendingVerification(),
-                ],
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPaymentSummary(paymentState.amount),
+                      const SizedBox(height: 24),
+                      _buildMpesaSection(),
+                      const SizedBox(height: 24),
+                      _buildPaymentButton(paymentNotifier),
+                      if (paymentState.status == 'pending_verification')
+                        _buildPendingVerification(),
+                    ],
+                  ),
+                ),
               ),
             ),
     );
@@ -126,13 +131,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Widget _buildPaymentButton(PaymentNotifier notifier) {
-    return ElevatedButton(
-      onPressed: () => notifier.initiateMpesaPayment(widget.jobId),
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 50),
-        backgroundColor: Colors.green,
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () => notifier.initiateMpesaPayment(widget.jobId),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 50),
+          backgroundColor: Colors.green,
+        ),
+        child: const Text('Pay with M-PESA', style: TextStyle(fontSize: 16)),
       ),
-      child: const Text('Pay with M-PESA', style: TextStyle(fontSize: 16)),
     );
   }
 

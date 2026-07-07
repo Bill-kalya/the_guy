@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/profile_tile.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
-import '../../../shared/widgets/rating_stars.dart';
+import '../../../shared/widgets/service_quality_score.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -94,8 +94,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Text(user.phone, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 8),
           if (user.rating > 0) ...[
-            RatingStars(rating: user.rating),
-            const SizedBox(height: 4),
+            ServiceQualityScore(
+              score: user.rating * 20, // Convert 5-star to 100-point scale
+              size: 50,
+              showLabel: false,
+            ),
+            const SizedBox(width: 12),
             Text(
               '${user.reviewsCount} reviews',
               style: const TextStyle(fontSize: 12, color: Colors.grey),

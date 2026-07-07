@@ -5,6 +5,7 @@ import '../widgets/map_widget.dart';
 import '../widgets/nearby_providers_list.dart';
 import '../providers/location_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../shared/widgets/service_quality_score.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -107,52 +108,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Guest authentication banner
+          if (!isAuthenticated) _buildGuestAuthBanner(),
           // Hero section with search
           _buildHeroSection(),
+          // Stats section
+          _buildStatsSection(),
+          // Urgent help banner
+          _buildUrgentHelpBanner(),
           // Categories
           _buildCategoriesSection(),
           // How It Works
           _buildHowItWorksSection(),
           // Featured Providers
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'Featured Service Providers',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Text(
+                      'Featured Service Providers',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      itemCount: 5,
+                      itemBuilder: (context, index) => _buildFeaturedProviderCard(index, isAuthenticated),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(
-                height: 200,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: 5,
-                  itemBuilder: (context, index) => _buildFeaturedProviderCard(index, isAuthenticated),
-                ),
-              ),
-            ],
-          ),
-          // Nearby providers
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              'Nearby Providers',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
-          SizedBox(
-            height: 120,
-            child: MapWidget(position: locationState.currentPosition),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: SizedBox(
-              height: 180,
-              child: NearbyProvidersList(
-                position: locationState.currentPosition,
+          // Nearby providers
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Text(
+                      'Nearby Providers',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 120,
+                    child: MapWidget(position: locationState.currentPosition),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: SizedBox(
+                      height: 180,
+                      child: NearbyProvidersList(
+                        position: locationState.currentPosition,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -169,57 +191,178 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildHeroSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade700, Colors.blue.shade500],
+          colors: [
+            Colors.blue.shade800,
+            Colors.blue.shade600,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          const Text(
-            'The Guy',
-            style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final titleSize = constraints.maxWidth < 600 ? 32.0 : 48.0;
+                    return Text(
+                      'The Guy',
+                      style: TextStyle(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  'Connect with verified professionals for home, business, and personal services anywhere in Kenya.',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white70,
+                    height: 1.4,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                Text(
+                  'Fast • Trusted • Nearby',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search for plumbing, cleaning, tutoring...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildSearchChip('Plumbing'),
+                    _buildSearchChip('Electrician'),
+                    _buildSearchChip('Cleaning'),
+                    _buildSearchChip('Tutoring'),
+                  ],
+                ),
+
+                const SizedBox(height: 28),
+
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 600;
+
+                    if (isMobile) {
+                      return Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: _getGuyButton(),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: _becomeProviderButton(),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: _getGuyButton()),
+                        const SizedBox(width: 12),
+                        Expanded(child: _becomeProviderButton()),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Any service. Any time. Right at your doorstep.',
-            style: TextStyle(fontSize: 16, color: Colors.white70),
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Search for a service...',
-              hintStyle: TextStyle(color: Colors.grey.shade400),
-              prefixIcon: const Icon(Icons.search, color: Colors.grey),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            children: [
-              _buildSearchChip('Plumbing'),
-              _buildSearchChip('Electrician'),
-              _buildSearchChip('Cleaning'),
-              _buildSearchChip('Tutoring'),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _getGuyButton() {
+    return ElevatedButton.icon(
+      onPressed: () {
+        _requireAuthThen(context, () {
+          context.push('/request-service');
+        });
+      },
+      icon: const Icon(Icons.person_search),
+      label: const Text('Get a Guy'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.blue.shade700,
+        elevation: 3,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+    );
+  }
+
+  Widget _becomeProviderButton() {
+    return OutlinedButton.icon(
+      onPressed: () {
+        _requireAuthThen(context, () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Opening provider registration...')),
+          );
+        });
+      },
+      icon: const Icon(Icons.work_outline),
+      label: const Text('Become Provider'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: const BorderSide(color: Colors.white),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
       ),
     );
   }
@@ -227,7 +370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildSearchChip(String label) {
     return ActionChip(
       label: Text(label, style: const TextStyle(color: Colors.white)),
-      backgroundColor: Colors.white.withOpacity(0.2),
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
       onPressed: () {},
     );
   }
@@ -244,54 +387,94 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       {'icon': Icons.health_and_safety, 'name': 'Health'},
     ];
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Browse by Category',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Browse by Category',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  int crossAxisCount = 4;
+
+                  if (constraints.maxWidth > 1200) {
+                    crossAxisCount = 6;
+                  } else if (constraints.maxWidth > 800) {
+                    crossAxisCount = 5;
+                  } else if (constraints.maxWidth > 600) {
+                    crossAxisCount = 4;
+                  } else {
+                    crossAxisCount = 3;
+                  }
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      return InkWell(
+                        onTap: () {},
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withValues(alpha: 0.15),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  categories[index]['icon'] as IconData,
+                                  color: Colors.blue.shade700,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                categories[index]['name'] as String,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              return InkWell(
-                onTap: () {},
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(categories[index]['icon'] as IconData,
-                          size: 32, color: Colors.blue.shade600),
-                      const SizedBox(height: 8),
-                      Text(
-                        categories[index]['name'] as String,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -304,72 +487,98 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       {'step': '4', 'title': 'Done', 'desc': 'Service completed at your doorstep', 'icon': Icons.check_circle},
     ];
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'How It Works',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(16),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: steps.map((step) {
-              return Expanded(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade600,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          step['step']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'How It Works',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  int crossAxisCount = 4;
+                  
+                  if (constraints.maxWidth < 600) {
+                    crossAxisCount = 2;
+                  } else if (constraints.maxWidth < 800) {
+                    crossAxisCount = 4;
+                  }
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.2,
+                    ),
+                    itemCount: steps.length,
+                    itemBuilder: (context, index) {
+                      final step = steps[index];
+                      return Column(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade600,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                step['step']!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      step['title']!,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      step['desc']!,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+                          const SizedBox(height: 8),
+                          Text(
+                            step['title']!,
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            step['desc']!,
+                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildFeaturedProviderCard(int index, bool isAuthenticated) {
     final List<Map<String, dynamic>> providers = [
-      {'name': 'John M.', 'profession': 'Plumber', 'rating': '4.9', 'price': 'KSH 1,500/hr'},
-      {'name': 'Sarah K.', 'profession': 'Electrician', 'rating': '4.8', 'price': 'KSH 2,000/hr'},
-      {'name': 'Peter O.', 'profession': 'Cleaner', 'rating': '4.7', 'price': 'KSH 800/hr'},
-      {'name': 'Grace W.', 'profession': 'Tutor', 'rating': '4.9', 'price': 'KSH 1,200/hr'},
-      {'name': 'James N.', 'profession': 'Handyman', 'rating': '4.6', 'price': 'KSH 1,000/hr'},
+      {'name': 'John M.', 'profession': 'Plumber', 'sqs': 96.0, 'price': 'KSH 1,500/hr'},
+      {'name': 'Sarah K.', 'profession': 'Electrician', 'sqs': 94.0, 'price': 'KSH 2,000/hr'},
+      {'name': 'Peter O.', 'profession': 'Cleaner', 'sqs': 91.0, 'price': 'KSH 800/hr'},
+      {'name': 'Grace W.', 'profession': 'Tutor', 'sqs': 97.0, 'price': 'KSH 1,200/hr'},
+      {'name': 'James N.', 'profession': 'Handyman', 'sqs': 89.0, 'price': 'KSH 1,000/hr'},
     ];
 
     final provider = providers[index];
@@ -419,9 +628,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const Spacer(),
               Row(
                 children: [
-                  const Icon(Icons.star, size: 16, color: Colors.amber),
-                  const SizedBox(width: 4),
-                  Text(provider['rating']!),
+                  ServiceQualityScore(
+                    score: (provider['sqs'] as double),
+                    size: 30,
+                    showLabel: false,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${provider['sqs']!.round()}%',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -462,45 +681,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildTestimonialsSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'What Our Users Say',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'What Our Users Say',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 120,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildTestimonialCard(
+                      98.0,
+                      '"Fixed my leaking pipes in 30 mins. Amazing service!"',
+                      '- James K.',
+                    ),
+                    _buildTestimonialCard(
+                      96.0,
+                      '"Found a great tutor for my kids. Very professional."',
+                      '- Mary W.',
+                    ),
+                    _buildTestimonialCard(
+                      92.0,
+                      '"Electrician arrived on time and did excellent work."',
+                      '- David O.',
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 120,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildTestimonialCard(
-                  '⭐️⭐️⭐️⭐️⭐️',
-                  '"Fixed my leaking pipes in 30 mins. Amazing service!"',
-                  '- James K.',
-                ),
-                _buildTestimonialCard(
-                  '⭐️⭐️⭐️⭐️⭐️',
-                  '"Found a great tutor for my kids. Very professional."',
-                  '- Mary W.',
-                ),
-                _buildTestimonialCard(
-                  '⭐️⭐️⭐️⭐️',
-                  '"Electrician arrived on time and did excellent work."',
-                  '- David O.',
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildTestimonialCard(String stars, String text, String author) {
+  Widget _buildTestimonialCard(double sqs, String text, String author) {
     return Container(
       width: 260,
       margin: const EdgeInsets.only(right: 12),
@@ -513,7 +737,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(stars),
+          Row(
+            children: [
+              ServiceQualityScore(
+                score: sqs,
+                size: 30,
+                showLabel: false,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${sqs.round()}%',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Expanded(
             child: Text(
@@ -530,52 +770,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildBecomeProviderSection(bool isAuthenticated) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.green.shade600, Colors.green.shade400],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.green.shade600, Colors.green.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Become a Provider',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Earn money on your own schedule. Join thousands of providers on The Guy.',
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  _requireAuthThen(context, () {
+                    // Navigate to provider registration
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Opening provider registration...')),
+                    );
+                  });
+                },
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text('Get Started'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.green.shade700,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
+          ),
         ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Become a Provider',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Earn money on your own schedule. Join thousands of providers on The Guy.',
-            style: TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () {
-              _requireAuthThen(context, () {
-                // Navigate to provider registration
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Opening provider registration...')),
-                );
-              });
-            },
-            icon: const Icon(Icons.arrow_forward),
-            label: const Text('Get Started'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.green.shade700,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -618,6 +863,171 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildGuestAuthBanner() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Sign in to request services, track jobs and hire trusted professionals.',
+                  style: TextStyle(
+                    color: Colors.grey.shade800,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => context.push('/login'),
+                child: const Text('Get a Guy'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsSection() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 600) {
+                return Column(
+                  children: [
+                    _buildStatItem('500+', 'Providers'),
+                    const SizedBox(height: 16),
+                    _buildStatItem('10K+', 'Jobs Done'),
+                    const SizedBox(height: 16),
+                    _buildStatItem('95%', 'SQS'),
+                  ],
+                );
+              }
+              
+              return const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      Text(
+                        '500+',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text('Providers'),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text(
+                        '10K+',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text('Jobs Done'),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text(
+                        '95%',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text('SQS'),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(label),
+      ],
+    );
+  }
+
+  Widget _buildUrgentHelpBanner() {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.amber.shade200,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.flash_on,
+                color: Colors.amber.shade700,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Need help urgently? Get matched with nearby professionals instantly.',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
@@ -626,10 +1036,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _currentIndex = index;
         });
       },
+      selectedItemColor: Colors.blue.shade700,
+      unselectedItemColor: Colors.grey,
+      elevation: 10,
+      type: BottomNavigationBarType.fixed,
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Jobs'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_rounded),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.history_rounded),
+          label: 'Jobs',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_rounded),
+          label: 'Profile',
+        ),
       ],
     );
   }

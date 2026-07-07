@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
-import '../../providers/availability_provider.dart';
 
 class ProviderHomeScreen extends ConsumerStatefulWidget {
   const ProviderHomeScreen({super.key});
@@ -16,7 +15,6 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final jobState = ref.watch(providerJobProvider);
-    final availabilityState = ref.watch(availabilityProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -33,24 +31,30 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
       body: Stack(
         children: [
           // Main content
-          Column(
-            children: [
-              // Availability toggle
-              AvailabilityToggleWidget(),
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                // Availability toggle
+                const AvailabilityToggleWidget(),
 
-              // Stats cards
-              _buildStatsCards(),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                // Stats cards
+                _buildStatsCards(),
 
-              // Active job section
-              _buildActiveJobSection(jobState),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                // Active job section
+                _buildActiveJobSection(jobState),
 
-              // Today's earnings preview
-              _buildEarningsPreview(),
-            ],
+                const SizedBox(height: 16),
+
+                // Today's earnings preview
+                _buildEarningsPreview(),
+
+                const SizedBox(height: 80),
+              ],
+            ),
           ),
 
           // Incoming job popup
@@ -80,145 +84,107 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
   }
 
   Widget _buildStatsCards() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 600) {
+                return Column(
                   children: [
-                    const Icon(Icons.attach_money, color: Colors.green),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Today\'s Earnings',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    _buildStatCard(
+                      icon: Icons.attach_money,
+                      color: Colors.green,
+                      label: 'Today\'s Earnings',
+                      value: 'KES 0.00',
                     ),
-                    Text(
-                      'KES 0.00',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.work,
+                            color: Colors.blue,
+                            label: 'Today\'s Jobs',
+                            value: '0',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard(
+                            icon: Icons.star,
+                            color: Colors.amber,
+                            label: 'Rating',
+                            value: '5.0',
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ),
-            ),
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      icon: Icons.attach_money,
+                      color: Colors.green,
+                      label: 'Today\'s Earnings',
+                      value: 'KES 0.00',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatCard(
+                      icon: Icons.work,
+                      color: Colors.blue,
+                      label: 'Today\'s Jobs',
+                      value: '0',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatCard(
+                      icon: Icons.star,
+                      color: Colors.amber,
+                      label: 'Rating',
+                      value: '5.0',
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    const Icon(Icons.work, color: Colors.blue),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Today\'s Jobs',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    Text(
-                      '0',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Rating',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    Text(
-                      '5.0',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildActiveJobSection(ProviderJobState jobState) {
-    if (jobState.activeJob == null) {
-      return Card(
-        margin: const EdgeInsets.all(16),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Icon(Icons.work_off, size: 48, color: Colors.grey.shade400),
-              const SizedBox(height: 12),
-              const Text(
-                'No active job',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'You\'ll see incoming job requests here',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
+  Widget _buildStatCard({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String value,
+  }) {
     return Card(
-      margin: const EdgeInsets.all(16),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
-              children: [
-                Icon(Icons.work, color: Colors.green),
-                SizedBox(width: 8),
-                Text(
-                  'Active Job',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
+            Icon(icon, color: color),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            const SizedBox(height: 12),
-            Text('Service: ${jobState.activeJob!.category}'),
-            const SizedBox(height: 4),
-            Text('Customer: ${jobState.activeJob!.customerName}'),
-            const SizedBox(height: 4),
-            Text('Status: ${jobState.activeJob!.status}'),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/provider/active-job');
-                },
-                child: const Text('View Job Details'),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -227,17 +193,83 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
+  Widget _buildActiveJobSection(ProviderJobState jobState) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: jobState.activeJob == null
+                ? Column(
+                    children: [
+                      Icon(Icons.work_off, size: 48, color: Colors.grey.shade400),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'No active job',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'You\'ll see incoming job requests here',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.work, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text(
+                            'Active Job',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text('Service: ${jobState.activeJob!.category}'),
+                      const SizedBox(height: 4),
+                      Text('Customer: ${jobState.activeJob!.customerName}'),
+                      const SizedBox(height: 4),
+                      Text('Status: ${jobState.activeJob!.status}'),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/provider/active-job');
+                          },
+                          child: const Text('View Job Details'),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEarningsPreview() {
-    return Card(
-      margin: const EdgeInsets.all(16),
-      child: ListTile(
-        leading: const Icon(Icons.attach_money, color: Colors.green),
-        title: const Text('View Earnings'),
-        subtitle: const Text('Check your earnings history and statistics'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          Navigator.pushNamed(context, '/provider/earnings');
-        },
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: ListTile(
+            leading: const Icon(Icons.attach_money, color: Colors.green),
+            title: const Text('View Earnings'),
+            subtitle: const Text('Check your earnings history and statistics'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.pushNamed(context, '/provider/earnings');
+            },
+          ),
+        ),
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/job_provider.dart';
 import '../models/job_state.dart';
-import '../../../shared/widgets/rating_stars.dart';
+import '../../../shared/widgets/service_quality_score.dart';
 
 class ActiveJobScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -132,9 +132,13 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  RatingStars(rating: provider['rating']),
-                  const SizedBox(height: 4),
+                   const SizedBox(height: 4),
+                   ServiceQualityScore(
+                     score: (provider['serviceQualityScore'] ?? provider['rating'] * 20).toDouble(),
+                     size: 40,
+                     showLabel: false,
+                   ),
+                   const SizedBox(height: 4),
                   Row(
                     children: [
                       const Icon(Icons.directions_car, size: 16),

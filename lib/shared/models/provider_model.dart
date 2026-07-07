@@ -16,6 +16,8 @@ class ProviderModel {
   final String? businessName;
   final String? idNumber;
   final bool isVerified;
+  final double? serviceQualityScore;
+  final Map<String, double>? scoreBreakdown;
 
   ProviderModel({
     required this.id,
@@ -35,6 +37,8 @@ class ProviderModel {
     this.businessName,
     this.idNumber,
     this.isVerified = false,
+    this.serviceQualityScore,
+    this.scoreBreakdown,
   });
 
   factory ProviderModel.fromJson(Map<String, dynamic> json) {
@@ -56,6 +60,10 @@ class ProviderModel {
       businessName: json['businessName'],
       idNumber: json['idNumber'],
       isVerified: json['isVerified'] ?? false,
+      serviceQualityScore: (json['serviceQualityScore'] ?? 0.0).toDouble(),
+      scoreBreakdown: json['scoreBreakdown'] != null
+          ? Map<String, double>.from(json['scoreBreakdown'])
+          : null,
     );
   }
 
@@ -78,6 +86,8 @@ class ProviderModel {
       'businessName': businessName,
       'idNumber': idNumber,
       'isVerified': isVerified,
+      'serviceQualityScore': serviceQualityScore,
+      'scoreBreakdown': scoreBreakdown,
     };
   }
 
@@ -99,6 +109,8 @@ class ProviderModel {
     String? businessName,
     String? idNumber,
     bool? isVerified,
+    double? serviceQualityScore,
+    Map<String, double>? scoreBreakdown,
   }) {
     return ProviderModel(
       id: id ?? this.id,
@@ -118,6 +130,8 @@ class ProviderModel {
       businessName: businessName ?? this.businessName,
       idNumber: idNumber ?? this.idNumber,
       isVerified: isVerified ?? this.isVerified,
+      serviceQualityScore: serviceQualityScore ?? this.serviceQualityScore,
+      scoreBreakdown: scoreBreakdown ?? this.scoreBreakdown,
     );
   }
 }
