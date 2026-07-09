@@ -68,7 +68,6 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 4)],
       ),
       child: Row(
         children: List.generate(steps.length, (index) {

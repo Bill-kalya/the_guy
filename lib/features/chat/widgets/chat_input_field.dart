@@ -38,13 +38,6 @@ class _ChatInputFieldState extends State<ChatInputField> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
       ),
       child: Row(
         children: [

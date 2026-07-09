@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/map_widget.dart';
 import '../widgets/nearby_providers_list.dart';
+import '../widgets/animated_provider_card.dart';
 import '../providers/location_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/service_quality_score.dart';
@@ -108,8 +109,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Guest authentication banner
-          if (!isAuthenticated) _buildGuestAuthBanner(),
           // Hero section with search
           _buildHeroSection(),
           // Stats section
@@ -140,7 +139,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       itemCount: 5,
-                      itemBuilder: (context, index) => _buildFeaturedProviderCard(index, isAuthenticated),
+                      itemBuilder: (context, index) =>
+                          AnimatedProviderCard(
+                            index: index,
+                            child: _buildFeaturedProviderCard(
+                              index,
+                              isAuthenticated,
+                            ),
+                          ),
                     ),
                   ),
                 ],
@@ -201,125 +207,107 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           end: Alignment.bottomRight,
         ),
       ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final titleSize = constraints.maxWidth < 600 ? 32.0 : 48.0;
-                    return Text(
-                      'The Guy',
-                      style: TextStyle(
-                        fontSize: titleSize,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 12),
-
-                const Text(
-                  'Connect with verified professionals for home, business, and personal services anywhere in Kenya.',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white70,
-                    height: 1.4,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Text(
-                  'Fast • Trusted • Nearby',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search for plumbing, cleaning, tutoring...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildSearchChip('Plumbing'),
-                    _buildSearchChip('Electrician'),
-                    _buildSearchChip('Cleaning'),
-                    _buildSearchChip('Tutoring'),
-                  ],
-                ),
-
-                const SizedBox(height: 28),
-
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isMobile = constraints.maxWidth < 600;
-
-                    if (isMobile) {
-                      return Column(
-                        children: [
-                          SizedBox(
-                            width: double.infinity,
-                            child: _getGuyButton(),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: _becomeProviderButton(),
-                          ),
-                        ],
-                      );
-                    }
-
-                    return Row(
-                      children: [
-                        Expanded(child: _getGuyButton()),
-                        const SizedBox(width: 12),
-                        Expanded(child: _becomeProviderButton()),
-                      ],
-                    );
-                  },
-                ),
-              ],
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.1,
+              child: Image.asset(
+                'assets/images/noise.png',
+                repeat: ImageRepeat.repeat,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final titleSize = constraints.maxWidth < 600 ? 32.0 : 48.0;
+                        return Text(
+                          'The Guy',
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    const Text(
+                      'Connect with verified professionals for home, business, and personal services anywhere in Kenya.',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white70,
+                        height: 1.4,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+                      'Fast • Trusted • Nearby',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Search for plumbing, cleaning, tutoring...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildSearchChip('Plumbing'),
+                        _buildSearchChip('Electrician'),
+                        _buildSearchChip('Cleaning'),
+                        _buildSearchChip('Tutoring'),
+                      ],
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: _getGuyButton(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -337,28 +325,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.blue.shade700,
         elevation: 3,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      ),
-    );
-  }
-
-  Widget _becomeProviderButton() {
-    return OutlinedButton.icon(
-      onPressed: () {
-        _requireAuthThen(context, () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Opening provider registration...')),
-          );
-        });
-      },
-      icon: const Icon(Icons.work_outline),
-      label: const Text('Become Provider'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: const BorderSide(color: Colors.white),
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
@@ -432,13 +398,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withValues(alpha: 0.15),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -508,7 +467,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               LayoutBuilder(
                 builder: (context, constraints) {
                   int crossAxisCount = 4;
-                  
+
                   if (constraints.maxWidth < 600) {
                     crossAxisCount = 2;
                   } else if (constraints.maxWidth < 800) {
@@ -574,56 +533,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildFeaturedProviderCard(int index, bool isAuthenticated) {
     final List<Map<String, dynamic>> providers = [
-      {'name': 'John M.', 'profession': 'Plumber', 'sqs': 96.0, 'price': 'KSH 1,500/hr'},
-      {'name': 'Sarah K.', 'profession': 'Electrician', 'sqs': 94.0, 'price': 'KSH 2,000/hr'},
-      {'name': 'Peter O.', 'profession': 'Cleaner', 'sqs': 91.0, 'price': 'KSH 800/hr'},
-      {'name': 'Grace W.', 'profession': 'Tutor', 'sqs': 97.0, 'price': 'KSH 1,200/hr'},
-      {'name': 'James N.', 'profession': 'Handyman', 'sqs': 89.0, 'price': 'KSH 1,000/hr'},
+      {'name': 'John M.', 'profession': 'Plumber', 'sqs': 96.0, 'price': 'KSH 1,500/hr', 'image': 'assets/providers/plumber.jpg'},
+      {'name': 'Sarah K.', 'profession': 'Electrician', 'sqs': 94.0, 'price': 'KSH 2,000/hr', 'image': 'assets/providers/electrician.jpg'},
+      {'name': 'Peter O.', 'profession': 'Cleaner', 'sqs': 91.0, 'price': 'KSH 800/hr', 'image': 'assets/providers/cleaner.jpg'},
+      {'name': 'Grace W.', 'profession': 'Tutor', 'sqs': 97.0, 'price': 'KSH 1,200/hr', 'image': 'assets/providers/tutor.jpg'},
+      {'name': 'James N.', 'profession': 'Handyman', 'sqs': 89.0, 'price': 'KSH 1,000/hr', 'image': 'assets/providers/handyman.jpg'},
     ];
 
     final provider = providers[index];
     return Container(
       width: 180,
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.blue.shade100,
-                    child: Text(
-                      provider['name']!.split(' ').first[0],
-                      style: TextStyle(
-                        color: Colors.blue.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          provider['name']!,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          provider['profession']!,
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.95),
+            Colors.white.withValues(alpha: 0.75),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.6),
+        ),
+        borderRadius: BorderRadius.circular(32),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  provider['image'],
+                  height: 90,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                provider['name'],
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                provider['profession'],
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 13,
+                ),
               ),
               const Spacer(),
               Row(
@@ -675,7 +642,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -730,9 +696,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        color: const Color(0xFFE8E5E2),
+        borderRadius: BorderRadius.circular(30),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -784,39 +749,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
-              const Text(
-                'Become a Provider',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.06,
+                  child: Image.asset(
+                    'assets/images/noise.png',
+                    repeat: ImageRepeat.repeat,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Earn money on your own schedule. Join thousands of providers on The Guy.',
-                style: TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  _requireAuthThen(context, () {
-                    // Navigate to provider registration
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Opening provider registration...')),
-                    );
-                  });
-                },
-                icon: const Icon(Icons.arrow_forward),
-                label: const Text('Get Started'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.green.shade700,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Become a Provider',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Earn money on your own schedule. Join thousands of providers on The Guy.',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      _requireAuthThen(context, () {
+                        // Navigate to provider registration
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Opening provider registration...')),
+                        );
+                      });
+                    },
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('Get Started'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.green.shade700,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -863,39 +842,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildGuestAuthBanner() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade100,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Sign in to request services, track jobs and hire trusted professionals.',
-                  style: TextStyle(
-                    color: Colors.grey.shade800,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () => context.push('/login'),
-                child: const Text('Get a Guy'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildStatsSection() {
     return Center(
       child: ConstrainedBox(
@@ -906,12 +852,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-              ),
-            ],
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {

@@ -12,7 +12,8 @@ dependencies:
     sdk: flutter
 
   # UI
-  google_maps_flutter: ^2.5.0
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
   flutter_svg: ^2.0.7
   cached_network_image: ^3.3.0
   flutter_screenutil: ^5.9.0
@@ -61,8 +62,10 @@ flutter:
   uses-material-design: true
   
   assets:
+    - assets/images/noise.png
     - assets/images/
     - assets/icons/
     - assets/animations/
     - assets/sounds/
+    - assets/providers/
 

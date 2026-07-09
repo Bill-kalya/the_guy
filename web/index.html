@@ -31,6 +31,10 @@
 
   <title>the_guy</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Google Fonts preconnect for Roboto -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
 </head>
 <body>
   <!--
@@ -41,6 +45,10 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+    // Use HTML renderer to avoid CanvasKit download from gstatic.com
+    window.flutterWebRenderer = 'html';
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

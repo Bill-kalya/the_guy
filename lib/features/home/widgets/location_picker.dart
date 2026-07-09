@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
@@ -18,22 +19,20 @@ class LocationPicker extends StatefulWidget {
 }
 
 class _LocationPickerState extends State<LocationPicker> {
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
   LatLng? _selectedLocation;
   String _selectedAddress = '';
   bool _isLoading = false;
-  CameraPosition? _currentCameraPosition;
+  LatLng? _currentCenter;
 
-  static const CameraPosition _defaultPosition = CameraPosition(
-    target: LatLng(-1.286389, 36.817223),
-    zoom: 14,
-  );
+  static const LatLng _defaultPosition = LatLng(-1.286389, 36.817223);
 
   @override
   void initState() {
     super.initState();
     if (widget.initialLocation != null) {
       _selectedLocation = widget.initialLocation;
+      _currentCenter = widget.initialLocation;
     }
   }
 
@@ -69,20 +68,26 @@ class _LocationPickerState extends State<LocationPicker> {
   }
 
   Widget _buildMap() {
-    return GoogleMap(
-      initialCameraPosition: _selectedLocation != null
-          ? CameraPosition(target: _selectedLocation!, zoom: 15)
-          : _defaultPosition,
-      onMapCreated: (controller) {
-        _mapController = controller;
-      },
-      onCameraMove: (position) {
-        _currentCameraPosition = position;
-      },
-      onCameraIdle: _onCameraIdle,
-      myLocationEnabled: true,
-      myLocationButtonEnabled: true,
-      zoomControlsEnabled: true,
+    final center = _selectedLocation ?? _defaultPosition;
+
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: center,
+        initialZoom: 15.0,
+        onMapEvent: (event) {
+          if (event is MapEventMoveEnd) {
+            _currentCenter = event.camera.center;
+            _onCameraIdle();
+          }
+        },
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.example.the_guy',
+        ),
+      ],
     );
   }
 
@@ -107,13 +112,6 @@ class _LocationPickerState extends State<LocationPicker> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -159,9 +157,9 @@ class _LocationPickerState extends State<LocationPicker> {
   }
 
   Future<void> _onCameraIdle() async {
-    if (_currentCameraPosition == null) return;
+    if (_currentCenter == null) return;
 
-    final location = _currentCameraPosition!.target;
+    final location = _currentCenter!;
     setState(() {
       _selectedLocation = location;
       _isLoading = true;
@@ -202,17 +200,14 @@ class _LocationPickerState extends State<LocationPicker> {
 
     try {
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
       final location = LatLng(position.latitude, position.longitude);
       _selectedLocation = location;
+      _currentCenter = location;
 
-      await _mapController?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: location, zoom: 15),
-        ),
-      );
+      _mapController.move(location, 15.0);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

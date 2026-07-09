@@ -70,13 +70,6 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

@@ -93,41 +93,55 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
   }
 
   Widget _buildTotalEarningsCard(EarningsModel earnings) {
-    return Card(
-      elevation: 4,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Colors.green, Colors.greenAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Colors.green, Colors.greenAccent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Column(
-          children: [
-            const Text(
-              'Total Earnings',
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'KES ${earnings.totalEarnings.toStringAsFixed(2)}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Stack(
+        children: [
+          Center(
+            child: Opacity(
+              opacity: 0.06,
+              child: Image.asset(
+                'assets/images/noise.png',
+                repeat: ImageRepeat.repeat,
+                fit: BoxFit.none,
+                width: double.infinity,
+                height: double.infinity,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              '${earnings.totalJobsCompleted} jobs completed',
-              style: const TextStyle(color: Colors.white70),
-            ),
-          ],
-        ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Total Earnings',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'KES ${earnings.totalEarnings.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${earnings.totalJobsCompleted} jobs completed',
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -180,7 +194,11 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
     IconData icon,
     Color color,
   ) {
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8E5E2),
+        borderRadius: BorderRadius.circular(30),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
