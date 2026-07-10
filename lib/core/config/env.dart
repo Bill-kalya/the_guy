@@ -2,12 +2,12 @@ class Env {
   // API Configuration
   static const String apiUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://api.theguy.com/api',
+    defaultValue: 'http://localhost:8080/api',
   );
 
   static const String wsUrl = String.fromEnvironment(
     'WS_URL',
-    defaultValue: 'wss://api.theguy.com',
+    defaultValue: 'ws://localhost:8080',
   );
 
   // Google Maps

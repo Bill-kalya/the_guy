@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
@@ -18,6 +19,7 @@ class AnimatedProviderCard extends StatefulWidget {
 class _AnimatedProviderCardState extends State<AnimatedProviderCard>
     with SingleTickerProviderStateMixin {
   late AnimationController controller;
+  Timer? _startTimer;
 
   @override
   void initState() {
@@ -30,14 +32,19 @@ class _AnimatedProviderCardState extends State<AnimatedProviderCard>
       ),
     );
 
-    Future.delayed(
+    _startTimer = Timer(
       Duration(milliseconds: widget.index * 120),
-      () => controller.forward(),
+      () {
+        if (mounted) {
+          controller.forward();
+        }
+      },
     );
   }
 
   @override
   void dispose() {
+    _startTimer?.cancel();
     controller.dispose();
     super.dispose();
   }

@@ -34,6 +34,11 @@ class Endpoints {
   static const String checkPaymentStatus = '/payments/status';
   static const String paymentHistory = '/payments/history';
 
+  // Location Endpoints
+  static const String updateLocation = '/location/update';
+  static const String providerLocation = '/location/provider';
+  static const String nearbyLocations = '/location/nearby';
+
   // Providers Endpoints
   static const String nearbyProviders = '/providers/nearby';
   static const String providerDetails = '/providers';

@@ -3,18 +3,17 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../storage/secure_storage.dart';
-import 'endpoints.dart';
-import '../../features/jobs/providers/job_provider.dart';
-import '../../features/chat/providers/chat_provider.dart';
-import '../../features/home/providers/nearby_providers_provider.dart';
+import '../network/endpoints.dart';
 import '../../shared/models/nearby_provider_model.dart';
-import '../../core/utils/error_handler.dart' as error_handler;
+import '../../features/home/providers/nearby_providers_provider.dart';
 
-final webSocketServiceProvider = Provider<WebSocketService>((ref) {
-  return WebSocketService(ref);
+final locationSocketServiceProvider = Provider<LocationSocketService>((ref) {
+  return LocationSocketService(ref);
 });
 
-class WebSocketService {
+/// WebSocket service specifically for real-time provider location tracking
+/// Uses the existing STOMP connection from WebSocketService
+class LocationSocketService {
   final Ref _ref;
   StompClient? _client;
   bool _isConnected = false;
@@ -23,10 +22,7 @@ class WebSocketService {
   static const int _maxReconnectAttempts = 5;
   Timer? _reconnectTimer;
 
-  Function(Map<String, dynamic>)? onIncomingJob;
-  Function(Map<String, dynamic>)? onJobStatusUpdate;
-
-  WebSocketService(this._ref);
+  LocationSocketService(this._ref);
 
   Future<void> connect() async {
     final token = await _ref.read(secureStorageProvider).getAccessToken();
@@ -70,7 +66,6 @@ class WebSocketService {
   }
 
   int _getBackoffDelay() {
-    // Exponential backoff: 1s, 2s, 4s, 8s, 16s
     return (1 << _reconnectAttempts).clamp(1, 16);
   }
 
@@ -84,54 +79,23 @@ class WebSocketService {
     _client?.subscribe(
       destination: destination,
       callback: (frame) {
-        _handleFrame(destination, frame);
+        _handleLocationFrame(destination, frame);
       },
     );
   }
 
-  void _handleFrame(String destination, StompFrame frame) {
+  void _handleLocationFrame(String destination, StompFrame frame) {
     try {
       final data = jsonDecode(frame.body ?? '{}') as Map<String, dynamic>;
 
-      // Handle location updates from providers
+      // Parse location update
       if (data.containsKey('providerId') && data.containsKey('latitude')) {
         final update = ProviderLocationUpdate.fromJson(data);
         _ref.read(providerLocationsProvider.notifier).updateLocation(update);
-        return;
-      }
-
-      if (destination.startsWith('/queue/customer/')) {
-        _handleIncomingMessage(data);
-      } else if (destination.startsWith('/queue/provider/')) {
-        if (data['type'] == 'NEW_JOB_REQUEST') {
-          onIncomingJob?.call(data['job']);
-        } else if (data['type'] == 'JOB_UPDATE') {
-          onJobStatusUpdate?.call(data['job']);
-        }
-      } else if (destination.startsWith('/topic/chat/')) {
-        final jobId = destination.split('/').last;
-        _ref.read(chatProvider(jobId).notifier).addMessage(data);
-      } else if (destination.startsWith('/topic/provider/')) {
-        // Provider location topic: /topic/provider/{providerId}/location
-        if (data.containsKey('latitude')) {
-          final update = ProviderLocationUpdate.fromJson(data);
-          _ref.read(providerLocationsProvider.notifier).updateLocation(update);
-        }
       }
     } catch (e) {
-      error_handler.ErrorHandler.logError('WebSocket frame error', e);
+      // Silently handle parse errors
     }
-  }
-
-  void subscribeToProviderJobs() {
-    _ref.read(secureStorageProvider).getUserId().then((providerId) {
-      if (providerId == null) return;
-      final destination = '/queue/provider/$providerId';
-      _subscriptions.add(destination);
-      if (_isConnected) {
-        _performSubscribe(destination);
-      }
-    });
   }
 
   /// Subscribe to live location updates for a specific provider
@@ -169,58 +133,6 @@ class WebSocketService {
     _client?.send(
       destination: '/app/location/track/$providerId',
       body: jsonEncode({'action': 'track'}),
-    );
-  }
-
-  void sendProviderStatus(bool isOnline) {
-    _client?.send(
-      destination: '/app/provider/status',
-      body: jsonEncode({
-        'isOnline': isOnline,
-        'timestamp': DateTime.now().toIso8601String(),
-      }),
-    );
-  }
-
-  void _handleIncomingMessage(Map<String, dynamic> data) {
-    try {
-      final type = data['type'];
-      switch (type) {
-        case 'JOB_MATCHED':
-          _ref.read(jobProvider.notifier).updateJobStatus(data['job']);
-          break;
-        case 'PROVIDER_ACCEPTED':
-          _ref.read(jobProvider.notifier).providerAccepted(data['provider']);
-          break;
-        case 'JOB_STATUS_UPDATE':
-          _ref.read(jobProvider.notifier).updateStatus(data['status']);
-          break;
-      }
-    } catch (e) {
-      error_handler.ErrorHandler.logError('Message handling error', e);
-    }
-  }
-
-  void subscribeToChat(String jobId) {
-    final destination = '/topic/chat/$jobId';
-    _subscriptions.add(destination);
-    if (_isConnected) {
-      _performSubscribe(destination);
-    }
-  }
-
-  void unsubscribeFromChat(String jobId) {
-    final destination = '/topic/chat/$jobId';
-    _subscriptions.remove(destination);
-  }
-
-  void sendMessage(String jobId, String message) {
-    _client?.send(
-      destination: '/app/chat/$jobId',
-      body: jsonEncode({
-        'message': message,
-        'timestamp': DateTime.now().toIso8601String(),
-      }),
     );
   }
 
