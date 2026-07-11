@@ -2,13 +2,15 @@ class Env {
   // API Configuration
   static const String apiUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://localhost:8080/api',
+    defaultValue: 'https://the-guy-backend-production.up.railway.app/api',
   );
 
   static const String wsUrl = String.fromEnvironment(
     'WS_URL',
-    defaultValue: 'ws://localhost:8080',
+    defaultValue: 'wss://the-guy-backend-production.up.railway.app',
   );
+
+
 
   // Google Maps
   static const String googleMapsKey = String.fromEnvironment(
