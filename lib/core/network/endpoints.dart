@@ -4,6 +4,21 @@ class Endpoints {
   static final String baseUrl = Env.apiUrl;
   static final String wsUrl = Env.wsUrl;
 
+  // ============ Admin / Trust & Safety ===========
+  static const String adminDashboard = '/admin/dashboard';
+  static const String trustSafetyRiskScores = '/admin/trust-safety/risk-scores';
+  static const String trustSafetyUserActionBase = '/admin/trust-safety/user';
+
+  static const String adminProviders = '/admin/providers';
+  static const String adminDisputes = '/admin/disputes';
+  static const String adminModerationCases = '/admin/moderation/cases';
+
+  static const String adminAuditLogs = '/admin/audit-logs';
+  static const String adminSettings = '/admin/settings';
+
+  // ============ End Admin / Trust & Safety ===========
+
+
   // Auth Endpoints
   static const String register = '/auth/register';
   static const String login = '/auth/login';

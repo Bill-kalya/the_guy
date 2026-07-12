@@ -348,7 +348,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final response = await apiClient.post(
         Endpoints.register,
         data: {
-          'name': _nameController.text.trim(),
+          'fullName': _nameController.text.trim(),
           'email': _emailController.text.trim(),
           'password': _passwordController.text,
           'role': _selectedRole,

@@ -13,6 +13,12 @@ import '../features/chat/screens/chat_screen.dart';
 import '../features/payment/screens/payment_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 
+// Admin routes
+import '../features/admin/presentation/pages/admin_home_page.dart';
+import '../features/admin/presentation/pages/trust_safety_center_page.dart';
+
+
+
 // Provider routes
 import '../features/provider/presentation/screens/provider_home_screen.dart';
 import '../features/provider/presentation/screens/incoming_job_screen.dart';
@@ -71,6 +77,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // Admin routes (auth-required)
+      GoRoute(
+        name: 'admin-home',
+        path: '/admin',
+        builder: (context, state) => const AdminHomePage(),
+      ),
+      GoRoute(
+        name: 'admin-trust-safety',
+        path: '/admin/trust-safety',
+        builder: (context, state) => const TrustSafetyCenterPage(),
+      ),
+
       // Public landing page (root)
       GoRoute(
         name: 'home',
