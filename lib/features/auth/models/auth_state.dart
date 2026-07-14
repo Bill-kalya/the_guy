@@ -7,7 +7,11 @@ class AuthState {
   final String? error;
   final String? pendingEmail;
   final bool emailVerified;
-  final String? verificationToken;
+
+  // Password reset flow
+  final String? resetEmail;
+  final bool resetOtpSent;
+  final bool resetOtpVerified;
 
   const AuthState({
     this.isLoading = false,
@@ -16,7 +20,9 @@ class AuthState {
     this.error,
     this.pendingEmail,
     this.emailVerified = false,
-    this.verificationToken,
+    this.resetEmail,
+    this.resetOtpSent = false,
+    this.resetOtpVerified = false,
   });
 
   factory AuthState.initial() => const AuthState();
@@ -34,6 +40,12 @@ class AuthState {
   factory AuthState.verified(String email) =>
       AuthState(pendingEmail: email, emailVerified: true);
 
+  factory AuthState.forgotPasswordOtpSent(String email) =>
+      AuthState(resetEmail: email, resetOtpSent: true);
+
+  factory AuthState.resetOtpVerified(String email) =>
+      AuthState(resetEmail: email, resetOtpSent: true, resetOtpVerified: true);
+
   factory AuthState.error(String message) => AuthState(error: message);
 
   AuthState copyWith({
@@ -43,7 +55,9 @@ class AuthState {
     String? error,
     String? pendingEmail,
     bool? emailVerified,
-    String? verificationToken,
+    String? resetEmail,
+    bool? resetOtpSent,
+    bool? resetOtpVerified,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -52,7 +66,9 @@ class AuthState {
       error: error ?? this.error,
       pendingEmail: pendingEmail ?? this.pendingEmail,
       emailVerified: emailVerified ?? this.emailVerified,
-      verificationToken: verificationToken ?? this.verificationToken,
+      resetEmail: resetEmail ?? this.resetEmail,
+      resetOtpSent: resetOtpSent ?? this.resetOtpSent,
+      resetOtpVerified: resetOtpVerified ?? this.resetOtpVerified,
     );
   }
 }

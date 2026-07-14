@@ -18,15 +18,19 @@ class Endpoints {
 
   // ============ End Admin / Trust & Safety ===========
 
-
-  // Auth Endpoints
+  // Auth Endpoints (OTP-based)
   static const String register = '/auth/register';
   static const String login = '/auth/login';
   static const String refreshToken = '/auth/refresh';
   static const String logout = '/auth/logout';
-  static const String verifyEmail = '/auth/verify';
-  static const String resendVerification = '/auth/resend-verification';
+
+  // Email verification OTP flow
+  static const String verifyEmail = '/auth/verify-email';
+  static const String resendVerification = '/auth/resend-otp';
+
+  // Password reset OTP flow
   static const String forgotPassword = '/auth/forgot-password';
+  static const String verifyResetOtp = '/auth/verify-reset-otp';
   static const String resetPassword = '/auth/reset-password';
 
   // User Endpoints

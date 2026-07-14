@@ -3,9 +3,9 @@ import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../core/utils/error_handler.dart';
+import '../../../core/network/endpoints.dart';
 import '../models/auth_state.dart';
 import '../models/user_model.dart';
-import '../../../core/network/endpoints.dart';
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
@@ -27,6 +27,9 @@ class AuthNotifier extends Notifier<AuthState> {
     return AuthState.initial();
   }
 
+  // ──────────────────────────────────────────
+  // Registration (OTP-based email verification)
+  // ──────────────────────────────────────────
   Future<void> registerUser({
     required String name,
     required String email,
@@ -51,7 +54,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
 
       if (response.statusCode == 201) {
-        // Registration successful - email verification pending
+        // Registration successful — OTP sent to email via Resend
         state = AuthState.emailVerificationPending(email);
       }
     } catch (e) {
@@ -60,6 +63,9 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  // ──────────────────────────────────────────
+  // Login
+  // ──────────────────────────────────────────
   Future<void> loginWithEmail(String email, String password) async {
     state = AuthState.loading();
 
@@ -90,13 +96,16 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  // ──────────────────────────────────────────
+  // Email Verification (OTP)
+  // ──────────────────────────────────────────
   Future<void> verifyEmail(String email, String otp) async {
     state = AuthState.loading();
 
     try {
       final response = await _apiClient.post(
         Endpoints.verifyEmail,
-        data: {'email': email, 'token': otp},
+        data: {'email': email, 'otp': otp},
       );
 
       if (response.statusCode == 200) {
@@ -113,10 +122,15 @@ class AuthNotifier extends Notifier<AuthState> {
       }
     } catch (e) {
       ErrorHandler.logError('Email verification failed', e);
-      state = AuthState.error('Invalid or expired verification code. Please try again.');
+      state = AuthState.error(
+        'Invalid or expired verification code. Please try again.',
+      );
     }
   }
 
+  // ──────────────────────────────────────────
+  // Resend OTP (email verification)
+  // ──────────────────────────────────────────
   Future<void> resendVerificationEmail(String email) async {
     try {
       await _apiClient.post(
@@ -125,10 +139,110 @@ class AuthNotifier extends Notifier<AuthState> {
       );
     } catch (e) {
       ErrorHandler.logError('Failed to resend verification', e);
-      state = AuthState.error('Failed to resend verification email.');
+      state = AuthState.error(
+        'Too many requests. Please wait before resending.',
+      );
     }
   }
 
+  // ──────────────────────────────────────────
+  // Forgot Password — send OTP
+  // ──────────────────────────────────────────
+  Future<void> forgotPassword(String email) async {
+    state = AuthState.loading();
+
+    try {
+      final response = await _apiClient.post(
+        Endpoints.forgotPassword,
+        data: {'email': email},
+      );
+
+      if (response.statusCode == 200) {
+        state = AuthState.forgotPasswordOtpSent(email);
+      }
+    } catch (e) {
+      ErrorHandler.logError('Forgot password request failed', e);
+      state = AuthState.error(
+        'Failed to send reset code. Please check your email is correct.',
+      );
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // Verify Reset OTP
+  // ──────────────────────────────────────────
+  Future<void> verifyResetOtp(String email, String otp) async {
+    state = AuthState.loading();
+
+    try {
+      final response = await _apiClient.post(
+        Endpoints.verifyResetOtp,
+        data: {'email': email, 'otp': otp},
+      );
+
+      if (response.statusCode == 200) {
+        state = AuthState.resetOtpVerified(email);
+      }
+    } catch (e) {
+      ErrorHandler.logError('Reset OTP verification failed', e);
+      state = AuthState.error(
+        'Invalid or expired reset code. Please try again.',
+      );
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // Resend Reset OTP
+  // ──────────────────────────────────────────
+  Future<void> resendResetOtp(String email) async {
+    try {
+      await _apiClient.post(
+        Endpoints.forgotPassword,
+        data: {'email': email},
+      );
+    } catch (e) {
+      ErrorHandler.logError('Failed to resend reset OTP', e);
+      state = AuthState.error(
+        'Too many requests. Please wait before resending.',
+      );
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // Reset Password (after OTP verified)
+  // ──────────────────────────────────────────
+  Future<void> resetPassword({
+    required String email,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    state = AuthState.loading();
+
+    try {
+      final response = await _apiClient.post(
+        Endpoints.resetPassword,
+        data: {
+          'email': email,
+          'newPassword': newPassword,
+          'confirmPassword': confirmPassword,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Password reset successful — navigate to login
+        state = AuthState.unauthenticated();
+      }
+    } catch (e) {
+      ErrorHandler.logError('Password reset failed', e);
+      state = AuthState.error(
+        'Failed to reset password. Please try again.',
+      );
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // Logout
+  // ──────────────────────────────────────────
   Future<void> logout() async {
     try {
       await _apiClient.post(Endpoints.logout);
@@ -138,6 +252,9 @@ class AuthNotifier extends Notifier<AuthState> {
     state = AuthState.unauthenticated();
   }
 
+  // ──────────────────────────────────────────
+  // Check persisted auth status
+  // ──────────────────────────────────────────
   Future<void> checkAuthStatus() async {
     final token = await _secureStorage.getAccessToken();
     final userData = await _secureStorage.getUserData();

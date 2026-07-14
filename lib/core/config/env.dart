@@ -2,7 +2,7 @@ class Env {
   // API Configuration
   static const String apiUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://the-guy-backend-production.up.railway.app/api',
+    defaultValue: 'https://api.theguy.co.ke',
   );
 
   static const String wsUrl = String.fromEnvironment(

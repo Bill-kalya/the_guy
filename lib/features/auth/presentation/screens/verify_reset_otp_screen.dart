@@ -5,18 +5,17 @@ import '../widgets/auth_button.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/auth_state.dart';
 
-class EmailVerificationScreen extends ConsumerStatefulWidget {
+class VerifyResetOtpScreen extends ConsumerStatefulWidget {
   final String email;
 
-  const EmailVerificationScreen({super.key, required this.email});
+  const VerifyResetOtpScreen({super.key, required this.email});
 
   @override
-  ConsumerState<EmailVerificationScreen> createState() =>
-      _EmailVerificationScreenState();
+  ConsumerState<VerifyResetOtpScreen> createState() =>
+      _VerifyResetOtpScreenState();
 }
 
-class _EmailVerificationScreenState
-    extends ConsumerState<EmailVerificationScreen> {
+class _VerifyResetOtpScreenState extends ConsumerState<VerifyResetOtpScreen> {
   final List<TextEditingController> _otpControllers = List.generate(
     6,
     (_) => TextEditingController(),
@@ -76,20 +75,15 @@ class _EmailVerificationScreenState
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Listen for auth state changes
+    // Listen for OTP verified state → navigate to reset-password
     ref.listen<AuthState>(authProvider, (previous, next) {
-      if (next.isAuthenticated && previous?.isAuthenticated == false) {
-        final userRole = next.user?.role ?? 'customer';
-        if (userRole == 'provider') {
-          context.go('/provider/home');
-        } else {
-          context.go('/');
-        }
+      if (next.resetOtpVerified && previous?.resetOtpVerified == false) {
+        context.push('/reset-password', extra: next.resetEmail);
       }
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Email')),
+      appBar: AppBar(title: const Text('Verify Reset Code')),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -130,15 +124,15 @@ class _EmailVerificationScreenState
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: Colors.orange.shade50,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.mark_email_unread_outlined,
-              size: 40, color: Colors.blue),
+          child: Icon(Icons.pin_outlined,
+              size: 40, color: Colors.orange.shade700),
         ),
         const SizedBox(height: 16),
         const Text(
-          'Verify Your Email',
+          'Enter Reset Code',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -223,7 +217,7 @@ class _EmailVerificationScreenState
             onPressed: () {
               ref
                   .read(authProvider.notifier)
-                  .resendVerificationEmail(widget.email);
+                  .resendResetOtp(widget.email);
               setState(() {
                 _timerSeconds = 60;
                 _canResend = false;
@@ -238,12 +232,12 @@ class _EmailVerificationScreenState
 
   Widget _buildVerifyButton(AuthState authState) {
     return AuthButton(
-      text: 'Verify',
+      text: 'Verify Code',
       onPressed: _getOtp().length == 6
           ? () {
               ref
                   .read(authProvider.notifier)
-                  .verifyEmail(widget.email, _getOtp());
+                  .verifyResetOtp(widget.email, _getOtp());
             }
           : null,
       isLoading: authState.isLoading,

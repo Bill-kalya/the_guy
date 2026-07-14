@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/otp_verification_screen.dart' as verify_email;
+import '../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../features/auth/presentation/screens/verify_reset_otp_screen.dart' as verify_reset;
+import '../features/auth/presentation/screens/reset_password_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/jobs/screens/request_service_screen.dart';
 import '../features/jobs/screens/matching_screen.dart';
@@ -16,8 +19,6 @@ import '../features/profile/screens/profile_screen.dart';
 // Admin routes
 import '../features/admin/presentation/pages/admin_home_page.dart';
 import '../features/admin/presentation/pages/trust_safety_center_page.dart';
-
-
 
 // Provider routes
 import '../features/provider/presentation/screens/provider_home_screen.dart';
@@ -38,10 +39,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       final location = state.matchedLocation;
       final isAuthRoute = location == '/login' ||
           location == '/register' ||
-          location == '/verify-email';
+          location == '/verify-email' ||
+          location == '/forgot-password' ||
+          location == '/verify-reset-otp' ||
+          location == '/reset-password';
       final isHomeRoute = location == '/';
 
-      // If authenticated and on an auth route (login/register/verify-email), redirect to home
+      // If authenticated and on an auth route (login/register/verify-email, etc), redirect to home
       if (isAuthenticated && isAuthRoute) {
         final userRole = authState.user?.role ?? 'customer';
         if (userRole == 'provider') {
@@ -113,6 +117,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final email = state.extra as String;
           return verify_email.EmailVerificationScreen(email: email);
+        },
+      ),
+      GoRoute(
+        name: 'forgot-password',
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        name: 'verify-reset-otp',
+        path: '/verify-reset-otp',
+        builder: (context, state) {
+          final email = state.extra as String;
+          return verify_reset.VerifyResetOtpScreen(email: email);
+        },
+      ),
+      GoRoute(
+        name: 'reset-password',
+        path: '/reset-password',
+        builder: (context, state) {
+          final email = state.extra as String;
+          return ResetPasswordScreen(email: email);
         },
       ),
 
