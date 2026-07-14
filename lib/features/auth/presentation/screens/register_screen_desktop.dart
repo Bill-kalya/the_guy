@@ -73,7 +73,7 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
                     Container(
                       width: 32, height: 32,
                       decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(8)),
-                      child: const Center(child: Text('TG', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
+                      child: Image.asset('assets/icons/icon (2).png', fit: BoxFit.contain),
                     ),
                     const SizedBox(width: 8),
                     Text('The Guy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade800)),

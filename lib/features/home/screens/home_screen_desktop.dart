@@ -94,19 +94,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade700,
                         borderRadius: BorderRadius.circular(10),
+                        color: Colors.transparent,
                       ),
-                      child: const Center(
-                        child: Text(
-                          'TG',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
+                      child: Image.asset('assets/icons/icon (2).png', fit: BoxFit.contain),
                     ),
                     const SizedBox(width: 10),
                     Text(
