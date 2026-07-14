@@ -53,6 +53,7 @@ dependencies:
   # Icons
   cupertino_icons: ^1.0.8
   flutter_launcher_icons: ^0.14.4
+  flutter_map_cancellable_tile_provider: ^3.0.2
 
 dev_dependencies:
   flutter_test:

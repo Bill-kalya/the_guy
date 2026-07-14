@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../widgets/earnings_chart.dart';
 import '../../providers/earnings_provider.dart';
 import '../../models/earnings_model.dart';
 import '../../../../shared/widgets/loading_widget.dart';
+import '../../../../shared/widgets/responsive_layout.dart';
+import 'earnings_screen_desktop.dart';
 
 class EarningsScreen extends ConsumerStatefulWidget {
   const EarningsScreen({super.key});
@@ -25,25 +26,26 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
   Widget build(BuildContext context) {
     final earningsState = ref.watch(earningsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Earnings'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.read(earningsProvider.notifier).refreshEarnings();
-            },
-          ),
-        ],
+    return ResponsiveLayout(
+      mobile: Scaffold(
+        appBar: AppBar(
+          title: const Text('Earnings'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => ref.read(earningsProvider.notifier).refreshEarnings(),
+            ),
+          ],
+        ),
+        body: earningsState.isLoading
+            ? const LoadingWidget()
+            : earningsState.error != null
+                ? _buildErrorWidget(earningsState.error!)
+                : earningsState.earnings != null
+                    ? _buildEarningsContent(earningsState.earnings!)
+                    : const SizedBox(),
       ),
-      body: earningsState.isLoading
-          ? const LoadingWidget()
-          : earningsState.error != null
-          ? _buildErrorWidget(earningsState.error!)
-          : earningsState.earnings != null
-          ? _buildEarningsContent(earningsState.earnings!)
-          : const SizedBox(),
+      desktop: EarningsScreenDesktop(),
     );
   }
 
@@ -57,9 +59,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
           Text(error),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {
-              ref.read(earningsProvider.notifier).refreshEarnings();
-            },
+            onPressed: () => ref.read(earningsProvider.notifier).refreshEarnings(),
             child: const Text('Retry'),
           ),
         ],
@@ -73,19 +73,10 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Total earnings card
           _buildTotalEarningsCard(earnings),
           const SizedBox(height: 16),
-
-          // Stats grid
           _buildStatsGrid(earnings),
           const SizedBox(height: 24),
-
-          // Earnings chart
-          EarningsChartWidget(weeklyEarnings: earnings.weeklyEarnings),
-          const SizedBox(height: 24),
-
-          // Recent transactions
           _buildRecentTransactions(earnings),
         ],
       ),
@@ -104,43 +95,17 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
         ),
         borderRadius: BorderRadius.circular(30),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Opacity(
-              opacity: 0.06,
-              child: Image.asset(
-                'assets/images/noise.png',
-                repeat: ImageRepeat.repeat,
-                fit: BoxFit.none,
-                width: double.infinity,
-                height: double.infinity,
-              ),
-            ),
+          const Text('Total Earnings', style: TextStyle(color: Colors.white, fontSize: 16)),
+          const SizedBox(height: 8),
+          Text(
+            'KES ${earnings.totalEarnings.toStringAsFixed(2)}',
+            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Total Earnings',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'KES ${earnings.totalEarnings.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${earnings.totalJobsCompleted} jobs completed',
-                style: const TextStyle(color: Colors.white70),
-              ),
-            ],
-          ),
+          const SizedBox(height: 8),
+          Text('${earnings.totalJobsCompleted} jobs completed', style: const TextStyle(color: Colors.white70)),
         ],
       ),
     );
@@ -155,50 +120,17 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
       crossAxisSpacing: 12,
       childAspectRatio: 1.5,
       children: [
-        _buildStatCard(
-          'Today',
-          'KES ${earnings.todayEarnings.toStringAsFixed(2)}',
-          '${earnings.todayJobs} jobs',
-          Icons.today,
-          Colors.blue,
-        ),
-        _buildStatCard(
-          'This Week',
-          'KES ${earnings.thisWeekEarnings.toStringAsFixed(2)}',
-          '${earnings.thisWeekJobs} jobs',
-          Icons.calendar_view_week,
-          Colors.green,
-        ),
-        _buildStatCard(
-          'This Month',
-          'KES ${earnings.thisMonthEarnings.toStringAsFixed(2)}',
-          '${earnings.thisMonthJobs} jobs',
-          Icons.calendar_today,
-          Colors.orange,
-        ),
-        _buildStatCard(
-          'Average',
-          'KES ${(earnings.totalEarnings / earnings.totalJobsCompleted).toStringAsFixed(2)}',
-          'per job',
-          Icons.trending_up,
-          Colors.purple,
-        ),
+        _buildStatCard('Today', 'KES ${earnings.todayEarnings.toStringAsFixed(2)}', '${earnings.todayJobs} jobs', Icons.today, Colors.blue),
+        _buildStatCard('This Week', 'KES ${earnings.thisWeekEarnings.toStringAsFixed(2)}', '${earnings.thisWeekJobs} jobs', Icons.calendar_view_week, Colors.green),
+        _buildStatCard('This Month', 'KES ${earnings.thisMonthEarnings.toStringAsFixed(2)}', '${earnings.thisMonthJobs} jobs', Icons.calendar_today, Colors.orange),
+        _buildStatCard('Average', 'KES ${(earnings.totalEarnings / earnings.totalJobsCompleted).toStringAsFixed(2)}', 'per job', Icons.trending_up, Colors.purple),
       ],
     );
   }
 
-  Widget _buildStatCard(
-    String title,
-    String amount,
-    String subtitle,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildStatCard(String title, String amount, String subtitle, IconData icon, Color color) {
     return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8E5E2),
-        borderRadius: BorderRadius.circular(30),
-      ),
+      decoration: BoxDecoration(color: const Color(0xFFE8E5E2), borderRadius: BorderRadius.circular(30)),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -209,21 +141,12 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
               children: [
                 Icon(icon, size: 20, color: color),
                 const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
+                Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              amount,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            Text(amount, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
@@ -234,10 +157,7 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Recent Transactions',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        const Text('Recent Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         ListView.separated(
           shrinkWrap: true,
@@ -257,17 +177,8 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    'KES ${transaction.amount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  Text(
-                    transaction.status,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
+                  Text('KES ${transaction.amount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                  Text(transaction.status, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
             );
@@ -280,15 +191,9 @@ class _EarningsScreenState extends ConsumerState<EarningsScreen> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'Today, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+    if (difference.inDays == 0) return 'Today, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    if (difference.inDays == 1) return 'Yesterday';
+    if (difference.inDays < 7) return '${difference.inDays} days ago';
+    return '${date.day}/${date.month}/${date.year}';
   }
 }

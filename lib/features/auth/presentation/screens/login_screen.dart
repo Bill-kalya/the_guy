@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/auth_button.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/auth_state.dart';
+import '../../../../shared/widgets/responsive_layout.dart';
+import 'login_screen_desktop.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -29,7 +30,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Listen for auth state changes
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isAuthenticated && previous?.isAuthenticated == false) {
         final userRole = next.user?.role ?? 'customer';
@@ -41,34 +41,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     });
 
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 60),
-                _buildHeader(),
-                const SizedBox(height: 48),
-                _buildEmailField(),
-                const SizedBox(height: 16),
-                _buildPasswordField(),
-                const SizedBox(height: 12),
-                _buildForgotPasswordLink(),
-                const SizedBox(height: 24),
-                _buildLoginButton(authState),
-                const SizedBox(height: 24),
-                _buildCreateAccountLink(),
-                const SizedBox(height: 32),
-                if (authState.error != null) _buildErrorBanner(authState.error!),
-              ],
+    return ResponsiveLayout(
+      mobile: Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 60),
+                  _buildHeader(),
+                  const SizedBox(height: 48),
+                  _buildEmailField(),
+                  const SizedBox(height: 16),
+                  _buildPasswordField(),
+                  const SizedBox(height: 12),
+                  _buildForgotPasswordLink(),
+                  const SizedBox(height: 24),
+                  _buildLoginButton(authState),
+                  const SizedBox(height: 24),
+                  _buildCreateAccountLink(),
+                  const SizedBox(height: 32),
+                  if (authState.error != null) _buildErrorBanner(authState.error!),
+                ],
+              ),
             ),
           ),
         ),
       ),
+      desktop: LoginScreenDesktop(),
     );
   }
 
@@ -162,9 +165,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton(
-        onPressed: () {
-          // TODO: Navigate to forgot password screen
-        },
+        onPressed: () {},
         child: const Text(
           'Forgot Password?',
           style: TextStyle(color: Colors.blue),
@@ -174,10 +175,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildLoginButton(AuthState authState) {
-    return AuthButton(
-      text: 'Login',
-      onPressed: _login,
-      isLoading: authState.isLoading,
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton(
+        onPressed: authState.isLoading ? null : _login,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue.shade700,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: authState.isLoading
+            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            : const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      ),
     );
   }
 

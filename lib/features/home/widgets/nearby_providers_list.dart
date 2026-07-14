@@ -86,6 +86,8 @@ class NearbyProvidersList extends StatelessWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: providers!.length,
       itemBuilder: (context, index) {
         final provider = providers![index];

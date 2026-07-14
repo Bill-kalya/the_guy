@@ -6,6 +6,8 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
+import '../../../../shared/widgets/responsive_layout.dart';
+import 'register_screen_desktop.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -36,44 +38,47 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    return ResponsiveLayout(
+      mobile: Scaffold(
+        appBar: AppBar(
+          title: const Text('Create Account'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 32),
-                _buildNameField(),
-                const SizedBox(height: 16),
-                _buildEmailField(),
-                const SizedBox(height: 16),
-                _buildPasswordField(),
-                const SizedBox(height: 16),
-                _buildConfirmPasswordField(),
-                const SizedBox(height: 24),
-                _buildRoleSelector(),
-                const SizedBox(height: 24),
-                _buildTermsCheckbox(),
-                const SizedBox(height: 24),
-                _buildRegisterButton(),
-                const SizedBox(height: 16),
-                _buildLoginLink(),
-              ],
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 32),
+                  _buildNameField(),
+                  const SizedBox(height: 16),
+                  _buildEmailField(),
+                  const SizedBox(height: 16),
+                  _buildPasswordField(),
+                  const SizedBox(height: 16),
+                  _buildConfirmPasswordField(),
+                  const SizedBox(height: 24),
+                  _buildRoleSelector(),
+                  const SizedBox(height: 24),
+                  _buildTermsCheckbox(),
+                  const SizedBox(height: 24),
+                  _buildRegisterButton(),
+                  const SizedBox(height: 16),
+                  _buildLoginLink(),
+                ],
+              ),
             ),
           ),
         ),
       ),
+      desktop: const RegisterScreenDesktop(),
     );
   }
 

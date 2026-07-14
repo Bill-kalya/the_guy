@@ -8,10 +8,10 @@ import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
-
+import '../../../shared/widgets/responsive_layout.dart';
+import 'home_screen_desktop.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-
   const HomeScreen({super.key});
 
   @override
@@ -58,17 +58,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final nearbyProvidersAsync = ref.watch(nearbyProvidersProvider);
     final liveLocations = ref.watch(providerLocationsProvider);
 
-    return Scaffold(
-      body: _buildBody(locationState, isAuthenticated, nearbyProvidersAsync, liveLocations),
-      bottomNavigationBar: _buildBottomNavBar(),
-      floatingActionButton: isAuthenticated && _currentIndex == 0
-          ? FloatingActionButton.extended(
-              onPressed: () => context.push('/request-service'),
-              icon: const Icon(Icons.add),
-              label: const Text('Request Service'),
-              backgroundColor: Colors.blue,
-            )
-          : null,
+    return ResponsiveLayout(
+      mobile: Scaffold(
+        body: _buildBody(locationState, isAuthenticated, nearbyProvidersAsync, liveLocations),
+        bottomNavigationBar: _buildBottomNavBar(),
+        floatingActionButton: isAuthenticated && _currentIndex == 0
+            ? FloatingActionButton.extended(
+                onPressed: () => context.push('/request-service'),
+                icon: const Icon(Icons.add),
+                label: const Text('Request Service'),
+                backgroundColor: Colors.blue,
+              )
+            : null,
+      ),
+      desktop: HomeScreenDesktop(),
     );
   }
 
