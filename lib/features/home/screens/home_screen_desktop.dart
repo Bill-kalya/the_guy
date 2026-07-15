@@ -1081,8 +1081,12 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                                   color: Colors.blue.shade600,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Center(
-                                  child: Text('TG', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    'assets/icons/icon (2).png',
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 8),
