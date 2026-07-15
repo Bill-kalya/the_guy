@@ -72,4 +72,8 @@ class Endpoints {
   // Categories
   static const String categories = '/categories';
   static const String subCategories = '/categories/sub';
+  
+  // Search
+  static const String searchProviders = '/search/providers';
+  static const String searchSuggestions = '/search/suggestions';
 }

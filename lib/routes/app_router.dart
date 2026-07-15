@@ -9,6 +9,7 @@ import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/verify_reset_otp_screen.dart' as verify_reset;
 import '../features/auth/presentation/screens/reset_password_screen.dart';
 import '../features/home/screens/home_screen.dart';
+import '../features/search/screens/search_screen.dart';
 import '../features/jobs/screens/request_service_screen.dart';
 import '../features/jobs/screens/matching_screen.dart';
 import '../features/jobs/screens/active_job_screen.dart';
@@ -98,6 +99,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'home',
         path: '/',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        name: 'search',
+        path: '/search',
+        builder: (context, state) => const SearchScreen(),
       ),
 
       // Auth routes
