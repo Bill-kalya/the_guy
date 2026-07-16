@@ -5,75 +5,75 @@ class Endpoints {
   static final String wsUrl = Env.wsUrl;
 
   // ============ Admin / Trust & Safety ===========
-  static const String adminDashboard = '/admin/dashboard';
-  static const String trustSafetyRiskScores = '/admin/trust-safety/risk-scores';
-  static const String trustSafetyUserActionBase = '/admin/trust-safety/user';
+  static const String adminDashboard = '/api/admin/dashboard';
+  static const String trustSafetyRiskScores = '/api/admin/trust-safety/risk-scores';
+  static const String trustSafetyUserActionBase = '/api/admin/trust-safety/user';
 
-  static const String adminProviders = '/admin/providers';
-  static const String adminDisputes = '/admin/disputes';
-  static const String adminModerationCases = '/admin/moderation/cases';
+  static const String adminProviders = '/api/admin/providers';
+  static const String adminDisputes = '/api/admin/disputes';
+  static const String adminModerationCases = '/api/admin/moderation/cases';
 
-  static const String adminAuditLogs = '/admin/audit-logs';
-  static const String adminSettings = '/admin/settings';
+  static const String adminAuditLogs = '/api/admin/audit-logs';
+  static const String adminSettings = '/api/admin/settings';
 
   // ============ End Admin / Trust & Safety ===========
 
   // Auth Endpoints (OTP-based)
-  static const String register = '/auth/register';
-  static const String login = '/auth/login';
-  static const String refreshToken = '/auth/refresh';
-  static const String logout = '/auth/logout';
+  static const String register = '/api/auth/register';
+  static const String login = '/api/auth/login';
+  static const String refreshToken = '/api/auth/refresh';
+  static const String logout = '/api/auth/logout';
 
   // Email verification OTP flow
-  static const String verifyEmail = '/auth/verify-email';
-  static const String resendVerification = '/auth/resend-otp';
+  static const String verifyEmail = '/api/auth/verify-email';
+  static const String resendVerification = '/api/auth/resend-otp';
 
   // Password reset OTP flow
-  static const String forgotPassword = '/auth/forgot-password';
-  static const String verifyResetOtp = '/auth/verify-reset-otp';
-  static const String resetPassword = '/auth/reset-password';
+  static const String forgotPassword = '/api/auth/forgot-password';
+  static const String verifyResetOtp = '/api/auth/verify-reset-otp';
+  static const String resetPassword = '/api/auth/reset-password';
 
   // User Endpoints
-  static const String userProfile = '/users/profile';
-  static const String updateProfile = '/users/profile';
-  static const String getUserById = '/users';
+  static const String userProfile = '/api/users/profile';
+  static const String updateProfile = '/api/users/profile';
+  static const String getUserById = '/api/users';
 
   // Jobs Endpoints
-  static const String jobs = '/jobs';
-  static const String requestJob = '/jobs/request';
-  static const String nearbyJobs = '/jobs/nearby';
-  static const String jobHistory = '/jobs/history';
-  static const String acceptJob = '/jobs/accept';
-  static const String declineJob = '/jobs/decline';
-  static const String updateJobStatus = '/jobs/status';
-  static const String completeJob = '/jobs/complete';
+  static const String jobs = '/api/jobs';
+  static const String requestJob = '/api/jobs/request';
+  static const String nearbyJobs = '/api/jobs/nearby';
+  static const String jobHistory = '/api/jobs/history';
+  static const String acceptJob = '/api/jobs/accept';
+  static const String declineJob = '/api/jobs/decline';
+  static const String updateJobStatus = '/api/jobs/status';
+  static const String completeJob = '/api/jobs/complete';
 
   // Payment Endpoints
-  static const String initiateMpesa = '/payments/mpesa/initiate';
-  static const String checkPaymentStatus = '/payments/status';
-  static const String paymentHistory = '/payments/history';
+  static const String initiateMpesa = '/api/payments/mpesa/initiate';
+  static const String checkPaymentStatus = '/api/payments/status';
+  static const String paymentHistory = '/api/payments/history';
 
   // Location Endpoints
-  static const String updateLocation = '/location/update';
-  static const String providerLocation = '/location/provider';
-  static const String nearbyLocations = '/location/nearby';
+  static const String updateLocation = '/api/location/update';
+  static const String providerLocation = '/api/location/provider';
+  static const String nearbyLocations = '/api/location/nearby';
 
   // Providers Endpoints
-  static const String nearbyProviders = '/providers/nearby';
-  static const String providerDetails = '/providers';
-  static const String providerEarnings = '/providers/earnings';
-  static const String updateAvailability = '/providers/availability';
+  static const String nearbyProviders = '/api/providers/nearby';
+  static const String providerDetails = '/api/providers';
+  static const String providerEarnings = '/api/providers/earnings';
+  static const String updateAvailability = '/api/providers/availability';
 
   // Chat Endpoints
-  static const String chatHistory = '/chat/history';
-  static const String sendMessage = '/chat/send';
-  static const String markAsRead = '/chat/read';
+  static const String chatHistory = '/api/chat/history';
+  static const String sendMessage = '/api/chat/send';
+  static const String markAsRead = '/api/chat/read';
 
   // Categories
-  static const String categories = '/categories';
-  static const String subCategories = '/categories/sub';
+  static const String categories = '/api/categories';
+  static const String subCategories = '/api/categories/sub';
   
   // Search
-  static const String searchProviders = '/search/providers';
-  static const String searchSuggestions = '/search/suggestions';
+  static const String searchProviders = '/api/search/providers';
+  static const String searchSuggestions = '/api/search/suggestions';
 }

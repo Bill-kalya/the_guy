@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/endpoints.dart';
 import '../models/job_state.dart';
 
 final jobProvider = NotifierProvider<JobNotifier, JobState>(JobNotifier.new);
@@ -17,7 +18,7 @@ class JobNotifier extends Notifier<JobState> {
     state = state.copyWith(status: JobStatus.loading);
 
     try {
-      final response = await _apiClient.post('/jobs/request', data: jobData);
+      final response = await _apiClient.post(Endpoints.requestJob, data: jobData);
 
       if (response.statusCode == 201) {
         state = state.copyWith(
@@ -55,7 +56,7 @@ class JobNotifier extends Notifier<JobState> {
   }
 
   Future<void> completeJob() async {
-    await _apiClient.patch('/jobs/${state.jobId}/complete');
+    await _apiClient.patch('${Endpoints.completeJob}/${state.jobId}');
     state = state.copyWith(status: JobStatus.completed);
   }
 }
