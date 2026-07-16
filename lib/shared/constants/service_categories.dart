@@ -27,13 +27,13 @@ class ServiceCategories {
     ServiceCategory(name: 'Plumbing', icon: Icons.plumbing, color: Colors.blue, basePrice: 1000),
     ServiceCategory(name: 'Electrical', icon: Icons.electrical_services, color: Colors.amber, basePrice: 1200),
     ServiceCategory(name: 'Carpenter', icon: Icons.handyman, color: Colors.orange, basePrice: 1500),
-    ServiceCategory(name: 'Mason', icon: Icons.bricks, color: Colors.brown, basePrice: 2000),
+    ServiceCategory(name: 'Mason', icon: Icons.construction, color: Colors.brown, basePrice: 2000),
     ServiceCategory(name: 'Painting', icon: Icons.format_paint, color: Colors.indigo, basePrice: 1500),
 
     // Cleaning & Hygiene
     ServiceCategory(name: 'Mama Fua', icon: Icons.cleaning_services, color: Colors.teal, basePrice: 500),
     ServiceCategory(name: 'Commercial Cleaning', icon: Icons.business, color: Colors.blueGrey, basePrice: 3000),
-    ServiceCategory(name: 'Carpet & Sofa Cleaning', icon: Icons.sofa, color: Colors.deepPurple, basePrice: 2000),
+    ServiceCategory(name: 'Carpet & Sofa Cleaning', icon: Icons.cleaning_services, color: Colors.deepPurple, basePrice: 2000),
     ServiceCategory(name: 'Pressure Washing', icon: Icons.water, color: Colors.cyan, basePrice: 2500),
 
     // Outdoor & Garden

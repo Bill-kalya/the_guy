@@ -108,7 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _buildMarketplaceHome(locationState, isAuthenticated, nearbyProvidersAsync, liveLocations),
         // Jobs tab
         isAuthenticated
-            ? const Center(child: Text('My Jobs - Coming Soon'))
+            ? _buildJobsTab()
             : _buildAuthPromptTab(
                 icon: Icons.history,
                 title: 'My Jobs',
@@ -116,7 +116,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
         // Profile tab
         isAuthenticated
-            ? const Center(child: Text('Profile - Coming Soon'))
+            ? _buildProfileTab()
             : _buildAuthPromptTab(
                 icon: Icons.person,
                 title: 'Profile',
@@ -646,6 +646,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJobsTab() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.history, size: 80, color: Colors.grey.shade300),
+            const SizedBox(height: 24),
+            const Text(
+              'My Jobs',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'View your active and past service requests.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => context.push('/request-service'),
+              icon: const Icon(Icons.add),
+              label: const Text('Request a Service'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileTab() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.person, size: 80, color: Colors.grey.shade300),
+            const SizedBox(height: 24),
+            const Text(
+              'Profile',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Manage your profile, view reviews, and update settings.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => context.push('/profile'),
+              icon: const Icon(Icons.person),
+              label: const Text('View Profile'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              ),
+            ),
+          ],
         ),
       ),
     );

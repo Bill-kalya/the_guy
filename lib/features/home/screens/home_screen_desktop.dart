@@ -113,19 +113,27 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 ),
                 const SizedBox(width: 48),
                 // Nav Links
-                Expanded(
-                  child: Row(
-                    children: [
-                      _navLink('Home', true),
-                      const SizedBox(width: 24),
-                      _navLink('Services', false),
-                      const SizedBox(width: 24),
-                      _navLink('How It Works', false),
-                      const SizedBox(width: 24),
-                      _navLink('Become a Provider', false),
-                    ],
-                  ),
-                ),
+          Expanded(
+            child: Row(
+              children: [
+                _navLink('Home', true, () {}),
+                const SizedBox(width: 24),
+                _navLink('Services', false, () => context.push('/search')),
+                const SizedBox(width: 24),
+                _navLink('How It Works', false, () {
+                  // Scroll to the How It Works section
+                }),
+                const SizedBox(width: 24),
+                _navLink('Become a Provider', false, () {
+                  _requireAuthThen(context, () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Opening provider registration...')),
+                    );
+                  });
+                }),
+              ],
+            ),
+          ),
                 // Search
                 SizedBox(
                   width: 240,
@@ -155,7 +163,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {},
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Notifications coming soon')),
+                          );
+                        },
                         tooltip: 'Notifications',
                       ),
                       const SizedBox(width: 8),
@@ -205,9 +217,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     );
   }
 
-  Widget _navLink(String label, bool isActive) {
+  Widget _navLink(String label, bool isActive, VoidCallback onPressed) {
     return TextButton(
-      onPressed: () {},
+      onPressed: onPressed,
       style: TextButton.styleFrom(
         foregroundColor: isActive ? Colors.blue.shade700 : Colors.grey.shade700,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -502,7 +514,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       avatar: Icon(icon, color: Colors.white, size: 16),
       label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 13)),
       backgroundColor: Colors.white.withValues(alpha: 0.15),
-      onPressed: () {},
+      onPressed: () => context.push('/search'),
     );
   }
 
@@ -839,7 +851,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                     ],
                   ),
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () => context.push('/search'),
                     icon: const Text('View All'),
                     label: const Icon(Icons.arrow_forward, size: 18),
                   ),

@@ -26,6 +26,7 @@ import '../features/provider/presentation/screens/provider_home_screen.dart';
 import '../features/provider/presentation/screens/incoming_job_screen.dart';
 import '../features/provider/presentation/screens/active_jobs_screen.dart';
 import '../features/provider/presentation/screens/earnings_screen.dart';
+import '../features/provider/presentation/screens/provider_profile_screen.dart';
 
 // Providers
 import '../features/auth/providers/auth_provider.dart';
@@ -216,6 +217,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'earnings',
         path: '/provider/earnings',
         builder: (context, state) => const EarningsScreen(),
+      ),
+      GoRoute(
+        name: 'provider-profile',
+        path: '/provider/profile',
+        builder: (context, state) => const ProviderProfileScreen(),
       ),
     ],
   );
