@@ -94,7 +94,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(24),
                         color: Colors.transparent,
                       ),
                       child: Image.asset('assets/icons/icon (2).png', fit: BoxFit.contain),

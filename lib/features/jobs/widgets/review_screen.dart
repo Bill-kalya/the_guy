@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/sqs_calculator.dart';
 import '../../../shared/widgets/service_quality_score.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/review_model.dart';
 import '../../../core/network/api_client.dart';
 
-class ReviewScreen extends StatefulWidget {
+class ReviewScreen extends ConsumerStatefulWidget {
   final String jobId;
   final String providerId;
   final String providerName;
@@ -18,10 +19,10 @@ class ReviewScreen extends StatefulWidget {
   });
 
   @override
-  State<ReviewScreen> createState() => _ReviewScreenState();
+  ConsumerState<ReviewScreen> createState() => _ReviewScreenState();
 }
 
-class _ReviewScreenState extends State<ReviewScreen> {
+class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   // Score values (0-100)
   int overallExperience = 80;
   int timeliness = 80;
@@ -116,67 +117,67 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
             ReviewQuestion(
               title: 'How satisfied were you with your overall experience?',
-              value: overallExperience.toDouble(),
+              initialValue: overallExperience.toDouble(),
               onChanged: (v) => setState(() => overallExperience = v.round()),
             ),
 
             ReviewQuestion(
               title: 'Was the service completed within a reasonable time?',
-              value: timeliness.toDouble(),
+              initialValue: timeliness.toDouble(),
               onChanged: (v) => setState(() => timeliness = v.round()),
             ),
 
             ReviewQuestion(
               title: 'How professional was the service provider?',
-              value: professionalism.toDouble(),
+              initialValue: professionalism.toDouble(),
               onChanged: (v) => setState(() => professionalism = v.round()),
             ),
 
             ReviewQuestion(
               title: 'How would you rate the communication?',
-              value: communication.toDouble(),
+              initialValue: communication.toDouble(),
               onChanged: (v) => setState(() => communication = v.round()),
             ),
 
             ReviewQuestion(
               title: 'How courteous was the provider?',
-              value: courtesy.toDouble(),
+              initialValue: courtesy.toDouble(),
               onChanged: (v) => setState(() => courtesy = v.round()),
             ),
 
             ReviewQuestion(
               title: 'How would you rate the quality of work?',
-              value: workQuality.toDouble(),
+              initialValue: workQuality.toDouble(),
               onChanged: (v) => setState(() => workQuality = v.round()),
             ),
 
             ReviewQuestion(
               title: 'How would you rate the attention to detail?',
-              value: attentionToDetail.toDouble(),
+              initialValue: attentionToDetail.toDouble(),
               onChanged: (v) => setState(() => attentionToDetail = v.round()),
             ),
 
             ReviewQuestion(
               title: 'How would you rate the cleanliness?',
-              value: cleanliness.toDouble(),
+              initialValue: cleanliness.toDouble(),
               onChanged: (v) => setState(() => cleanliness = v.round()),
             ),
 
             ReviewQuestion(
               title: 'How reliable was the provider?',
-              value: reliability.toDouble(),
+              initialValue: reliability.toDouble(),
               onChanged: (v) => setState(() => reliability = v.round()),
             ),
 
             ReviewQuestion(
               title: 'How would you rate the value for money?',
-              value: valueForMoney.toDouble(),
+              initialValue: valueForMoney.toDouble(),
               onChanged: (v) => setState(() => valueForMoney = v.round()),
             ),
 
             ReviewQuestion(
               title: 'Would you recommend this provider to others?',
-              value: recommendation.toDouble(),
+              initialValue: recommendation.toDouble(),
               onChanged: (v) => setState(() => recommendation = v.round()),
             ),
 
@@ -199,7 +200,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         problemResolution = problemResolution == null ? 80 : null;
                       });
                     },
-                    style: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
                       backgroundColor: problemResolution == null
                           ? Colors.grey[200]
                           : Colors.green,
@@ -220,7 +221,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                               problemResolution = 40;
                             });
                           },
-                    style: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
                       backgroundColor: problemResolution != null && problemResolution! < 60
                           ? Colors.red
                           : Colors.grey[200],
@@ -237,7 +238,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               const SizedBox(height: 16),
               ReviewQuestion(
                 title: 'How well were the problems resolved?',
-                value: problemResolution!.toDouble(),
+                initialValue: problemResolution!.toDouble(),
                 onChanged: (v) => setState(() => problemResolution = v.round()),
               ),
             ],
@@ -269,7 +270,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitReview,
-                style: ElevatedButton(
+                style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
@@ -299,8 +300,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final authProvider = AuthProvider();
-      final userId = authProvider.user?.id;
+      final userId = ref.read(authProvider).user?.id;
 
       if (userId == null) {
         throw Exception('User not authenticated');
@@ -323,7 +323,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
         comment: _commentController.text.isNotEmpty ? _commentController.text : null,
       );
 
-      final response = await ApiClient.post('/reviews', body: request.toJson());
+      final api = ref.read(apiClientProvider);
+      final response = await api.post('/reviews', data: request.toJson());
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {

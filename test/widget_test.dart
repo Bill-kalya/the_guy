@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'lib/app.dart';
+import 'package:the_guy/app.dart';
 
 void main() {
   testWidgets('The Guy app launches', (tester) async {

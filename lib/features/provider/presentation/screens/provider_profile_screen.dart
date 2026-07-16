@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/availability_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
-import '../../../shared/widgets/service_quality_score.dart';
+import '../../../../shared/widgets/service_quality_score.dart';
 
 class ProviderProfileScreen extends ConsumerStatefulWidget {
   const ProviderProfileScreen({super.key});
