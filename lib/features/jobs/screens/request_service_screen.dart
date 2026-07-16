@@ -4,6 +4,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/utils/error_handler.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
+import '../../../shared/constants/service_categories.dart';
 
 class RequestServiceScreen extends ConsumerStatefulWidget {
   const RequestServiceScreen({super.key});
@@ -20,16 +21,7 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
   double _estimatedPrice = 0;
   bool _isLoading = false;
 
-  final List<String> _categories = [
-    'Plumbing',
-    'Electrical',
-    'Cleaning',
-    'Moving',
-    'Gardening',
-    'Painting',
-    'Carpentry',
-    'Appliance Repair',
-  ];
+  final List<String> _categories = ServiceCategories.names;
 
   @override
   Widget build(BuildContext context) {
@@ -121,22 +113,8 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
   }
 
   void _estimatePrice() {
-    // Simple price estimation logic
-    double basePrice = 0;
-
-    switch (_selectedCategory) {
-      case 'Plumbing':
-        basePrice = 1000;
-        break;
-      case 'Electrical':
-        basePrice = 1200;
-        break;
-      case 'Cleaning':
-        basePrice = 800;
-        break;
-      default:
-        basePrice = 500;
-    }
+    // Get base price from centralized categories
+    final basePrice = ServiceCategories.getBasePrice(_selectedCategory ?? '');
 
     // Adjust based on description length (more details = higher estimate)
     final descriptionLength = _descriptionController.text.length;

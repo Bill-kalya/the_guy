@@ -8,6 +8,7 @@ import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../shared/constants/service_categories.dart';
 class HomeScreenDesktop extends ConsumerStatefulWidget {
   const HomeScreenDesktop({super.key});
 
@@ -419,16 +420,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [
-                          _heroCategoryChip(Icons.plumbing, 'Plumbing'),
-                          _heroCategoryChip(Icons.electrical_services, 'Electrical'),
-                          _heroCategoryChip(Icons.cleaning_services, 'Cleaning'),
-                          _heroCategoryChip(Icons.school, 'Tutoring'),
-                          _heroCategoryChip(Icons.build, 'Handyman'),
-                          _heroCategoryChip(Icons.local_shipping, 'Moving'),
-                          _heroCategoryChip(Icons.pets, 'Pet Care'),
-                          _heroCategoryChip(Icons.health_and_safety, 'Health'),
-                        ],
+                        children: ServiceCategories.popular.map((cat) {
+                          return _heroCategoryChip(cat.icon, cat.name);
+                        }).toList(),
                       ),
                     ],
                   ),
@@ -619,17 +613,6 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _buildServiceCategories() {
-    final categories = [
-      ('Plumbing', Icons.plumbing, Colors.blue),
-      ('Electrical', Icons.electrical_services, Colors.amber),
-      ('Cleaning', Icons.cleaning_services, Colors.teal),
-      ('Tutoring', Icons.school, Colors.purple),
-      ('Handyman', Icons.build, Colors.orange),
-      ('Moving', Icons.local_shipping, Colors.red),
-      ('Pet Care', Icons.pets, Colors.pink),
-      ('Health', Icons.health_and_safety, Colors.green),
-    ];
-
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1400),
@@ -653,9 +636,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
               ),
               const SizedBox(height: 24),
               Row(
-                children: categories.map((cat) {
+                children: ServiceCategories.featured.map((cat) {
                   return Expanded(
-                    child: _serviceCategoryCard(cat.$1, cat.$2, cat.$3),
+                    child: _serviceCategoryCard(cat.name, cat.icon, cat.color),
                   );
                 }).toList(),
               ),
@@ -1115,7 +1098,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                     const SizedBox(width: 48),
                     _footerColumn('Company', ['About Us', 'Careers', 'Blog', 'Press']),
                     const SizedBox(width: 48),
-                    _footerColumn('Services', ['Plumbing', 'Electrical', 'Cleaning', 'Tutoring', 'All Services']),
+                    _footerColumn('Services', [...ServiceCategories.popular.map((c) => c.name), 'All Services']),
                     const SizedBox(width: 48),
                     _footerColumn('Support', ['Help Center', 'Safety', 'Terms of Service', 'Privacy Policy']),
                   ],

@@ -9,6 +9,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../shared/widgets/responsive_layout.dart';
+import '../../../shared/constants/service_categories.dart';
 import 'home_screen_desktop.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -324,16 +325,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           height: 72,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
-                            children: [
-                              _buildSearchCategoryChip(Icons.plumbing, 'Plumbing'),
-                              _buildSearchCategoryChip(Icons.electrical_services, 'Electrical'),
-                              _buildSearchCategoryChip(Icons.cleaning_services, 'Cleaning'),
-                              _buildSearchCategoryChip(Icons.school, 'Tutoring'),
-                              _buildSearchCategoryChip(Icons.build, 'Handyman'),
-                              _buildSearchCategoryChip(Icons.local_shipping, 'Moving'),
-                              _buildSearchCategoryChip(Icons.pets, 'Pet Care'),
-                              _buildSearchCategoryChip(Icons.health_and_safety, 'Health'),
-                            ],
+                            children: ServiceCategories.popular.map((cat) {
+                              return _buildSearchCategoryChip(cat.icon, cat.name);
+                            }).toList(),
                           ),
                         ),
                       ],
@@ -385,7 +379,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildSearchCategoryChip(IconData icon, String label) {
-
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
@@ -396,11 +389,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-
-
-
-
-
 
 
   Widget _buildBecomeProviderSection(bool isAuthenticated) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../shared/constants/service_categories.dart';
 
 class JobCard extends StatelessWidget {
   final Map<String, dynamic> job;
@@ -159,17 +160,6 @@ class JobCard extends StatelessWidget {
   }
 
   IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'plumbing':
-        return Icons.water_damage;
-      case 'electrical':
-        return Icons.electrical_services;
-      case 'cleaning':
-        return Icons.cleaning_services;
-      case 'moving':
-        return Icons.local_shipping;
-      default:
-        return Icons.handyman;
-    }
+    return ServiceCategories.getIcon(category);
   }
 }

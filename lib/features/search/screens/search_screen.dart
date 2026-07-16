@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/search_provider.dart';
 import '../repository/search_repository.dart';
+import '../../../shared/constants/service_categories.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -44,16 +45,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onSubmitted: _onSubmit,
             ),
             const SizedBox(height: 12),
-            const Text('Popular', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text('Popular Services', style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              _chip('Plumber'),
-              _chip('Electrician'),
-              _chip('Cleaner'),
-              _chip('Mechanic'),
-              _chip('Painter'),
-              _chip('Mover'),
-            ]),
+            Wrap(spacing: 8, runSpacing: 8, children: 
+              ServiceCategories.popular.map((cat) => _chip(cat.name)).toList(),
+            ),
             const SizedBox(height: 16),
             if (q.isNotEmpty) ...[
               const Text('Suggestions', style: TextStyle(fontWeight: FontWeight.w600)),
