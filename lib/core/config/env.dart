@@ -1,8 +1,9 @@
 class Env {
   // API Configuration
+  // NOTE: Do NOT append /api here — each Endpoints constant includes /api/ prefix
   static const String apiUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://api.theguy.co.ke/api',
+    defaultValue: 'https://api.theguy.co.ke',
   );
 
   static const String wsUrl = String.fromEnvironment(

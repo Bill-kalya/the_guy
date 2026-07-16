@@ -72,7 +72,7 @@ class LocationApiService {
   Future<ProviderLocationUpdate?> getProviderLocation(String providerId) async {
     try {
       final response = await _apiClient.get(
-        '${Endpoints.providerLocation}/$providerId',
+        EndpointBuilder.providerLocation(providerId),
       );
 
       final data = response.data;

@@ -43,7 +43,7 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      final response = await _apiClient.patch('${Endpoints.acceptJob}/$jobId');
+      final response = await _apiClient.patch(EndpointBuilder.acceptJob(jobId));
 
       if (response.statusCode == 200) {
         final acceptedJob = ProviderJob.fromJson(response.data);
@@ -66,7 +66,7 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      await _apiClient.patch('${Endpoints.declineJob}/$jobId');
+      await _apiClient.patch(EndpointBuilder.declineJob(jobId));
       state = state.copyWith(
         incomingJob: null,
         hasIncomingJob: false,
@@ -80,7 +80,7 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
   Future<void> updateJobStatus(String jobId, String status) async {
     try {
       final response = await _apiClient.patch(
-        '${Endpoints.updateJobStatus}/$jobId',
+        EndpointBuilder.updateJobStatus(jobId),
         data: {'status': status},
       );
 

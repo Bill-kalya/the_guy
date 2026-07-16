@@ -3,6 +3,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
 import '../models/job_state.dart';
 
+
 final jobProvider = NotifierProvider<JobNotifier, JobState>(JobNotifier.new);
 
 class JobNotifier extends Notifier<JobState> {
@@ -56,7 +57,8 @@ class JobNotifier extends Notifier<JobState> {
   }
 
   Future<void> completeJob() async {
-    await _apiClient.patch('${Endpoints.completeJob}/${state.jobId}');
+    if (state.jobId == null) return;
+    await _apiClient.patch(EndpointBuilder.completeJob(state.jobId!));
     state = state.copyWith(status: JobStatus.completed);
   }
 }
