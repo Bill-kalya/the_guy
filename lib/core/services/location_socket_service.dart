@@ -29,7 +29,7 @@ class LocationSocketService {
     if (token == null) return;
 
     _client = StompClient(
-      config: StompConfig(
+      config: StompConfig.sockJS(
         url: '${Endpoints.wsUrl}/ws',
         stompConnectHeaders: {'Authorization': 'Bearer $token'},
         webSocketConnectHeaders: {'Authorization': 'Bearer $token'},
