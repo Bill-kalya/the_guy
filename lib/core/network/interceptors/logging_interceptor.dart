@@ -1,17 +1,18 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../config/env.dart';
 
 class LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (Env.enableLogging) {
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print('🚀 REQUEST: ${options.method} ${options.path}');
-      print('📦 HEADERS: ${options.headers}');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('🚀 REQUEST: ${options.method} ${options.path}');
+      debugPrint('📦 HEADERS: ${options.headers}');
       if (options.data != null) {
-        print('📝 BODY: ${options.data}');
+        debugPrint('📝 BODY: ${options.data}');
       }
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
     return handler.next(options);
   }
@@ -19,14 +20,14 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (Env.enableLogging) {
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print(
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint(
         '✅ RESPONSE: ${response.statusCode} ${response.requestOptions.path}',
       );
       if (response.data != null) {
-        print('📦 DATA: ${response.data}');
+        debugPrint('📦 DATA: ${response.data}');
       }
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
     return handler.next(response);
   }
@@ -34,13 +35,13 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (Env.enableLogging) {
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print('❌ ERROR: ${err.response?.statusCode} ${err.requestOptions.path}');
-      print('⚠️ MESSAGE: ${err.message}');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('❌ ERROR: ${err.response?.statusCode} ${err.requestOptions.path}');
+      debugPrint('⚠️ MESSAGE: ${err.message}');
       if (err.response?.data != null) {
-        print('📦 ERROR DATA: ${err.response?.data}');
+        debugPrint('📦 ERROR DATA: ${err.response?.data}');
       }
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
     return handler.next(err);
   }

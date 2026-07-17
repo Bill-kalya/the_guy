@@ -22,8 +22,7 @@ class AvailabilityNotifier extends Notifier<AvailabilityState> {
 
   void _loadInitialStatus() async {
     // Load saved status or default to online
-    final savedStatus = await _secureStorage
-        .getUserRole(); // You can store this
+    await _secureStorage.getUserRole();
     state = state.copyWith(isOnline: true); // Default online
   }
 

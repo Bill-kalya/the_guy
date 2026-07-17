@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 class ErrorInterceptor extends Interceptor {
   @override
@@ -6,7 +7,7 @@ class ErrorInterceptor extends Interceptor {
     String errorMessage = _handleError(err);
 
     // You can show a toast or snackbar here
-    print('Error: $errorMessage');
+    debugPrint('Error: $errorMessage');
 
     return handler.next(err);
   }

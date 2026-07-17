@@ -5,7 +5,7 @@ import '../repository/search_repository.dart';
 import '../../../shared/constants/service_categories.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+  const SearchScreen({super.key});
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -74,7 +74,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
 class SearchResultsScreen extends ConsumerWidget {
   final String query;
-  const SearchResultsScreen({Key? key, required this.query}) : super(key: key);
+  const SearchResultsScreen({super.key, required this.query});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -95,7 +95,7 @@ class SearchResultsScreen extends ConsumerWidget {
               Expanded(
                 child: ListView.separated(
                   itemCount: res.providers.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, i) => _ProviderCard(provider: res.providers[i]),
                 ),
               ),
@@ -111,7 +111,7 @@ class SearchResultsScreen extends ConsumerWidget {
 
 class _ProviderCard extends StatelessWidget {
   final dynamic provider;
-  const _ProviderCard({Key? key, required this.provider}) : super(key: key);
+  const _ProviderCard({required this.provider});
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +124,7 @@ class _ProviderCard extends StatelessWidget {
 
     return ListTile(
       title: Text(name),
-      subtitle: Text('\u2B50 ${sqs.toStringAsFixed(0)}% SQS • \u{1F4CD} ${distance}m • ETA ${eta} min'),
+      subtitle: Text('\u2B50 ${sqs.toStringAsFixed(0)}% SQS • \u{1F4CD} ${distance}m • ETA $eta min'),
       trailing: verified ? const Icon(Icons.verified, color: Colors.green) : null,
       onTap: () {},
     );

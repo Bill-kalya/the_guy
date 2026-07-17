@@ -419,7 +419,7 @@ class _ReviewQuestionState extends State<ReviewQuestion> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: _getScoreColor(value.round()).withOpacity(0.1),
+                color: _getScoreColor(value.round()).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: _getScoreColor(value.round()),

@@ -240,19 +240,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           end: Alignment.bottomRight,
         ),
       ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.1,
-              child: Image.asset(
-                'assets/images/noise.png',
-                repeat: ImageRepeat.repeat,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Center(
+      child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1200),
               child: Padding(
@@ -341,10 +329,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                 ),
-              ),
-            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -367,14 +353,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           borderRadius: BorderRadius.circular(14),
         ),
       ),
-    );
-  }
-
-  Widget _buildSearchChip(String label) {
-    return ActionChip(
-      label: Text(label, style: const TextStyle(color: Colors.white)),
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
-      onPressed: () {},
     );
   }
 
@@ -406,53 +384,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Stack(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Positioned.fill(
-                child: Opacity(
-                  opacity: 0.06,
-                  child: Image.asset(
-                    'assets/images/noise.png',
-                    repeat: ImageRepeat.repeat,
-                    fit: BoxFit.cover,
-                  ),
+              const Text(
+                'Become a Provider',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Become a Provider',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Earn money on your own schedule. Join thousands of providers on The Guy.',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      _requireAuthThen(context, () {
-                        // Navigate to provider registration
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Opening provider registration...')),
-                        );
-                      });
-                    },
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Get Started'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.green.shade700,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 8),
+              const Text(
+                'Earn money on your own schedule. Join thousands of providers on The Guy.',
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  _requireAuthThen(context, () {
+                    // Navigate to provider registration
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Opening provider registration...')),
+                    );
+                  });
+                },
+                icon: const Icon(Icons.arrow_forward),
+                label: const Text('Get Started'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.green.shade700,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
               ),
             ],
           ),
@@ -496,108 +460,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStatsSection() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            border: Border.all(
-              color: Colors.grey.shade200,
-            ),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 600) {
-                return Column(
-                  children: [
-                    _buildStatItem('500+', 'Providers'),
-                    const SizedBox(height: 16),
-                    _buildStatItem('10K+', 'Jobs Done'),
-                    const SizedBox(height: 16),
-                    _buildStatItem('95%', 'SQS'),
-                  ],
-                );
-              }
-              
-              return const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        '500+',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Text('Providers', style: TextStyle(color: Colors.black54)),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        '10K+',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Text('Jobs Done', style: TextStyle(color: Colors.black54)),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        '95%',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      Text('SQS', style: TextStyle(color: Colors.black54)),
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        Text(label, style: const TextStyle(color: Colors.black54)),
-      ],
     );
   }
 

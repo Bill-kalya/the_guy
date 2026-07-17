@@ -64,7 +64,6 @@ flutter:
   uses-material-design: true
   
   assets:
-    - assets/images/noise.png
     - assets/images/
     - assets/icons/
     - assets/animations/

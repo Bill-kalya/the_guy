@@ -7,8 +7,6 @@ class AuthInterceptor extends Interceptor {
   final SecureStorage _secureStorage;
   late final Dio _dio;
   bool _isRefreshing = false;
-  final Map<String, dynamic> _pendingRequests = {};
-
   AuthInterceptor(this._secureStorage) {
     _dio = Dio();
   }

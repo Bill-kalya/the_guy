@@ -356,7 +356,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           'fullName': _nameController.text.trim(),
           'email': _emailController.text.trim(),
           'password': _passwordController.text,
-          'role': _selectedRole,
+          'role': _selectedRole.toUpperCase(),
+
           'latitude': location?.latitude,
           'longitude': location?.longitude,
         },

@@ -6,6 +6,7 @@ import 'core/config/env.dart';
 import 'core/storage/shared_prefs.dart';
 
 void main() async {
+  debugPrint('BUILD: 2026-07-17-001');
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Env.isDevelopment) {

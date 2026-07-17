@@ -220,16 +220,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () async {
+            onPressed: () {
+              final nav = Navigator.of(context);
               Navigator.pop(context);
-              await ref.read(authProvider.notifier).logout();
-              if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
-                );
-              }
+              ref.read(authProvider.notifier).logout().then((_) {
+                nav.pushNamedAndRemoveUntil('/login', (route) => false);
+              });
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Logout'),
