@@ -84,11 +84,23 @@ class AuthNotifier extends Notifier<AuthState> {
           accessToken: data['accessToken'] ?? data['token'],
           refreshToken: data['refreshToken'],
         );
-        await _secureStorage.saveUserData(data['user']);
+
+        final user = UserModel(
+          id: data['userId'],
+          name: data['fullName'] ?? data['name'],
+          phone: data['phone'] ?? '',
+          email: data['email'],
+          role: data['role'],
+          isVerified: data['verified'] ?? data['isVerified'] ?? false,
+          createdAt: data['createdAt'] != null
+              ? DateTime.parse(data['createdAt'])
+              : DateTime.now(),
+        );
+        await _secureStorage.saveUserData(user.toJson());
 
         await ref.read(webSocketServiceProvider).connect();
 
-        state = AuthState.authenticated(UserModel.fromJson(data['user']));
+        state = AuthState.authenticated(user);
       }
     } catch (e) {
       ErrorHandler.logError('Login failed', e);
@@ -114,11 +126,23 @@ class AuthNotifier extends Notifier<AuthState> {
           accessToken: data['accessToken'] ?? data['token'],
           refreshToken: data['refreshToken'],
         );
-        await _secureStorage.saveUserData(data['user']);
+
+        final user = UserModel(
+          id: data['userId'],
+          name: data['fullName'] ?? data['name'],
+          phone: data['phone'] ?? '',
+          email: data['email'],
+          role: data['role'],
+          isVerified: data['verified'] ?? data['isVerified'] ?? false,
+          createdAt: data['createdAt'] != null
+              ? DateTime.parse(data['createdAt'])
+              : DateTime.now(),
+        );
+        await _secureStorage.saveUserData(user.toJson());
 
         await ref.read(webSocketServiceProvider).connect();
 
-        state = AuthState.authenticated(UserModel.fromJson(data['user']));
+        state = AuthState.authenticated(user);
       }
     } catch (e) {
       ErrorHandler.logError('Email verification failed', e);

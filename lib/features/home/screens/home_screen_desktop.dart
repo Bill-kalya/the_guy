@@ -289,8 +289,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           end: Alignment.bottomRight,
         ),
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
+          bottomLeft: Radius.circular(48),
+          bottomRight: Radius.circular(48),
         ),
       ),
       child: Center(
