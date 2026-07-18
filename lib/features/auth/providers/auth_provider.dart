@@ -273,14 +273,11 @@ class AuthNotifier extends Notifier<AuthState> {
         return;
       }
     } catch (e) {
-      // Token might be expired; try refresh via the auth interceptor
-      // If we still have stored user data, optimistically authenticate
-      try {
-        final user = UserModel.fromJson(userData);
-        state = AuthState.authenticated(user);
-      } catch (_) {
-        state = AuthState.unauthenticated();
-      }
+      // AuthInterceptor already handles 401 refresh + storage cleanup.
+      // If we get here, the session is dead — don't fall back to stale local data.
+      await _secureStorage.clearAll();
     }
+
+    state = AuthState.unauthenticated();
   }
 }
