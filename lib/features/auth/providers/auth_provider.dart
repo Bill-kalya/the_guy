@@ -54,8 +54,8 @@ class AuthNotifier extends Notifier<AuthState> {
       );
 
       if (response.statusCode == 201) {
-        // Registration successful — OTP sent to email via Resend
-        state = AuthState.emailVerificationPending(email);
+        final otpSent = response.data['data']?['otpSent'] ?? true;
+        state = AuthState.emailVerificationPending(email, otpSent: otpSent);
       }
     } catch (e) {
       ErrorHandler.logError('Registration failed', e);

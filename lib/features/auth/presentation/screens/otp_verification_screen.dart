@@ -124,35 +124,44 @@ class _EmailVerificationScreenState
   }
 
   Widget _buildHeader() {
+    final authState = ref.watch(authProvider);
+    final otpWasSent = authState.otpSent;
+
     return Column(
       children: [
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: otpWasSent ? Colors.blue.shade50 : Colors.orange.shade50,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.mark_email_unread_outlined,
-              size: 40, color: Colors.blue),
+          child: Icon(
+            otpWasSent ? Icons.mark_email_unread_outlined : Icons.email_outlined,
+            size: 40,
+            color: otpWasSent ? Colors.blue : Colors.orange,
+          ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'Verify Your Email',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
-          'We sent a 6-digit code to\n${widget.email}',
+          otpWasSent
+              ? 'We sent a 6-digit code to\n${widget.email}'
+              : "We couldn't send a code to\n${widget.email}\nTap Resend to try again.",
           style: const TextStyle(color: Colors.grey),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Code expires in 5 minutes',
-          style: TextStyle(color: Colors.grey, fontSize: 12),
-          textAlign: TextAlign.center,
-        ),
+        if (otpWasSent)
+          const Text(
+            'Code expires in 5 minutes',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
       ],
     );
   }

@@ -7,6 +7,7 @@ class AuthState {
   final String? error;
   final String? pendingEmail;
   final bool emailVerified;
+  final bool otpSent;
 
   // Password reset flow
   final String? resetEmail;
@@ -20,6 +21,7 @@ class AuthState {
     this.error,
     this.pendingEmail,
     this.emailVerified = false,
+    this.otpSent = true,
     this.resetEmail,
     this.resetOtpSent = false,
     this.resetOtpVerified = false,
@@ -34,8 +36,8 @@ class AuthState {
 
   factory AuthState.unauthenticated() => const AuthState();
 
-  factory AuthState.emailVerificationPending(String email) =>
-      AuthState(pendingEmail: email);
+  factory AuthState.emailVerificationPending(String email, {bool otpSent = true}) =>
+      AuthState(pendingEmail: email, otpSent: otpSent);
 
   factory AuthState.verified(String email) =>
       AuthState(pendingEmail: email, emailVerified: true);
@@ -55,6 +57,7 @@ class AuthState {
     String? error,
     String? pendingEmail,
     bool? emailVerified,
+    bool? otpSent,
     String? resetEmail,
     bool? resetOtpSent,
     bool? resetOtpVerified,
@@ -66,6 +69,7 @@ class AuthState {
       error: error ?? this.error,
       pendingEmail: pendingEmail ?? this.pendingEmail,
       emailVerified: emailVerified ?? this.emailVerified,
+      otpSent: otpSent ?? this.otpSent,
       resetEmail: resetEmail ?? this.resetEmail,
       resetOtpSent: resetOtpSent ?? this.resetOtpSent,
       resetOtpVerified: resetOtpVerified ?? this.resetOtpVerified,
