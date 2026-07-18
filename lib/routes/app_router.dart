@@ -1,5 +1,6 @@
-import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 // Customer routes
 import '../features/auth/presentation/screens/login_screen.dart';
@@ -30,13 +31,30 @@ import '../features/provider/presentation/screens/provider_profile_screen.dart';
 
 // Providers
 import '../features/auth/providers/auth_provider.dart';
+import '../features/auth/models/auth_state.dart';
+
+/// Bridges Riverpod auth state changes into a [Listenable] so GoRouter's
+/// [refreshListenable] can re-evaluate [redirect] without recreating the router.
+class GoRouterRefreshNotifier extends ChangeNotifier {
+  GoRouterRefreshNotifier(Ref ref) {
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      notifyListeners();
+    });
+  }
+}
+
+final _goRouterRefreshProvider = Provider<GoRouterRefreshNotifier>((ref) {
+  return GoRouterRefreshNotifier(ref);
+});
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final refreshNotifier = ref.watch(_goRouterRefreshProvider);
 
   return GoRouter(
     initialLocation: '/',
-    redirect: (context, state) async {
+    refreshListenable: refreshNotifier,
+    redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isAuthenticated = authState.isAuthenticated;
       final location = state.matchedLocation;
       final isAuthRoute = location == '/login' ||
@@ -47,7 +65,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           location == '/reset-password';
       final isHomeRoute = location == '/';
 
-      // If authenticated and on an auth route (login/register/verify-email, etc), redirect to role-appropriate home
+      // Unverified user with pending email — send to OTP screen
+      if (!isAuthenticated &&
+          authState.pendingEmail != null &&
+          location != '/verify-email') {
+        return '/verify-email';
+      }
+
+      // Authenticated and on an auth route — redirect to role-appropriate home
       if (isAuthenticated && isAuthRoute) {
         final userRole = authState.user?.role ?? 'customer';
         if (userRole == 'provider') {
@@ -59,7 +84,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/';
       }
 
-      // If on root path, always show home (public landing page)
+      // Root path — always show home (public landing page)
       if (isHomeRoute) {
         return null;
       }
@@ -75,7 +100,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       }
 
-      // Auth-required routes - redirect to login if not authenticated
+      // Auth-required routes — redirect to login if not authenticated
       final authRequiredRoutes = [
         '/request-service',
         '/matching',

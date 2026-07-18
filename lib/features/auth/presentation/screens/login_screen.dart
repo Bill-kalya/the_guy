@@ -30,21 +30,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    ref.listen<AuthState>(authProvider, (previous, next) {
-      if (next.isAuthenticated && previous?.isAuthenticated == false) {
-        final userRole = next.user?.role ?? 'customer';
-        if (userRole == 'provider') {
-          context.go('/provider/home');
-        } else {
-          context.go('/');
-        }
-      } else if (next.pendingEmail != null &&
-          previous?.pendingEmail != next.pendingEmail &&
-          !next.isAuthenticated) {
-        context.go('/verify-email', extra: next.pendingEmail);
-      }
-    });
-
     return ResponsiveLayout(
       mobile: Scaffold(
         body: SafeArea(
