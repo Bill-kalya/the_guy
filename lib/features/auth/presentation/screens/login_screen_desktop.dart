@@ -36,6 +36,10 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
         } else {
           context.go('/');
         }
+      } else if (next.pendingEmail != null &&
+          previous?.pendingEmail != next.pendingEmail &&
+          !next.isAuthenticated) {
+        context.go('/verify-email', extra: next.pendingEmail);
       }
     });
 

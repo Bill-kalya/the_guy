@@ -106,14 +106,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         // Home tab - Marketplace landing
         _buildMarketplaceHome(locationState, isAuthenticated, nearbyProvidersAsync, liveLocations),
-        // Jobs tab
-        isAuthenticated
-            ? _buildJobsTab()
-            : _buildAuthPromptTab(
-                icon: Icons.history,
-                title: 'My Jobs',
-                description: 'Sign in to view your job history and track active services.',
-              ),
+        // Services tab
+        _buildServicesTab(),
         // Profile tab
         isAuthenticated
             ? _buildProfileTab()
@@ -517,32 +511,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildJobsTab() {
+  Widget _buildServicesTab() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history, size: 80, color: Colors.grey.shade300),
+            Icon(Icons.search, size: 80, color: Colors.grey.shade300),
             const SizedBox(height: 24),
             const Text(
-              'My Jobs',
+              'Services',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             const Text(
-              'View your active and past service requests.',
+              'Browse all available services and find what you need.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => context.push('/request-service'),
-              icon: const Icon(Icons.add),
-              label: const Text('Request a Service'),
+              onPressed: () => context.push('/search'),
+              icon: const Icon(Icons.explore),
+              label: const Text('Explore Services'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
             ),
           ],
@@ -603,8 +597,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.history_rounded),
-          label: 'Jobs',
+          icon: Icon(Icons.search_rounded),
+          label: 'Services',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_rounded),

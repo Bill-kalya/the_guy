@@ -38,6 +38,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         } else {
           context.go('/');
         }
+      } else if (next.pendingEmail != null &&
+          previous?.pendingEmail != next.pendingEmail &&
+          !next.isAuthenticated) {
+        context.go('/verify-email', extra: next.pendingEmail);
       }
     });
 

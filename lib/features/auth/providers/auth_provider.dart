@@ -247,7 +247,17 @@ class AuthNotifier extends Notifier<AuthState> {
       accessToken: data['accessToken'],
       refreshToken: data['refreshToken'],
     );
-    final user = UserModel.fromJson(data);
+    final user = UserModel(
+      id: data['userId'] ?? data['id'],
+      name: data['fullName'] ?? data['name'],
+      phone: data['phone'] ?? '',
+      email: data['email'],
+      role: data['role'],
+      isVerified: data['verified'] ?? data['isVerified'] ?? false,
+      createdAt: data['createdAt'] != null
+          ? DateTime.parse(data['createdAt'])
+          : DateTime.now(),
+    );
     await _secureStorage.saveUserData(user.toJson());
     await ref.read(webSocketServiceProvider).connect();
     state = AuthState.authenticated(user);
