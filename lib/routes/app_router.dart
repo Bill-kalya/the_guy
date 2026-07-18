@@ -162,8 +162,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'verify-email',
         path: '/verify-email',
         builder: (context, state) {
-          final email = state.extra as String;
-          return verify_email.EmailVerificationScreen(email: email);
+          final authState = ref.read(authProvider);
+          final email = authState.pendingEmail ?? (state.extra as String?);
+          return verify_email.EmailVerificationScreen(email: email ?? '');
         },
       ),
       GoRoute(
