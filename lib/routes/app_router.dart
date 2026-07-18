@@ -47,11 +47,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           location == '/reset-password';
       final isHomeRoute = location == '/';
 
-      // If authenticated and on an auth route (login/register/verify-email, etc), redirect to home
+      // If authenticated and on an auth route (login/register/verify-email, etc), redirect to role-appropriate home
       if (isAuthenticated && isAuthRoute) {
         final userRole = authState.user?.role ?? 'customer';
         if (userRole == 'provider') {
           return '/provider/home';
+        }
+        if (userRole == 'admin') {
+          return '/admin';
         }
         return '/';
       }
@@ -59,6 +62,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       // If on root path, always show home (public landing page)
       if (isHomeRoute) {
         return null;
+      }
+
+      // Redirect /profile to role-appropriate profile screen
+      if (isAuthenticated && location == '/profile') {
+        final userRole = authState.user?.role ?? 'customer';
+        if (userRole == 'provider') {
+          return '/provider/profile';
+        }
+        if (userRole == 'admin') {
+          return '/admin';
+        }
       }
 
       // Auth-required routes - redirect to login if not authenticated
@@ -70,6 +84,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/payment',
         '/profile',
         '/provider',
+        '/admin',
       ];
 
       final isAuthRequired = authRequiredRoutes.any(

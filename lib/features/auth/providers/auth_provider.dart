@@ -79,29 +79,19 @@ class AuthNotifier extends Notifier<AuthState> {
       );
 
       if (response.statusCode == 200) {
-        final data = response.data;
-        await _secureStorage.saveTokens(
-          accessToken: data['accessToken'] ?? data['token'],
-          refreshToken: data['refreshToken'],
-        );
-
-        final user = UserModel(
-          id: data['userId'],
-          name: data['fullName'] ?? data['name'],
-          phone: data['phone'] ?? '',
-          email: data['email'],
-          role: data['role'],
-          isVerified: data['verified'] ?? data['isVerified'] ?? false,
-          createdAt: data['createdAt'] != null
-              ? DateTime.parse(data['createdAt'])
-              : DateTime.now(),
-        );
-        await _secureStorage.saveUserData(user.toJson());
-
-        await ref.read(webSocketServiceProvider).connect();
-
-        state = AuthState.authenticated(user);
+        await _persistSession(response.data);
+        return;
       }
+
+      if (response.statusCode == 403 &&
+          response.data?['message'] == 'EMAIL_NOT_VERIFIED') {
+        state = AuthState.emailVerificationPending(email);
+        return;
+      }
+
+      state = AuthState.error(
+        response.data?['message'] ?? 'Invalid email or password.',
+      );
     } catch (e) {
       ErrorHandler.logError('Login failed', e);
       state = AuthState.error('Invalid email or password. Please try again.');
@@ -121,29 +111,14 @@ class AuthNotifier extends Notifier<AuthState> {
       );
 
       if (response.statusCode == 200) {
-        final data = response.data;
-        await _secureStorage.saveTokens(
-          accessToken: data['accessToken'] ?? data['token'],
-          refreshToken: data['refreshToken'],
-        );
-
-        final user = UserModel(
-          id: data['userId'],
-          name: data['fullName'] ?? data['name'],
-          phone: data['phone'] ?? '',
-          email: data['email'],
-          role: data['role'],
-          isVerified: data['verified'] ?? data['isVerified'] ?? false,
-          createdAt: data['createdAt'] != null
-              ? DateTime.parse(data['createdAt'])
-              : DateTime.now(),
-        );
-        await _secureStorage.saveUserData(user.toJson());
-
-        await ref.read(webSocketServiceProvider).connect();
-
-        state = AuthState.authenticated(user);
+        await _persistSession(response.data);
+        return;
       }
+
+      state = AuthState.error(
+        response.data?['message'] ??
+            'Invalid or expired verification code. Please try again.',
+      );
     } catch (e) {
       ErrorHandler.logError('Email verification failed', e);
       state = AuthState.error(
@@ -262,6 +237,20 @@ class AuthNotifier extends Notifier<AuthState> {
         'Failed to reset password. Please try again.',
       );
     }
+  }
+
+  // ──────────────────────────────────────────
+  // Session persistence (shared by login + verify-email)
+  // ──────────────────────────────────────────
+  Future<void> _persistSession(Map<String, dynamic> data) async {
+    await _secureStorage.saveTokens(
+      accessToken: data['accessToken'],
+      refreshToken: data['refreshToken'],
+    );
+    final user = UserModel.fromJson(data);
+    await _secureStorage.saveUserData(user.toJson());
+    await ref.read(webSocketServiceProvider).connect();
+    state = AuthState.authenticated(user);
   }
 
   // ──────────────────────────────────────────

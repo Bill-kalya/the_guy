@@ -27,16 +27,18 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
-      name: json['name'],
-      phone: json['phone'],
+      id: (json['id'] ?? json['userId']).toString(),
+      name: json['fullName'] ?? json['name'] ?? '',
+      phone: json['phone'] ?? '',
       email: json['email'],
-      role: json['role'],
-      avatar: json['avatar'],
+      role: json['role'] ?? '',
+      avatar: json['avatarUrl'] ?? json['avatar'],
       rating: (json['rating'] ?? 0.0).toDouble(),
       reviewsCount: json['reviewsCount'] ?? 0,
-      isVerified: json['isVerified'] ?? false,
-      createdAt: DateTime.parse(json['createdAt']),
+      isVerified: json['isVerified'] ?? json['verified'] ?? false,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
       metadata: json['metadata'],
     );
   }
@@ -44,11 +46,11 @@ class UserModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'name': name,
+      'fullName': name,
       'phone': phone,
       'email': email,
       'role': role,
-      'avatar': avatar,
+      'avatarUrl': avatar,
       'rating': rating,
       'reviewsCount': reviewsCount,
       'isVerified': isVerified,
