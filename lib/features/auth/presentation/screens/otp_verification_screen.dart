@@ -82,6 +82,8 @@ class _EmailVerificationScreenState
         final userRole = next.user?.role ?? 'customer';
         if (userRole == 'provider') {
           context.go('/provider/home');
+        } else if (userRole == 'admin') {
+          context.go('/admin');
         } else {
           context.go('/');
         }

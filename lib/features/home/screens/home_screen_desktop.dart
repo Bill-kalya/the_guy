@@ -9,6 +9,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../shared/constants/service_categories.dart';
+import '../widgets/download_app_section.dart';
 class HomeScreenDesktop extends ConsumerStatefulWidget {
   const HomeScreenDesktop({super.key});
 
@@ -273,6 +274,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
             liveLocations,
           ),
           _buildBecomeProviderSection(isAuthenticated),
+          const DownloadAppSection(),
           _buildFooter(),
         ],
       ),
