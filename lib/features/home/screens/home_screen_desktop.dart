@@ -170,14 +170,22 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         tooltip: 'Notifications',
                       ),
                       const SizedBox(width: 8),
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.blue.shade100,
-                        child: Text(
-                          'U',
-                          style: TextStyle(
-                            color: Colors.blue.shade700,
-                            fontWeight: FontWeight.bold,
+                      InkWell(
+                        onTap: () => context.push('/profile'),
+                        borderRadius: BorderRadius.circular(18),
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.blue.shade100,
+                          child: Text(
+                            authState.user != null
+                                ? (authState.user!.name.isNotEmpty
+                                    ? authState.user!.name[0].toUpperCase()
+                                    : 'U')
+                                : 'U',
+                            style: TextStyle(
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

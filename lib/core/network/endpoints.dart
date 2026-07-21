@@ -31,7 +31,11 @@ class Endpoints {
   // Users
   static const String userProfile = '/api/users/profile';
   static const String updateProfile = '/api/users/profile';
+  static const String changePassword = '/api/users/change-password';
   static const String getUserById = '/api/users';
+
+  // File Upload
+  static const String fileUpload = '/api/files/upload';
 
   // Jobs
   static const String jobs = '/api/jobs';

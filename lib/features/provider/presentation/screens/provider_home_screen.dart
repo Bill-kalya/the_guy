@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
@@ -46,7 +47,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.account_circle),
-              onPressed: () => Navigator.pushNamed(context, '/provider/profile'),
+              onPressed: () => context.push('/provider/profile'),
             ),
           ],
         ),
@@ -499,9 +500,9 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
       onTap: (index) {
         switch (index) {
           case 0: break;
-          case 1: Navigator.pushNamed(context, '/provider/active-jobs'); break;
-          case 2: Navigator.pushNamed(context, '/provider/earnings'); break;
-          case 3: Navigator.pushNamed(context, '/provider/profile'); break;
+          case 1: context.push('/provider/active-job'); break;
+          case 2: context.push('/provider/earnings'); break;
+          case 3: context.push('/provider/profile'); break;
         }
       },
       selectedItemColor: Colors.blue.shade700,

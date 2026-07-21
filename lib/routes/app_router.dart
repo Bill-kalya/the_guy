@@ -9,6 +9,7 @@ import '../features/auth/presentation/screens/otp_verification_screen.dart' as v
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/verify_reset_otp_screen.dart' as verify_reset;
 import '../features/auth/presentation/screens/reset_password_screen.dart';
+import '../features/auth/presentation/screens/change_password_screen.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/jobs/screens/request_service_screen.dart';
@@ -21,6 +22,7 @@ import '../features/profile/screens/edit_profile_screen.dart';
 
 // Admin routes
 import '../features/admin/presentation/pages/admin_home_page.dart';
+import '../features/admin/presentation/pages/admin_profile_page.dart';
 import '../features/admin/presentation/pages/trust_safety_center_page.dart';
 
 // Provider routes
@@ -141,6 +143,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdminHomePage(),
       ),
       GoRoute(
+        name: 'admin-profile',
+        path: '/admin/profile',
+        builder: (context, state) => const AdminProfilePage(),
+      ),
+      GoRoute(
         name: 'admin-trust-safety',
         path: '/admin/trust-safety',
         builder: (context, state) => const TrustSafetyCenterPage(),
@@ -198,6 +205,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final email = state.extra as String;
           return ResetPasswordScreen(email: email);
         },
+      ),
+      GoRoute(
+        name: 'change-password',
+        path: '/change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
 
       // Customer routes (auth-required)

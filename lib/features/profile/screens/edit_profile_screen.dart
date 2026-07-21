@@ -1,10 +1,15 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
+import '../../../core/storage/secure_storage.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -18,7 +23,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   bool _isLoading = false;
+  bool _isUploadingAvatar = false;
   bool _initialized = false;
+  final _picker = ImagePicker();
 
   @override
   void didChangeDependencies() {
@@ -38,6 +45,95 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingAvatar = true);
+
+      final secureStorage = ref.read(secureStorageProvider);
+      final token = await secureStorage.getAccessToken();
+      final dio = Dio();
+
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          pickedFile.path,
+          filename: 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        ),
+        'folder': 'avatars',
+      });
+
+      final response = await dio.post(
+        '${Endpoints.baseUrl}${Endpoints.fileUpload}',
+        data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        final avatarUrl = responseData is Map<String, dynamic>
+            ? (responseData['data'] as String?)
+            : responseData as String?;
+        if (avatarUrl != null) {
+          // Save the avatar URL to profile
+          final api = ref.read(apiClientProvider);
+          final name = _nameController.text.trim();
+          final parts = name.split(RegExp(r'\s+'));
+          final firstName = parts.first;
+          final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
+          await api.put(
+            Endpoints.updateProfile,
+            data: {
+              'firstName': firstName,
+              'lastName': lastName,
+              'phone': _phoneController.text.trim(),
+              'avatarUrl': avatarUrl,
+            },
+          );
+
+          // Update local state
+          final user = ref.read(authProvider).user;
+          if (user != null) {
+            ref.read(authProvider.notifier).updateUser(
+              user.copyWith(avatar: avatarUrl),
+            );
+          }
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile photo updated'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload photo: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
   }
 
   Future<void> _save() async {
@@ -124,34 +220,47 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
               children: [
-                // Avatar
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    CircleAvatar(
-                      radius: 52,
-                      backgroundColor: Colors.blue.shade100,
-                      backgroundImage: user?.avatar != null ? NetworkImage(user!.avatar!) : null,
-                      child: user?.avatar == null
-                          ? Text(
-                              _initials(user?.name ?? ''),
-                              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blue.shade700),
-                            )
-                          : null,
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade700,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                // Avatar with upload
+                GestureDetector(
+                  onTap: _isUploadingAvatar ? null : _pickAndUploadAvatar,
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      CircleAvatar(
+                        radius: 52,
+                        backgroundColor: Colors.blue.shade100,
+                        backgroundImage: user?.avatar != null ? NetworkImage(user!.avatar!) : null,
+                        child: _isUploadingAvatar
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : (user?.avatar == null
+                                ? Text(
+                                    _initials(user?.name ?? ''),
+                                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                                  )
+                                : null),
                       ),
-                      child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
-                    ),
-                  ],
+                      if (!_isUploadingAvatar)
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade700,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                        ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 8),
-                Text('Change Photo', style: TextStyle(fontSize: 13, color: Colors.blue.shade700, fontWeight: FontWeight.w500)),
+                Text(
+                  'Change Photo',
+                  style: TextStyle(fontSize: 13, color: Colors.blue.shade700, fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(height: 32),
 
                 // Name

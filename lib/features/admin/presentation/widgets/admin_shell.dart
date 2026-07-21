@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 
 class AdminShell extends StatefulWidget {
@@ -126,14 +127,18 @@ class _AdminShellState extends State<AdminShell> {
               ),
             ),
             const SizedBox(width: 16),
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.blue.shade100,
-              child: Text(
-                'A',
-                style: TextStyle(
-                  color: Colors.blue.shade700,
-                  fontWeight: FontWeight.bold,
+            InkWell(
+              onTap: () => context.push('/admin/profile'),
+              borderRadius: BorderRadius.circular(18),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: Colors.blue.shade100,
+                child: Text(
+                  'A',
+                  style: TextStyle(
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -151,6 +156,7 @@ class _AdminShellState extends State<AdminShell> {
       ('safety', 'Trust & Safety', Icons.security),
       ('analytics', 'Analytics', Icons.analytics),
       ('finance', 'Finance', Icons.account_balance),
+      ('profile', 'Profile', Icons.account_circle),
     ];
 
     return Container(
@@ -209,6 +215,9 @@ class _AdminShellState extends State<AdminShell> {
                     child: InkWell(
                       onTap: () {
                         setState(() => _currentRoute = item.$1);
+                        if (item.$1 == 'profile') {
+                          context.push('/admin/profile');
+                        }
                       },
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
@@ -289,6 +298,7 @@ class _AdminShellState extends State<AdminShell> {
       ('safety', 'Trust & Safety', Icons.security),
       ('analytics', 'Analytics', Icons.analytics),
       ('finance', 'Finance', Icons.account_balance),
+      ('profile', 'Profile', Icons.account_circle),
     ];
 
     return Drawer(
@@ -341,6 +351,9 @@ class _AdminShellState extends State<AdminShell> {
                 onTap: () {
                   setState(() => _currentRoute = item.$1);
                   Navigator.pop(context);
+                  if (item.$1 == 'profile') {
+                    context.push('/admin/profile');
+                  }
                 },
               );
             }),

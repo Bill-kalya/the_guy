@@ -397,7 +397,7 @@ class ProviderProfileScreen extends ConsumerWidget {
       title: 'Account Security',
       child: Column(
         children: [
-          _actionRow(Icons.lock_outline, 'Change Password', () => context.push('/forgot-password')),
+          _actionRow(Icons.lock_outline, 'Change Password', () => context.push('/change-password')),
           const Divider(height: 1),
           _actionRow(Icons.location_on_outlined, 'Service Area', () {}),
           const Divider(height: 1),

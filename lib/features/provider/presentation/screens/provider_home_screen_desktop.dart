@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
@@ -113,7 +114,16 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () => setState(() => _currentRoute = item.$1),
+                      onTap: () {
+                        setState(() => _currentRoute = item.$1);
+                        if (item.$1 == 'profile') {
+                          context.push('/provider/profile');
+                        } else if (item.$1 == 'jobs') {
+                          context.push('/provider/active-job');
+                        } else if (item.$1 == 'earnings') {
+                          context.push('/provider/earnings');
+                        }
+                      },
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
