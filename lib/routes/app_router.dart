@@ -86,8 +86,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/';
       }
 
-      // Root path — always show home (public landing page)
+      // Root path — redirect non-customer roles to their homes
       if (isHomeRoute) {
+        if (isAuthenticated) {
+          final userRole = authState.user?.role ?? 'customer';
+          if (userRole == 'admin') {
+            return '/admin';
+          }
+          if (userRole == 'provider') {
+            return '/provider/home';
+          }
+        }
         return null;
       }
 
