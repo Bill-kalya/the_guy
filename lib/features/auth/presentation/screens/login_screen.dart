@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../models/auth_state.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import 'login_screen_desktop.dart';
+import '../../../../core/themes/colors.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -71,7 +72,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: AppColors.primaryLight,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.handyman, size: 40, color: Colors.blue),
@@ -169,7 +170,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: ElevatedButton(
         onPressed: authState.isLoading ? null : _login,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade700,
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),

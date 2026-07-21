@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/themes/colors.dart';
 
 class ProfileTile extends StatelessWidget {
   final IconData icon;
@@ -27,10 +28,10 @@ class ProfileTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Colors.blue, size: 20),
+            child: Icon(icon, color: AppColors.primary, size: 20),
           ),
           title: Text(title),
           subtitle: subtitle != null ? Text(subtitle!) : null,

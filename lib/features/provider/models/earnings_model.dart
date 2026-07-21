@@ -27,21 +27,21 @@ class EarningsModel {
 
   factory EarningsModel.fromJson(Map<String, dynamic> json) {
     return EarningsModel(
-      totalEarnings: json['totalEarnings'].toDouble(),
-      todayEarnings: json['todayEarnings'].toDouble(),
-      thisWeekEarnings: json['thisWeekEarnings'].toDouble(),
-      thisMonthEarnings: json['thisMonthEarnings'].toDouble(),
-      totalJobsCompleted: json['totalJobsCompleted'],
-      todayJobs: json['todayJobs'],
-      thisWeekJobs: json['thisWeekJobs'],
-      thisMonthJobs: json['thisMonthJobs'],
-      recentTransactions: (json['recentTransactions'] as List)
+      totalEarnings: (json['totalEarnings'] ?? 0).toDouble(),
+      todayEarnings: (json['todayEarnings'] ?? 0).toDouble(),
+      thisWeekEarnings: (json['thisWeekEarnings'] ?? 0).toDouble(),
+      thisMonthEarnings: (json['thisMonthEarnings'] ?? 0).toDouble(),
+      totalJobsCompleted: json['totalJobsCompleted'] ?? json['jobsCompleted'] ?? 0,
+      todayJobs: json['todayJobs'] ?? 0,
+      thisWeekJobs: json['thisWeekJobs'] ?? 0,
+      thisMonthJobs: json['thisMonthJobs'] ?? 0,
+      recentTransactions: (json['recentTransactions'] as List? ?? [])
           .map((e) => EarningTransaction.fromJson(e))
           .toList(),
-      weeklyEarnings: (json['weeklyEarnings'] as List)
+      weeklyEarnings: (json['weeklyEarnings'] as List? ?? [])
           .map((e) => DailyEarning.fromJson(e))
           .toList(),
-      monthlyEarnings: (json['monthlyEarnings'] as List)
+      monthlyEarnings: (json['monthlyEarnings'] as List? ?? [])
           .map((e) => MonthlyEarning.fromJson(e))
           .toList(),
     );

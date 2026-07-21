@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/themes/colors.dart';
 
 class PriceEstimator extends StatefulWidget {
   final Function(double) onPriceChanged;
@@ -114,7 +115,7 @@ class _PriceEstimatorState extends State<PriceEstimator> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

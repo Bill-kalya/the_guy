@@ -3,16 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../providers/availability_provider.dart';
+import '../../providers/earnings_provider.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../auth/models/user_model.dart';
+import '../../../../core/themes/colors.dart';
 
-class ProviderProfileScreen extends ConsumerWidget {
+class ProviderProfileScreen extends ConsumerStatefulWidget {
   const ProviderProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProviderProfileScreen> createState() => _ProviderProfileScreenState();
+}
+
+class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(earningsProvider.notifier).fetchEarnings();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final availabilityState = ref.watch(availabilityProvider);
+    final earningsState = ref.watch(earningsProvider);
     final user = authState.user;
 
     if (user == null) {
@@ -40,9 +56,9 @@ class ProviderProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                     _buildContactInfo(user),
                     const SizedBox(height: 20),
-                    _buildProviderMetrics(user),
+                    _buildProviderMetrics(user, earningsState),
                     const SizedBox(height: 20),
-                    _buildWalletCard(),
+                    _buildWalletCard(earningsState),
                     const SizedBox(height: 20),
                     _buildSecuritySection(context, ref),
                     const SizedBox(height: 20),
@@ -70,8 +86,8 @@ class ProviderProfileScreen extends ConsumerWidget {
           Container(
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12)),
-            child: Text('Provider', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue.shade700)),
+            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)),
+            child: Text('Provider', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary)),
           ),
         ],
       ),
@@ -85,7 +101,7 @@ class ProviderProfileScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade800, Colors.blue.shade500],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -104,7 +120,7 @@ class ProviderProfileScreen extends ConsumerWidget {
                 backgroundColor: Colors.white,
                 backgroundImage: user.avatar != null ? NetworkImage(user.avatar!) : null,
                 child: user.avatar == null
-                    ? Text(_initials(user.name), style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.blue.shade700))
+                    ? Text(_initials(user.name), style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: AppColors.primary))
                     : null,
               ),
               if (user.isVerified)
@@ -171,7 +187,7 @@ class ProviderProfileScreen extends ConsumerWidget {
               label: const Text('Edit Profile'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: Colors.blue.shade700,
+                foregroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -204,13 +220,13 @@ class ProviderProfileScreen extends ConsumerWidget {
                   child: LinearProgressIndicator(
                     value: pct / 100,
                     backgroundColor: Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation(pct == 100 ? Colors.green.shade500 : Colors.blue.shade600),
+                    valueColor: AlwaysStoppedAnimation(pct == 100 ? Colors.green.shade500 : AppColors.primary),
                     minHeight: 8,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Text('$pct%', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: pct == 100 ? Colors.green.shade700 : Colors.blue.shade700)),
+              Text('$pct%', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: pct == 100 ? Colors.green.shade700 : AppColors.primary)),
             ],
           ),
           const SizedBox(height: 16),
@@ -298,24 +314,17 @@ class ProviderProfileScreen extends ConsumerWidget {
   }
 
   // ── Provider Metrics ────────────────────────────────────
-  Widget _buildProviderMetrics(UserModel user) {
+  Widget _buildProviderMetrics(UserModel user, EarningsState earningsState) {
+    final jobsCompleted = earningsState.earnings?.totalJobsCompleted ?? 0;
     return _card(
       title: 'Provider Activity',
       child: Column(
         children: [
           Row(
             children: [
-              Expanded(child: _statTile(Icons.work_outline, Colors.blue, '0', 'Jobs Done')),
+              Expanded(child: _statTile(Icons.work_outline, Colors.blue, '$jobsCompleted', 'Jobs Done')),
               Container(width: 1, height: 48, color: Colors.grey.shade200),
               Expanded(child: _statTile(Icons.star_rounded, Colors.amber, user.rating > 0 ? user.rating.toStringAsFixed(1) : '\u2014', 'Rating')),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _statTile(Icons.timer_outlined, Colors.purple, '< 2m', 'Response')),
-              Container(width: 1, height: 48, color: Colors.grey.shade200),
-              Expanded(child: _statTile(Icons.check_circle_outline, Colors.green, '98%', 'Completion')),
             ],
           ),
         ],
@@ -324,7 +333,9 @@ class ProviderProfileScreen extends ConsumerWidget {
   }
 
   // ── Wallet ──────────────────────────────────────────────
-  Widget _buildWalletCard() {
+  Widget _buildWalletCard(EarningsState earningsState) {
+    final earnings = earningsState.earnings;
+    final available = earnings != null ? (earnings.totalEarnings) : 0.0;
     return _card(
       title: 'Wallet',
       child: Column(
@@ -345,7 +356,7 @@ class ProviderProfileScreen extends ConsumerWidget {
               children: [
                 Text('Available Balance', style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8))),
                 const SizedBox(height: 6),
-                const Text('KES 0.00', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text('KES ${available.toStringAsFixed(2)}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
               ],
             ),
           ),
@@ -473,13 +484,13 @@ class ProviderProfileScreen extends ConsumerWidget {
   Widget _infoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.blue.shade700),
+        Icon(icon, size: 20, color: AppColors.primary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              Text(label, style: TextStyle(fontSize: 12, color: AppColors.textHint)),
               const SizedBox(height: 2),
               Text(value, style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A2E))),
             ],
@@ -508,7 +519,7 @@ class ProviderProfileScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: Colors.blue.shade700),
+            Icon(icon, size: 20, color: AppColors.primary),
             const SizedBox(width: 12),
             Expanded(child: Text(label, style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A2E)))),
             Icon(Icons.chevron_right, size: 20, color: Colors.grey.shade400),

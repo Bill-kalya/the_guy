@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/admin_shell.dart';
+import '../../../../core/themes/colors.dart';
 
 class TrustSafetyCenterPage extends StatefulWidget {
   const TrustSafetyCenterPage({super.key});
@@ -59,7 +60,7 @@ class _TrustSafetyCenterPageState extends State<TrustSafetyCenterPage> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.blue.shade700, Colors.blue.shade500],
+              colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),

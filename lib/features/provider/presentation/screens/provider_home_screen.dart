@@ -6,6 +6,7 @@ import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import 'provider_home_screen_desktop.dart';
+import '../../../../core/themes/colors.dart';
 
 class ProviderHomeScreen extends ConsumerStatefulWidget {
   const ProviderHomeScreen({super.key});
@@ -198,8 +199,8 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: Colors.blue.shade100,
-                  child: Text(customer[0], style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
+                  backgroundColor: AppColors.primaryLight,
+                  child: Text(customer[0], style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -300,7 +301,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pushNamed(context, '/provider/active-job'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -345,8 +346,8 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, size: 18, color: Colors.blue.shade600),
+            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, size: 18, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -505,7 +506,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
           case 3: context.push('/provider/profile'); break;
         }
       },
-      selectedItemColor: Colors.blue.shade700,
+      selectedItemColor: AppColors.primary,
       unselectedItemColor: Colors.grey,
       elevation: 10,
       type: BottomNavigationBarType.fixed,

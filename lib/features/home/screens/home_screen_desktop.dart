@@ -8,6 +8,7 @@ import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../core/themes/colors.dart';
 import '../../../shared/constants/service_categories.dart';
 import '../widgets/download_app_section.dart';
 class HomeScreenDesktop extends ConsumerStatefulWidget {
@@ -107,7 +108,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade800,
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -175,7 +176,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         borderRadius: BorderRadius.circular(18),
                         child: CircleAvatar(
                           radius: 18,
-                          backgroundColor: Colors.blue.shade100,
+                          backgroundColor: AppColors.primaryLight,
                           child: Text(
                             authState.user != null
                                 ? (authState.user!.name.isNotEmpty
@@ -183,7 +184,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                                     : 'U')
                                 : 'U',
                             style: TextStyle(
-                              color: Colors.blue.shade700,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -202,7 +203,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       ElevatedButton(
                         onPressed: () => context.push('/register'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade700,
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
@@ -228,7 +229,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
-        foregroundColor: isActive ? Colors.blue.shade700 : Colors.grey.shade700,
+        foregroundColor: isActive ? AppColors.primary : Colors.grey.shade700,
         padding: const EdgeInsets.symmetric(horizontal: 8),
       ),
       child: Text(
@@ -292,7 +293,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade900, Colors.blue.shade700, Colors.blue.shade500],
+          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -419,7 +420,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                                     });
                                   },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue.shade700,
+                          backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 32,
@@ -495,7 +496,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                               padding: EdgeInsets.only(left: i > 0 ? -8 : 0),
                               child: CircleAvatar(
                                 radius: 20,
-                                backgroundColor: Colors.blue.shade300,
+                                backgroundColor: AppColors.primary.withValues(alpha: 0.5),
                                 child: Icon(Icons.person, color: Colors.white, size: 20),
                               ),
                             ),
@@ -1083,7 +1084,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.shade600,
+                                  color: AppColors.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: ClipRRect(

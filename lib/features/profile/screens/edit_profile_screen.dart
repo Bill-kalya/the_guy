@@ -8,6 +8,7 @@ import 'package:dio/dio.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/themes/colors.dart';
 import '../../../core/network/endpoints.dart';
 import '../../../core/storage/secure_storage.dart';
 
@@ -228,7 +229,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 52,
-                        backgroundColor: Colors.blue.shade100,
+                        backgroundColor: AppColors.primaryLight,
                         backgroundImage: user?.avatar != null ? NetworkImage(user!.avatar!) : null,
                         child: _isUploadingAvatar
                             ? const SizedBox(
@@ -239,7 +240,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             : (user?.avatar == null
                                 ? Text(
                                     _initials(user?.name ?? ''),
-                                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary),
                                   )
                                 : null),
                       ),
@@ -247,7 +248,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.blue.shade700,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
@@ -259,7 +260,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Change Photo',
-                  style: TextStyle(fontSize: 13, color: Colors.blue.shade700, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 32),
 
@@ -295,7 +296,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _save,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -334,7 +335,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-          prefixIcon: Icon(icon, color: Colors.blue.shade700, size: 20),
+          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           filled: true,
           fillColor: readOnly ? Colors.grey.shade50 : Colors.white,

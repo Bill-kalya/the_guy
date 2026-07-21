@@ -42,6 +42,7 @@ class Endpoints {
   static const String requestJob = '/api/jobs/request';
   static const String nearbyJobs = '/api/jobs/nearby';
   static const String jobHistory = '/api/jobs/history';
+  static const String customerStats = '/api/jobs/stats';
 
   // Payments
   static const String initiateMpesa = '/api/payments/mpesa/initiate';

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../auth/models/user_model.dart';
 import '../widgets/admin_shell.dart';
+import '../../../../core/themes/colors.dart';
 
 class AdminProfilePage extends ConsumerWidget {
   const AdminProfilePage({super.key});
@@ -70,14 +71,14 @@ class AdminProfilePage extends ConsumerWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade800, Colors.blue.shade500],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.shade200.withValues(alpha: 0.4),
+            color: AppColors.primaryLight.withValues(alpha: 0.4),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -93,7 +94,7 @@ class AdminProfilePage extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
+                color: AppColors.primary,
               ),
             ),
           ),
@@ -234,7 +235,7 @@ class AdminProfilePage extends ConsumerWidget {
   Widget _infoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.blue.shade700),
+        Icon(icon, size: 20, color: AppColors.primary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -257,7 +258,7 @@ class AdminProfilePage extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: Colors.blue.shade700),
+            Icon(icon, size: 20, color: AppColors.primary),
             const SizedBox(width: 12),
             Expanded(child: Text(label, style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A2E)))),
             Icon(Icons.chevron_right, size: 20, color: Colors.grey.shade400),

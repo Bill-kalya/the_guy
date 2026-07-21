@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../shared/constants/service_categories.dart';
+import '../../../../core/themes/colors.dart';
 
 class ProviderRegistrationScreen extends ConsumerStatefulWidget {
   const ProviderRegistrationScreen({super.key});
@@ -237,7 +238,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
                       height: 28,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isDone ? Colors.blue : isActive ? Colors.blue.shade700 : Colors.grey.shade300,
+                        color: isDone ? AppColors.primary : isActive ? AppColors.primary : Colors.grey.shade300,
                       ),
                       child: Center(
                         child: isDone
@@ -281,15 +282,15 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
             children: [
               CircleAvatar(
                 radius: 52,
-                backgroundColor: Colors.blue.shade100,
+                backgroundColor: AppColors.primaryLight,
                 backgroundImage: user?.avatar != null ? NetworkImage(user!.avatar!) : null,
                 child: user?.avatar == null
-                    ? Text(_initials(user?.name ?? ''), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blue.shade700))
+                    ? Text(_initials(user?.name ?? ''), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary))
                     : null,
               ),
               Container(
                 padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: Colors.blue.shade700, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
                 child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
               ),
             ],
@@ -327,9 +328,9 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: selected ? Colors.blue.shade700 : Colors.white,
+                    color: selected ? AppColors.primary : Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: selected ? Colors.blue.shade700 : Colors.grey.shade300),
+                    border: Border.all(color: selected ? AppColors.primary : Colors.grey.shade300),
                   ),
                   child: Center(
                     child: Text(
@@ -351,7 +352,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
           max: 50,
           divisions: 9,
           label: '${_serviceRadius.toInt()} km',
-          activeColor: Colors.blue.shade700,
+          activeColor: AppColors.primary,
           onChanged: (v) => setState(() => _serviceRadius = v),
         ),
       ],
@@ -539,7 +540,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               side: BorderSide(color: _latitude != null ? Colors.green.shade400 : Colors.grey.shade300),
-              foregroundColor: _latitude != null ? Colors.green.shade700 : Colors.blue.shade700,
+              foregroundColor: _latitude != null ? Colors.green.shade700 : AppColors.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
@@ -607,7 +608,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-        prefixIcon: Icon(icon, color: Colors.blue.shade700, size: 20),
+        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         filled: true,
         fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
@@ -626,7 +627,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
         child: ElevatedButton(
           onPressed: _isSubmitting ? null : (isLastStep ? _submit : () => setState(() => _currentStep++)),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue.shade700,
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

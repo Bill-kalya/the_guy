@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../widgets/auth_button.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/auth_state.dart';
+import '../../../../core/themes/colors.dart';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
   final String email;
@@ -135,7 +136,7 @@ class _EmailVerificationScreenState
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: otpWasSent ? Colors.blue.shade50 : Colors.orange.shade50,
+            color: otpWasSent ? AppColors.primaryLight : Colors.orange.shade50,
             shape: BoxShape.circle,
           ),
           child: Icon(

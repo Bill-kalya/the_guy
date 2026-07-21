@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/themes/colors.dart';
 
 /// A "Get the app" section meant to sit at the bottom of the home screen.
 /// Shows App Store + Google Play badges. Since neither is published yet,
@@ -25,7 +26,7 @@ class DownloadAppSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade900, Colors.blue.shade700],
+          colors: [AppColors.primaryDark, AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

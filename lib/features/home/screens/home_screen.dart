@@ -8,6 +8,7 @@ import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../core/themes/colors.dart';
 import '../../../shared/widgets/responsive_layout.dart';
 import '../../../shared/constants/service_categories.dart';
 import 'home_screen_desktop.dart';
@@ -226,10 +227,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.blue.shade800,
-            Colors.blue.shade600,
-          ],
+          colors: AppColors.primaryGradient.colors.toList(),
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -344,7 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       label: const Text('Get a Guy'),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
-        foregroundColor: Colors.blue.shade700,
+        foregroundColor: AppColors.primary,
         elevation: 3,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
@@ -584,7 +582,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _currentIndex = index;
         });
       },
-      selectedItemColor: Colors.blue.shade700,
+      selectedItemColor: AppColors.primary,
       unselectedItemColor: Colors.grey,
       elevation: 10,
       type: BottomNavigationBarType.fixed,

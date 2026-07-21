@@ -6,6 +6,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
+import '../../../../core/themes/colors.dart';
 
 class RegisterScreenDesktop extends ConsumerStatefulWidget {
   const RegisterScreenDesktop({super.key});
@@ -72,11 +73,11 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
                   children: [
                     Container(
                       width: 32, height: 32,
-                      decoration: BoxDecoration(color: Colors.blue.shade700, borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
                       child: Image.asset('assets/icons/icon (2).png', fit: BoxFit.contain),
                     ),
                     const SizedBox(width: 8),
-                    Text('The Guy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade800)),
+                    Text('The Guy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
                   ],
                 ),
                 const Spacer(),
@@ -209,7 +210,7 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
           decoration: BoxDecoration(
             color: isActive ? Colors.blue : Colors.grey.shade200,
             shape: BoxShape.circle,
-            border: isCurrent ? Border.all(color: Colors.blue.shade700, width: 3) : null,
+            border: isCurrent ? Border.all(color: AppColors.primary, width: 3) : null,
           ),
           child: Center(
             child: isActive
@@ -254,7 +255,7 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
           child: ElevatedButton(
             onPressed: () => setState(() => _currentStep = 1),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade700, foregroundColor: Colors.white,
+              backgroundColor: AppColors.primary, foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0,
             ),
             child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -396,7 +397,7 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700, foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary, foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0,
                   ),
                   child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -455,9 +456,9 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
                 TextSpan(
                   text: 'I agree to the ', style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   children: [
-                    TextSpan(text: 'Terms of Service', style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w600)),
+                    TextSpan(text: 'Terms of Service', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
                     const TextSpan(text: ' and '),
-                    TextSpan(text: 'Privacy Policy', style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w600)),
+                    TextSpan(text: 'Privacy Policy', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),

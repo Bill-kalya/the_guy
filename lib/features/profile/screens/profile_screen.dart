@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
+import '../providers/customer_stats_provider.dart';
+import '../../../core/themes/colors.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -12,6 +14,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final user = authState.user;
+    final statsAsync = ref.watch(customerStatsProvider);
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text('Not logged in')));
@@ -36,7 +39,7 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                     _buildContactInfo(user),
                     const SizedBox(height: 20),
-                    _buildActivityCard(user),
+                    _buildActivityCard(user, statsAsync),
                     const SizedBox(height: 20),
                     _buildSecuritySection(context, ref),
                     const SizedBox(height: 20),
@@ -72,7 +75,7 @@ class ProfileScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade800, Colors.blue.shade500],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -91,7 +94,7 @@ class ProfileScreen extends ConsumerWidget {
                 backgroundColor: Colors.white,
                 backgroundImage: user.avatar != null ? NetworkImage(user.avatar!) : null,
                 child: user.avatar == null
-                    ? Text(_initials(user.name), style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.blue.shade700))
+                    ? Text(_initials(user.name), style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: AppColors.primary))
                     : null,
               ),
               if (user.isVerified)
@@ -131,7 +134,7 @@ class ProfileScreen extends ConsumerWidget {
               label: const Text('Edit Profile'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: Colors.blue.shade700,
+                foregroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -165,14 +168,14 @@ class ProfileScreen extends ConsumerWidget {
                     value: pct / 100,
                     backgroundColor: Colors.grey.shade200,
                     valueColor: AlwaysStoppedAnimation(
-                      pct == 100 ? Colors.green.shade500 : Colors.blue.shade600,
+                      pct == 100 ? Colors.green.shade500 : AppColors.primary,
                     ),
                     minHeight: 8,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Text('$pct%', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: pct == 100 ? Colors.green.shade700 : Colors.blue.shade700)),
+              Text('$pct%', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: pct == 100 ? Colors.green.shade700 : AppColors.primary)),
             ],
           ),
           const SizedBox(height: 16),
@@ -225,16 +228,17 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   // ── Activity (Customer) ─────────────────────────────────
-  Widget _buildActivityCard(UserModel user) {
+  Widget _buildActivityCard(UserModel user, AsyncValue<CustomerStats> statsAsync) {
+    final stats = statsAsync.valueOrNull;
     return _card(
       title: 'Activity',
       child: Row(
         children: [
-          Expanded(child: _statTile(Icons.work_outline, Colors.blue, '0', 'Jobs Posted')),
+          Expanded(child: _statTile(Icons.work_outline, Colors.blue, '${stats?.totalJobs ?? 0}', 'Jobs Posted')),
           Container(width: 1, height: 48, color: Colors.grey.shade200),
           Expanded(child: _statTile(Icons.star_rounded, Colors.amber, user.rating > 0 ? user.rating.toStringAsFixed(1) : '\u2014', 'Rating')),
           Container(width: 1, height: 48, color: Colors.grey.shade200),
-          Expanded(child: _statTile(Icons.favorite_outline, Colors.red, '0', 'Favorites')),
+          Expanded(child: _statTile(Icons.check_circle_outline, Colors.green, '${stats?.completedJobs ?? 0}', 'Completed')),
         ],
       ),
     );
@@ -322,7 +326,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget _infoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.blue.shade700),
+        Icon(icon, size: 20, color: AppColors.primary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -357,7 +361,7 @@ class ProfileScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: Colors.blue.shade700),
+        Icon(icon, size: 20, color: AppColors.primary),
             const SizedBox(width: 12),
             Expanded(child: Text(label, style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A2E)))),
             Icon(Icons.chevron_right, size: 20, color: Colors.grey.shade400),

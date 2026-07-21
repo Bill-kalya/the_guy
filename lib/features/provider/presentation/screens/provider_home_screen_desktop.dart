@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
+import '../../../../core/themes/colors.dart';
 
 class ProviderHomeScreenDesktop extends ConsumerStatefulWidget {
   const ProviderHomeScreenDesktop({super.key});
@@ -191,7 +192,7 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
             ),
             const SizedBox(width: 16),
             IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
-            CircleAvatar(radius: 18, backgroundColor: Colors.blue.shade100, child: const Text('P', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold))),
+            CircleAvatar(radius: 18, backgroundColor: AppColors.primaryLight, child: Text('P', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold))),
           ],
         ),
       ),
@@ -280,7 +281,7 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
               children: [
                 Expanded(flex: 2, child: Row(
                   children: [
-                    CircleAvatar(radius: 14, backgroundColor: Colors.blue.shade100, child: Text('J${i+1}', style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 12))),
+                    CircleAvatar(radius: 14, backgroundColor: AppColors.primaryLight, child: Text('J${i+1}', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12))),
                     const SizedBox(width: 8),
                     const Text('John Doe', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
                   ],
@@ -352,7 +353,7 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {},
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade700, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                     child: const Text('View Job Details'),
                   ),
                 ],
@@ -397,8 +398,8 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
       onTap: () {},
       child: Row(
         children: [
-          Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, size: 18, color: Colors.blue.shade600),
+          Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, size: 18, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Column(

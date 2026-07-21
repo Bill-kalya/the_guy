@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/auth_state.dart';
+import '../../../../core/themes/colors.dart';
 
 class LoginScreenDesktop extends ConsumerStatefulWidget {
   const LoginScreenDesktop({super.key});
@@ -85,7 +86,7 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                       child: Image.asset('assets/icons/icon (2).png', fit: BoxFit.contain),
                     ),
                     const SizedBox(width: 8),
-                    Text('The Guy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade800)),
+                    Text('The Guy', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
                   ],
                 ),
                 const Spacer(),
@@ -103,7 +104,7 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
       height: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade900, Colors.blue.shade700, Colors.blue.shade500],
+          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -273,7 +274,7 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                   child: ElevatedButton(
                     onPressed: authState.isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,

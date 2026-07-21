@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../core/themes/colors.dart';
 
 
 class NearbyProvidersList extends StatelessWidget {
@@ -123,7 +124,7 @@ class NearbyProvidersList extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: Colors.blue.shade100,
+                    backgroundColor: AppColors.primaryLight,
                     child: Text(
                       provider.name.isNotEmpty
                           ? provider.name[0].toUpperCase()
@@ -131,7 +132,7 @@ class NearbyProvidersList extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade700,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
@@ -224,7 +225,7 @@ class NearbyProvidersList extends StatelessWidget {
                             provider.category,
                             style: const TextStyle(fontSize: 10, color: Colors.white),
                           ),
-                          backgroundColor: Colors.blue.shade600,
+                          backgroundColor: AppColors.primary,
                           padding: EdgeInsets.zero,
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,

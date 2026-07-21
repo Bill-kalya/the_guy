@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/admin_shell.dart';
+import '../../../../core/themes/colors.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -343,10 +344,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
+                      color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(activity.$3, size: 18, color: Colors.blue.shade600),
+                    child: Icon(activity.$3, size: 18, color: AppColors.primary.withValues(alpha: 0.7)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

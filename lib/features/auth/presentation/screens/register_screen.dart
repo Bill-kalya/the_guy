@@ -8,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import 'register_screen_desktop.dart';
+import '../../../../core/themes/colors.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -89,10 +90,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: AppColors.primaryLight,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.person_add, size: 40, color: Colors.blue),
+          child: const Icon(Icons.person_add, size: 40, color: AppColors.primary),
         ),
         const SizedBox(height: 16),
         const Text(
@@ -220,7 +221,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.shade50 : Colors.grey.shade50,
+          color: isSelected ? AppColors.primaryLight : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? Colors.blue : Colors.grey.shade300,
@@ -252,7 +253,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.blue.shade700 : Colors.black87,
+                      color: isSelected ? AppColors.primary : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -267,7 +268,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: Colors.blue.shade600, size: 24),
+              Icon(Icons.check_circle, color: AppColors.primary.withValues(alpha: 0.7), size: 24),
           ],
         ),
       ),

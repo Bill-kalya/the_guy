@@ -18,7 +18,7 @@ class AppTheme {
     appBarTheme: const AppBarTheme(
       elevation: 0,
       centerTitle: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       foregroundColor: AppColors.textPrimary,
       titleTextStyle: TextStyle(
         color: AppColors.textPrimary,
@@ -35,7 +35,8 @@ class AppTheme {
         foregroundColor: Colors.white,
         minimumSize: const Size(double.infinity, 48),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
@@ -46,7 +47,7 @@ class AppTheme {
         minimumSize: const Size(double.infinity, 48),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         side: const BorderSide(color: AppColors.primary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
@@ -58,10 +59,10 @@ class AppTheme {
       ),
     ),
 
-    // Input Decoration Theme
+    // Input Decoration Theme — white fill matches home screen search bar
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.surface,
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.border),
@@ -85,10 +86,11 @@ class AppTheme {
 
     // Card Theme
     cardTheme: CardThemeData(
-      elevation: 2,
+      color: Colors.white,
+      elevation: 1,
+      shadowColor: Colors.black12,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
-      color: AppColors.card,
     ),
 
     // Text Themes
@@ -122,7 +124,7 @@ class AppTheme {
 
     // Bottom Navigation Bar Theme
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.textSecondary,
       type: BottomNavigationBarType.fixed,
@@ -148,26 +150,26 @@ class AppTheme {
       secondary: AppColors.secondary,
       error: AppColors.error,
       surface: Color(0xFF1E1E1E),
-      onSurface: Colors.black,
+      onSurface: Colors.white,
     ),
 
     appBarTheme: const AppBarTheme(
       elevation: 0,
       centerTitle: true,
       backgroundColor: Color(0xFF1E1E1E),
-      foregroundColor: Colors.black,
+      foregroundColor: Colors.white,
       titleTextStyle: TextStyle(
-        color: Colors.black,
+        color: Colors.white,
         fontSize: 20,
         fontWeight: FontWeight.w600,
       ),
-      iconTheme: IconThemeData(color: Colors.black),
+      iconTheme: IconThemeData(color: Colors.white),
     ),
 
     cardTheme: CardThemeData(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: const Color(0xFF1E1E1E),
+      color: const Color(0xFF2A2A2A),
     ),
 
     inputDecorationTheme: InputDecorationTheme(
@@ -190,8 +192,29 @@ class AppTheme {
         borderSide: const BorderSide(color: AppColors.error),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      hintStyle: const TextStyle(color: Colors.black54),
-      labelStyle: const TextStyle(color: Colors.black87),
+      hintStyle: const TextStyle(color: Colors.white54),
+      labelStyle: const TextStyle(color: Colors.white70),
+    ),
+
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFF1E1E1E),
+      selectedItemColor: AppColors.primary,
+      unselectedItemColor: Colors.white54,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
+    ),
+
+    tabBarTheme: const TabBarThemeData(
+      labelColor: AppColors.primary,
+      unselectedLabelColor: Colors.white54,
+      indicatorColor: AppColors.primary,
+      dividerColor: Color(0xFF3A3A3A),
+    ),
+
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF3A3A3A),
+      thickness: 1,
+      space: 1,
     ),
   );
 }

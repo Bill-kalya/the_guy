@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/payment_provider.dart';
 import '../../../shared/widgets/loading_widget.dart';
+import '../../../core/themes/colors.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -149,7 +150,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50,
+        color: AppColors.primaryLight,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

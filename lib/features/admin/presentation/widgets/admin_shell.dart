@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
+import '../../../../core/themes/colors.dart';
 
 class AdminShell extends StatefulWidget {
   final Widget body;
@@ -132,11 +133,11 @@ class _AdminShellState extends State<AdminShell> {
               borderRadius: BorderRadius.circular(18),
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: Colors.blue.shade100,
+                backgroundColor: AppColors.primaryLight,
                 child: Text(
                   'A',
                   style: TextStyle(
-                    color: Colors.blue.shade700,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
