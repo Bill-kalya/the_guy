@@ -402,10 +402,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ElevatedButton.icon(
                 onPressed: () {
                   _requireAuthThen(context, () {
-                    // Navigate to provider registration
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Opening provider registration...')),
-                    );
+                    context.push('/provider/register');
                   });
                 },
                 icon: const Icon(Icons.arrow_forward),

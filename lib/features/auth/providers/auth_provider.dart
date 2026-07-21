@@ -264,6 +264,14 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   // ──────────────────────────────────────────
+  // Update user in state (after profile edit)
+  // ──────────────────────────────────────────
+  void updateUser(UserModel user) {
+    state = AuthState.authenticated(user);
+    _secureStorage.saveUserData(user.toJson());
+  }
+
+  // ──────────────────────────────────────────
   // Logout
   // ──────────────────────────────────────────
   Future<void> logout() async {

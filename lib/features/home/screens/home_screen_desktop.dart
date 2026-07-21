@@ -127,9 +127,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 const SizedBox(width: 24),
                 _navLink('Become a Provider', false, () {
                   _requireAuthThen(context, () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Opening provider registration...')),
-                    );
+                    context.push('/provider/register');
                   });
                 }),
               ],
@@ -994,9 +992,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       ElevatedButton.icon(
                         onPressed: () {
                           _requireAuthThen(context, () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Opening provider registration...')),
-                            );
+                            context.push('/provider/register');
                           });
                         },
                         icon: const Icon(Icons.arrow_forward),

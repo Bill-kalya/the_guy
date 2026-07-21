@@ -17,6 +17,7 @@ import '../features/jobs/screens/active_job_screen.dart';
 import '../features/chat/screens/chat_screen.dart';
 import '../features/payment/screens/payment_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../features/profile/screens/edit_profile_screen.dart';
 
 // Admin routes
 import '../features/admin/presentation/pages/admin_home_page.dart';
@@ -28,6 +29,7 @@ import '../features/provider/presentation/screens/incoming_job_screen.dart';
 import '../features/provider/presentation/screens/active_jobs_screen.dart';
 import '../features/provider/presentation/screens/earnings_screen.dart';
 import '../features/provider/presentation/screens/provider_profile_screen.dart';
+import '../features/provider/presentation/screens/provider_registration_screen.dart';
 
 // Providers
 import '../features/auth/providers/auth_provider.dart';
@@ -237,8 +239,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
       ),
+      GoRoute(
+        name: 'edit-profile',
+        path: '/profile/edit',
+        builder: (context, state) => const EditProfileScreen(),
+      ),
 
       // Provider routes (auth-required)
+      GoRoute(
+        name: 'provider-register',
+        path: '/provider/register',
+        builder: (context, state) => const ProviderRegistrationScreen(),
+      ),
       GoRoute(
         name: 'provider-home',
         path: '/provider/home',
