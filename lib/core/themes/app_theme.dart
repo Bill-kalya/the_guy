@@ -80,8 +80,10 @@ class AppTheme {
         borderSide: const BorderSide(color: AppColors.error),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      hintStyle: const TextStyle(color: AppColors.textHint),
-      labelStyle: const TextStyle(color: AppColors.textSecondary),
+      hintStyle: const TextStyle(color: Colors.black38),
+      labelStyle: const TextStyle(color: Colors.black54),
+      prefixIconColor: Colors.black45,
+      suffixIconColor: Colors.black45,
     ),
 
     // Card Theme

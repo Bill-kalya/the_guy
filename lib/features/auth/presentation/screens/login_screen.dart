@@ -96,6 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
+      style: const TextStyle(color: Colors.black),
       decoration: const InputDecoration(
         labelText: 'Email Address',
         hintText: 'john@example.com',
@@ -122,6 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       controller: _passwordController,
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.done,
+      style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Password',
         hintText: 'Enter your password',

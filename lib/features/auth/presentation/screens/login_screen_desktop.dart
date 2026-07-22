@@ -221,6 +221,7 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
                     hintText: 'john@example.com',
                     prefixIcon: const Icon(Icons.email_outlined),
@@ -242,6 +243,7 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.done,
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
                     prefixIcon: const Icon(Icons.lock_outlined),
