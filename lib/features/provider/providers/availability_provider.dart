@@ -32,8 +32,7 @@ class AvailabilityNotifier extends Notifier<AvailabilityState> {
 
     try {
       final response = await _apiClient.patch(
-        Endpoints.updateAvailability,
-        data: {'isOnline': newStatus},
+        EndpointBuilder.providerAvailability(newStatus),
       );
 
       if (response.statusCode == 200) {

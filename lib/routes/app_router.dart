@@ -33,6 +33,7 @@ import '../features/provider/presentation/screens/earnings_screen.dart';
 import '../features/provider/presentation/screens/provider_profile_screen.dart';
 import '../features/provider/presentation/screens/provider_registration_screen.dart';
 import '../features/provider/presentation/screens/wallet_screen.dart';
+import '../features/provider/presentation/widgets/provider_shell_screen.dart';
 
 // Providers
 import '../features/auth/providers/auth_provider.dart';
@@ -273,16 +274,48 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const EditProfileScreen(),
       ),
 
-      // Provider routes (auth-required)
+      // Provider shell (bottom nav for mobile)
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ProviderShellScreen(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(
+              name: 'provider-home',
+              path: '/provider/home',
+              builder: (context, state) => const ProviderHomeScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              name: 'provider-active-job',
+              path: '/provider/active-job',
+              builder: (context, state) => const ActiveJobsScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              name: 'earnings',
+              path: '/provider/earnings',
+              builder: (context, state) => const EarningsScreen(),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              name: 'provider-profile',
+              path: '/provider/profile',
+              builder: (context, state) => const ProviderProfileScreen(),
+            ),
+          ]),
+        ],
+      ),
+
+      // Provider standalone routes (outside shell)
       GoRoute(
         name: 'provider-register',
         path: '/provider/register',
         builder: (context, state) => const ProviderRegistrationScreen(),
-      ),
-      GoRoute(
-        name: 'provider-home',
-        path: '/provider/home',
-        builder: (context, state) => const ProviderHomeScreen(),
       ),
       GoRoute(
         name: 'incoming-job',
@@ -290,24 +323,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const IncomingJobScreen(),
       ),
       GoRoute(
-        name: 'provider-active-job',
-        path: '/provider/active-job',
-        builder: (context, state) => const ActiveJobsScreen(),
-      ),
-      GoRoute(
-        name: 'earnings',
-        path: '/provider/earnings',
-        builder: (context, state) => const EarningsScreen(),
-      ),
-      GoRoute(
         name: 'wallet',
         path: '/provider/wallet',
         builder: (context, state) => const WalletScreen(),
-      ),
-      GoRoute(
-        name: 'provider-profile',
-        path: '/provider/profile',
-        builder: (context, state) => const ProviderProfileScreen(),
       ),
     ],
   );

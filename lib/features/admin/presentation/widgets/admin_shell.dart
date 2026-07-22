@@ -151,13 +151,13 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget _buildSidebar() {
     final menuItems = [
-      ('overview', 'Overview', Icons.dashboard),
-      ('providers', 'Providers', Icons.people),
-      ('users', 'Users', Icons.person),
-      ('safety', 'Trust & Safety', Icons.security),
-      ('analytics', 'Analytics', Icons.analytics),
-      ('finance', 'Finance', Icons.account_balance),
-      ('profile', 'Profile', Icons.account_circle),
+      ('overview', 'Overview', Icons.dashboard, '/admin'),
+      ('providers', 'Providers', Icons.people, '/admin/providers'),
+      ('users', 'Users', Icons.person, '/admin/users'),
+      ('safety', 'Trust & Safety', Icons.security, '/admin/trust-safety'),
+      ('analytics', 'Analytics', Icons.analytics, '/admin/analytics'),
+      ('finance', 'Finance', Icons.account_balance, '/admin/finance'),
+      ('profile', 'Profile', Icons.account_circle, '/admin/profile'),
     ];
 
     return Container(
@@ -216,9 +216,7 @@ class _AdminShellState extends State<AdminShell> {
                     child: InkWell(
                       onTap: () {
                         setState(() => _currentRoute = item.$1);
-                        if (item.$1 == 'profile') {
-                          context.push('/admin/profile');
-                        }
+                        context.go(item.$4);
                       },
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
@@ -272,18 +270,22 @@ class _AdminShellState extends State<AdminShell> {
           const Divider(color: Colors.white12),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(Icons.logout, size: 18, color: Colors.grey.shade400),
-                const SizedBox(width: 8),
-                Text(
-                  'Back to App',
-                  style: TextStyle(
-                    color: Colors.grey.shade400,
-                    fontSize: 13,
+            child: InkWell(
+              onTap: () => context.go('/'),
+              borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  Icon(Icons.logout, size: 18, color: Colors.grey.shade400),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Back to App',
+                    style: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 13,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -293,13 +295,13 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget _buildDrawer() {
     final menuItems = [
-      ('overview', 'Overview', Icons.dashboard),
-      ('providers', 'Providers', Icons.people),
-      ('users', 'Users', Icons.person),
-      ('safety', 'Trust & Safety', Icons.security),
-      ('analytics', 'Analytics', Icons.analytics),
-      ('finance', 'Finance', Icons.account_balance),
-      ('profile', 'Profile', Icons.account_circle),
+      ('overview', 'Overview', Icons.dashboard, '/admin'),
+      ('providers', 'Providers', Icons.people, '/admin/providers'),
+      ('users', 'Users', Icons.person, '/admin/users'),
+      ('safety', 'Trust & Safety', Icons.security, '/admin/trust-safety'),
+      ('analytics', 'Analytics', Icons.analytics, '/admin/analytics'),
+      ('finance', 'Finance', Icons.account_balance, '/admin/finance'),
+      ('profile', 'Profile', Icons.account_circle, '/admin/profile'),
     ];
 
     return Drawer(
@@ -352,9 +354,7 @@ class _AdminShellState extends State<AdminShell> {
                 onTap: () {
                   setState(() => _currentRoute = item.$1);
                   Navigator.pop(context);
-                  if (item.$1 == 'profile') {
-                    context.push('/admin/profile');
-                  }
+                  context.go(item.$4);
                 },
               );
             }),

@@ -81,7 +81,6 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
               ),
           ],
         ),
-        bottomNavigationBar: _buildBottomNavBar(),
       ),
       desktop: ProviderHomeScreenDesktop(),
     );
@@ -493,28 +492,4 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  // ── Bottom Nav ───────────────────────────────────────────
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      onTap: (index) {
-        switch (index) {
-          case 0: break;
-          case 1: context.push('/provider/active-job'); break;
-          case 2: context.push('/provider/earnings'); break;
-          case 3: context.push('/provider/profile'); break;
-        }
-      },
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: Colors.grey,
-      elevation: 10,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.work_rounded), label: 'Jobs'),
-        BottomNavigationBarItem(icon: Icon(Icons.attach_money_rounded), label: 'Earnings'),
-        BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
-      ],
-    );
-  }
 }
