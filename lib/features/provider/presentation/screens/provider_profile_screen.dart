@@ -335,7 +335,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   // ── Wallet ──────────────────────────────────────────────
   Widget _buildWalletCard(EarningsState earningsState) {
     final earnings = earningsState.earnings;
-    final available = earnings != null ? (earnings.totalEarnings) : 0.0;
+    final available = earnings?.availableBalance ?? 0.0;
+    final pending = earnings?.pendingBalance ?? 0.0;
+    final currency = earnings?.currency ?? 'KES';
     return _card(
       title: 'Wallet',
       child: Column(
@@ -356,10 +358,35 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
               children: [
                 Text('Available Balance', style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8))),
                 const SizedBox(height: 6),
-                Text('KES ${available.toStringAsFixed(2)}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text('$currency ${available.toStringAsFixed(2)}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
               ],
             ),
           ),
+          if (pending > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.pending_outlined, color: Colors.orange.shade700, size: 20),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Pending Balance', style: TextStyle(fontSize: 12, color: Colors.orange.shade700)),
+                      Text('$currency ${pending.toStringAsFixed(2)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange.shade800)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           Row(
             children: [

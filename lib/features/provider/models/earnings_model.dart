@@ -7,22 +7,30 @@ class EarningsModel {
   final int todayJobs;
   final int thisWeekJobs;
   final int thisMonthJobs;
+  final double pendingBalance;
+  final double availableBalance;
+  final double totalBalance;
+  final String currency;
   final List<EarningTransaction> recentTransactions;
   final List<DailyEarning> weeklyEarnings;
   final List<MonthlyEarning> monthlyEarnings;
 
   EarningsModel({
     required this.totalEarnings,
-    required this.todayEarnings,
-    required this.thisWeekEarnings,
-    required this.thisMonthEarnings,
+    this.todayEarnings = 0,
+    this.thisWeekEarnings = 0,
+    this.thisMonthEarnings = 0,
     required this.totalJobsCompleted,
-    required this.todayJobs,
-    required this.thisWeekJobs,
-    required this.thisMonthJobs,
-    required this.recentTransactions,
-    required this.weeklyEarnings,
-    required this.monthlyEarnings,
+    this.todayJobs = 0,
+    thisWeekJobs = 0,
+    this.thisMonthJobs = 0,
+    this.pendingBalance = 0,
+    this.availableBalance = 0,
+    this.totalBalance = 0,
+    this.currency = 'KES',
+    this.recentTransactions = const [],
+    this.weeklyEarnings = const [],
+    this.monthlyEarnings = const [],
   });
 
   factory EarningsModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +43,10 @@ class EarningsModel {
       todayJobs: json['todayJobs'] ?? 0,
       thisWeekJobs: json['thisWeekJobs'] ?? 0,
       thisMonthJobs: json['thisMonthJobs'] ?? 0,
+      pendingBalance: (json['pendingBalance'] ?? 0).toDouble(),
+      availableBalance: (json['availableBalance'] ?? 0).toDouble(),
+      totalBalance: (json['totalBalance'] ?? 0).toDouble(),
+      currency: json['currency'] ?? 'KES',
       recentTransactions: (json['recentTransactions'] as List? ?? [])
           .map((e) => EarningTransaction.fromJson(e))
           .toList(),

@@ -59,6 +59,16 @@ class Endpoints {
   static const String providerEarnings = '/api/providers/earnings';
   static const String updateAvailability = '/api/providers/availability';
 
+  // Wallet & Payouts
+  static const String wallet = '/api/wallet';
+  static const String walletTransactions = '/api/wallet/transactions';
+  static const String requestPayout = '/api/payouts/request';
+  static const String payoutHistory = '/api/payouts/history';
+
+  // Disputes
+  static const String disputes = '/api/disputes';
+  static const String openDisputes = '/api/disputes/open';
+
   // Search
   static const String searchProviders = '/api/search/providers';
   static const String searchSuggestions = '/api/search/suggestions';
