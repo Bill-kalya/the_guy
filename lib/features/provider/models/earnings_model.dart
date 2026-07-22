@@ -22,7 +22,7 @@ class EarningsModel {
     this.thisMonthEarnings = 0,
     required this.totalJobsCompleted,
     this.todayJobs = 0,
-    thisWeekJobs = 0,
+    this.thisWeekJobs = 0,
     this.thisMonthJobs = 0,
     this.pendingBalance = 0,
     this.availableBalance = 0,

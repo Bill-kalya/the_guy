@@ -6,6 +6,7 @@ import '../widgets/nearby_providers_list.dart';
 import '../providers/location_provider.dart';
 import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/models/auth_state.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../core/themes/colors.dart';
@@ -57,7 +58,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     return Scaffold(
       body: Column(
         children: [
-          _buildTopNavBar(isAuthenticated),
+          _buildTopNavBar(authState, isAuthenticated),
           Expanded(
             child: _buildBody(
               locationState,
@@ -71,7 +72,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     );
   }
 
-  Widget _buildTopNavBar(bool isAuthenticated) {
+  Widget _buildTopNavBar(AuthState authState, bool isAuthenticated) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,

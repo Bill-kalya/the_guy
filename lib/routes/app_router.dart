@@ -32,6 +32,7 @@ import '../features/provider/presentation/screens/active_jobs_screen.dart';
 import '../features/provider/presentation/screens/earnings_screen.dart';
 import '../features/provider/presentation/screens/provider_profile_screen.dart';
 import '../features/provider/presentation/screens/provider_registration_screen.dart';
+import '../features/provider/presentation/screens/wallet_screen.dart';
 
 // Providers
 import '../features/auth/providers/auth_provider.dart';
@@ -42,7 +43,12 @@ import '../features/auth/models/auth_state.dart';
 class GoRouterRefreshNotifier extends ChangeNotifier {
   GoRouterRefreshNotifier(Ref ref) {
     ref.listen<AuthState>(authProvider, (previous, next) {
-      notifyListeners();
+      // Only notify if the auth status actually changed (login/logout),
+      // not on every internal state update (loading, error, etc.)
+      if (previous?.isAuthenticated != next.isAuthenticated ||
+          previous?.user?.role != next.user?.role) {
+        notifyListeners();
+      }
     });
   }
 }
@@ -122,6 +128,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/payment',
         '/profile',
         '/provider',
+        '/wallet',
         '/admin',
       ];
 
@@ -291,6 +298,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'earnings',
         path: '/provider/earnings',
         builder: (context, state) => const EarningsScreen(),
+      ),
+      GoRoute(
+        name: 'wallet',
+        path: '/provider/wallet',
+        builder: (context, state) => const WalletScreen(),
       ),
       GoRoute(
         name: 'provider-profile',

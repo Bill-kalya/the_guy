@@ -391,24 +391,24 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           Row(
             children: [
               Expanded(
-                child: _walletAction(Icons.arrow_downward, 'Top Up', Colors.blue),
+                child: _walletAction(Icons.arrow_downward, 'Top Up', Colors.blue, null),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _walletAction(Icons.arrow_upward, 'Withdraw', Colors.green),
+                child: _walletAction(Icons.arrow_upward, 'Withdraw', Colors.green, () => context.push('/provider/wallet')),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          _actionRow(Icons.receipt_long_outlined, 'Transaction History', () {}),
+          _actionRow(Icons.receipt_long_outlined, 'Transaction History', () => context.push('/provider/wallet')),
         ],
       ),
     );
   }
 
-  Widget _walletAction(IconData icon, String label, MaterialColor color) {
+  Widget _walletAction(IconData icon, String label, MaterialColor color, VoidCallback? onTap) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),

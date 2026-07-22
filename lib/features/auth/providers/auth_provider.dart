@@ -22,9 +22,58 @@ class AuthNotifier extends Notifier<AuthState> {
     _secureStorage = ref.watch(secureStorageProvider);
     if (!_initialCheckDone) {
       _initialCheckDone = true;
-      checkAuthStatus();
+      _restoreSession();
     }
     return AuthState.initial();
+  }
+
+  /// Restore session from cache instantly, then validate in background.
+  Future<void> _restoreSession() async {
+    final token = await _secureStorage.getAccessToken();
+    final userData = await _secureStorage.getUserData();
+
+    if (token == null || userData == null) {
+      state = AuthState.unauthenticated();
+      return;
+    }
+
+    // Instant restore — no network call, no loading spinner
+    final user = UserModel.fromJson(userData);
+    state = AuthState.authenticated(user);
+
+    // Silent background validation — if token is expired,
+    // the interceptor handles refresh; if truly dead, we go unauthenticated.
+    _validateInBackground();
+  }
+
+  Future<void> _validateInBackground() async {
+    try {
+      final response = await _apiClient.get(Endpoints.userProfile);
+      if (response.statusCode == 200) {
+        final user = UserModel.fromJson(response.data);
+        // Only update if something changed (e.g. profile edit)
+        if (state.user?.name != user.name ||
+            state.user?.email != user.email ||
+            state.user?.isVerified != user.isVerified) {
+          state = AuthState.authenticated(user);
+          await _secureStorage.saveUserData(user.toJson());
+        }
+        _connectWebSocketLazy();
+        return;
+      }
+    } catch (_) {
+      // Token expired and refresh failed — interceptor handles cleanup
+      await _secureStorage.clearAll();
+      state = AuthState.unauthenticated();
+    }
+  }
+
+  void _connectWebSocketLazy() {
+    Future.delayed(const Duration(seconds: 2), () {
+      if (state.isAuthenticated) {
+        ref.read(webSocketServiceProvider).connect();
+      }
+    });
   }
 
   // ──────────────────────────────────────────
@@ -259,8 +308,8 @@ class AuthNotifier extends Notifier<AuthState> {
           : DateTime.now(),
     );
     await _secureStorage.saveUserData(user.toJson());
-    await ref.read(webSocketServiceProvider).connect();
     state = AuthState.authenticated(user);
+    _connectWebSocketLazy();
   }
 
   // ──────────────────────────────────────────
@@ -284,31 +333,9 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   // ──────────────────────────────────────────
-  // Check persisted auth status
+  // Check persisted auth status (public, for manual refresh)
   // ──────────────────────────────────────────
   Future<void> checkAuthStatus() async {
-    final token = await _secureStorage.getAccessToken();
-    final userData = await _secureStorage.getUserData();
-
-    if (token == null || userData == null) {
-      state = AuthState.unauthenticated();
-      return;
-    }
-
-    try {
-      final response = await _apiClient.get(Endpoints.userProfile);
-      if (response.statusCode == 200) {
-        final user = UserModel.fromJson(response.data);
-        state = AuthState.authenticated(user);
-        await ref.read(webSocketServiceProvider).connect();
-        return;
-      }
-    } catch (e) {
-      // AuthInterceptor already handles 401 refresh + storage cleanup.
-      // If we get here, the session is dead — don't fall back to stale local data.
-      await _secureStorage.clearAll();
-    }
-
-    state = AuthState.unauthenticated();
+    await _restoreSession();
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
