@@ -4,6 +4,7 @@ import 'package:lottie/lottie.dart';
 import '../providers/job_provider.dart';
 import '../models/job_state.dart';
 import '../../../shared/widgets/service_quality_score.dart';
+import '../../../shared/widgets/user_avatar.dart';
 
 class MatchingScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -109,9 +110,11 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  CircleAvatar(
+                  UserAvatar(
+                    imageUrl: provider['avatar'],
+                    name: provider['name'] ?? '',
                     radius: 40,
-                    backgroundImage: NetworkImage(provider['avatar'] ?? ''),
+                    backgroundColor: Colors.grey.shade200,
                   ),
                   const SizedBox(height: 12),
                   Text(

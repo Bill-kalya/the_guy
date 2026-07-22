@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
-import '../../../../core/themes/colors.dart';
+import '../../../../shared/widgets/user_avatar.dart';
+import '../../../auth/providers/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AdminShell extends StatefulWidget {
   final Widget body;
@@ -131,16 +133,15 @@ class _AdminShellState extends State<AdminShell> {
             InkWell(
               onTap: () => context.push('/admin/profile'),
               borderRadius: BorderRadius.circular(18),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.primaryLight,
-                child: Text(
-                  'A',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final user = ref.watch(authProvider).user;
+                  return UserAvatar(
+                    imageUrl: user?.avatar,
+                    name: user?.name ?? 'Admin',
+                    radius: 18,
+                  );
+                },
               ),
             ),
           ],

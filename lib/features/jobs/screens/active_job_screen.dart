@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/job_provider.dart';
 import '../models/job_state.dart';
 import '../../../shared/widgets/service_quality_score.dart';
+import '../../../shared/widgets/user_avatar.dart';
 
 class ActiveJobScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -115,9 +116,11 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            CircleAvatar(
+            UserAvatar(
+              imageUrl: provider['avatar'],
+              name: provider['name'] ?? '',
               radius: 30,
-              backgroundImage: NetworkImage(provider['avatar'] ?? ''),
+              backgroundColor: Colors.grey.shade200,
             ),
             const SizedBox(width: 16),
             Expanded(

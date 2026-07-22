@@ -11,6 +11,7 @@ import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../core/themes/colors.dart';
 import '../../../shared/constants/service_categories.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../widgets/download_app_section.dart';
 class HomeScreenDesktop extends ConsumerStatefulWidget {
   const HomeScreenDesktop({super.key});
@@ -175,20 +176,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       InkWell(
                         onTap: () => context.push('/profile'),
                         borderRadius: BorderRadius.circular(18),
-                        child: CircleAvatar(
+                        child: UserAvatar(
+                          imageUrl: authState.user?.avatar,
+                          name: authState.user?.name ?? 'User',
                           radius: 18,
-                          backgroundColor: AppColors.primaryLight,
-                          child: Text(
-                            authState.user != null
-                                ? (authState.user!.name.isNotEmpty
-                                    ? authState.user!.name[0].toUpperCase()
-                                    : 'U')
-                                : 'U',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                         ),
                       ),
                     ],

@@ -5,6 +5,8 @@ import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../../shared/widgets/user_avatar.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 class ProviderHomeScreenDesktop extends ConsumerStatefulWidget {
   const ProviderHomeScreenDesktop({super.key});
@@ -192,7 +194,17 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
             ),
             const SizedBox(width: 16),
             IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
-            CircleAvatar(radius: 18, backgroundColor: AppColors.primaryLight, child: Text('P', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold))),
+            Builder(
+              builder: (context) {
+                final user = ref.watch(authProvider).user;
+                return UserAvatar(
+                  imageUrl: user?.avatar,
+                  name: user?.name ?? 'Provider',
+                  radius: 18,
+                  onTap: () => context.push('/provider/profile'),
+                );
+              },
+            ),
           ],
         ),
       ),

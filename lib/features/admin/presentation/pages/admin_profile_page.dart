@@ -6,6 +6,7 @@ import '../../../auth/providers/auth_provider.dart';
 import '../../../auth/models/user_model.dart';
 import '../widgets/admin_shell.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 
 class AdminProfilePage extends ConsumerWidget {
   const AdminProfilePage({super.key});
@@ -86,17 +87,11 @@ class AdminProfilePage extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          CircleAvatar(
+          UserAvatar(
+            imageUrl: user.avatar,
+            name: user.name,
             radius: 48,
             backgroundColor: Colors.white,
-            child: Text(
-              _initials(user.name),
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
           ),
           const SizedBox(height: 16),
           Text(
@@ -266,13 +261,6 @@ class AdminProfilePage extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String _initials(String name) {
-    if (name.trim().isEmpty) return 'A';
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   String _formatDate(DateTime date) {
