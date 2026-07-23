@@ -1,9 +1,14 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/endpoints.dart';
+import '../../../../core/storage/secure_storage.dart';
 import '../../../../shared/constants/service_categories.dart';
 import '../../../../core/themes/colors.dart';
 
@@ -18,22 +23,25 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   int _currentStep = 0;
   bool _isSubmitting = false;
 
-  // Step 1 — Basic Info (pre-filled)
+  // Step 0 — Basic Info
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
-
-  // Step 2 — Business Info
   late TextEditingController _bioController;
-  late TextEditingController _businessNameController;
-  int _yearsExperience = 0;
-  double _serviceRadius = 10;
 
-  // Step 3 — Service categories
-  final Set<String> _selectedCategories = {};
+  // Step 1 — Category
+  String? _selectedCategory;
 
-  // Step 4 — Service offerings per category
-  final Map<String, List<_ServiceOffering>> _offerings = {};
+  // Step 2 — Profile Photo
+  File? _profilePhoto;
+  String? _profilePhotoUrl;
+
+  // Step 3 — Portfolio Photos
+  final List<File> _portfolioPhotos = [];
+  final List<String> _portfolioUrls = [];
+
+  // Step 4 — Verification Documents
+  final List<_VerificationDoc> _verificationDocs = [];
 
   // Step 5 — Location
   double? _latitude;
@@ -42,6 +50,9 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   bool _locationLoading = false;
 
   bool _initialized = false;
+
+  static const int _minPortfolioPhotos = 3;
+  static const int _maxPortfolioPhotos = 10;
 
   @override
   void didChangeDependencies() {
@@ -52,7 +63,6 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       _emailController = TextEditingController(text: user?.email ?? '');
       _phoneController = TextEditingController(text: user?.phone ?? '');
       _bioController = TextEditingController();
-      _businessNameController = TextEditingController();
       _initialized = true;
     }
   }
@@ -63,8 +73,67 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     _emailController.dispose();
     _phoneController.dispose();
     _bioController.dispose();
-    _businessNameController.dispose();
     super.dispose();
+  }
+
+  // ── Image Upload ──────────────────────────────────────
+  Future<String?> _uploadImage(File file, String folder) async {
+    try {
+      final secureStorage = ref.read(secureStorageProvider);
+      final token = await secureStorage.getAccessToken();
+      final dio = Dio();
+
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          file.path,
+          filename: '${folder}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        ),
+        'folder': folder,
+      });
+
+      final response = await dio.post(
+        '${Endpoints.baseUrl}${Endpoints.fileUpload}',
+        data: formData,
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return data is Map<String, dynamic> ? data['data'] as String? : data as String?;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Upload failed: $e');
+      return null;
+    }
+  }
+
+  // ── Pick Images ──────────────────────────────────────
+  Future<void> _pickProfilePhoto() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
+    if (picked != null) {
+      setState(() => _profilePhoto = File(picked.path));
+    }
+  }
+
+  Future<void> _pickPortfolioPhoto() async {
+    if (_portfolioPhotos.length >= _maxPortfolioPhotos) return;
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
+    if (picked != null) {
+      setState(() => _portfolioPhotos.add(File(picked.path)));
+    }
+  }
+
+  Future<void> _pickVerificationDoc(String type) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, maxWidth: 2048, maxHeight: 2048, imageQuality: 90);
+    if (picked != null) {
+      setState(() {
+        _verificationDocs.add(_VerificationDoc(type: type, file: File(picked.path)));
+      });
+    }
   }
 
   // ── Location ──────────────────────────────────────────
@@ -102,53 +171,59 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
   // ── Submit ────────────────────────────────────────────
   Future<void> _submit() async {
-    if (_selectedCategories.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one service category')),
-      );
+    if (_selectedCategory == null) {
+      _showError('Select a service category');
+      return;
+    }
+    if (_portfolioPhotos.length < _minPortfolioPhotos) {
+      _showError('Upload at least $_minPortfolioPhotos portfolio photos');
+      return;
+    }
+    if (_verificationDocs.isEmpty) {
+      _showError('Upload at least one verification document');
       return;
     }
     if (_bioController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add a bio')),
-      );
+      _showError('Please add a bio');
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final api = ref.read(apiClientProvider);
-      final services = <Map<String, dynamic>>[];
+      // Upload profile photo
+      if (_profilePhoto != null) {
+        _profilePhotoUrl = await _uploadImage(_profilePhoto!, 'profile');
+      }
 
-      for (final cat in _selectedCategories) {
-        final catOfferings = _offerings[cat];
-        if (catOfferings != null && catOfferings.isNotEmpty) {
-          for (final o in catOfferings) {
-            services.add({
-              'category': cat,
-              'title': o.titleController.text.trim(),
-              'description': o.descriptionController.text.trim(),
-              'pricingType': o.pricingType,
-              'basePrice': o.price,
-            });
-          }
-        } else {
-          services.add({
-            'category': cat,
-            'title': cat,
-            'description': '',
-            'pricingType': 'NEGOTIABLE',
-            'basePrice': 0,
+      // Upload portfolio photos
+      for (final photo in _portfolioPhotos) {
+        final url = await _uploadImage(photo, 'portfolio');
+        if (url != null) _portfolioUrls.add(url);
+      }
+
+      // Upload verification docs
+      final verificationData = <Map<String, String>>[];
+      for (final doc in _verificationDocs) {
+        final url = await _uploadImage(doc.file, 'verification');
+        if (url != null) {
+          verificationData.add({
+            'documentType': doc.type,
+            'imageUrl': url,
           });
         }
       }
 
+      // Submit registration
+      final api = ref.read(apiClientProvider);
       final response = await api.post(
         '/api/providers/register',
         data: {
           'bio': _bioController.text.trim(),
-          'services': services,
+          'categoryId': _selectedCategory,
+          'profileImageUrl': _profilePhotoUrl,
+          'portfolioImageUrls': _portfolioUrls,
+          'verificationDocuments': verificationData,
           'latitude': _latitude,
           'longitude': _longitude,
         },
@@ -178,6 +253,10 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     }
   }
 
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   // ── Build ─────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -197,9 +276,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       ),
       body: Column(
         children: [
-          // Progress indicator
           _buildProgressBar(),
-          // Step content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -211,7 +288,6 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
               ),
             ),
           ),
-          // Bottom button
           _buildBottomButton(),
         ],
       ),
@@ -219,7 +295,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   }
 
   Widget _buildProgressBar() {
-    final steps = ['Basic Info', 'Business', 'Services', 'Pricing', 'Location'];
+    final steps = ['Category', 'Photo', 'Portfolio', 'Verify', 'Location'];
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -232,13 +308,13 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
               return Expanded(
                 child: Row(
                   children: [
-                    if (i > 0) Expanded(child: Container(height: 2, color: isDone ? Colors.blue : Colors.grey.shade300)),
+                    if (i > 0) Expanded(child: Container(height: 2, color: isDone ? AppColors.primary : Colors.grey.shade300)),
                     Container(
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isDone ? AppColors.primary : isActive ? AppColors.primary : Colors.grey.shade300,
+                        color: isDone || isActive ? AppColors.primary : Colors.grey.shade300,
                       ),
                       child: Center(
                         child: isDone
@@ -260,144 +336,48 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
   Widget _buildCurrentStep() {
     switch (_currentStep) {
-      case 0: return _buildStep1BasicInfo();
-      case 1: return _buildStep2BusinessInfo();
-      case 2: return _buildStep3Categories();
-      case 3: return _buildStep4Pricing();
-      case 4: return _buildStep5Location();
+      case 0: return _buildStepCategory();
+      case 1: return _buildStepProfilePhoto();
+      case 2: return _buildStepPortfolio();
+      case 3: return _buildStepVerification();
+      case 4: return _buildStepLocation();
       default: return const SizedBox();
     }
   }
 
-  // ── Step 1: Basic Info ──────────────────────────────
-  Widget _buildStep1BasicInfo() {
-    final user = ref.watch(authProvider).user;
+  // ── Step 0: Select Category ──────────────────────────
+  Widget _buildStepCategory() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Avatar
-        Center(
-          child: Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              CircleAvatar(
-                radius: 52,
-                backgroundColor: AppColors.primaryLight,
-                backgroundImage: user?.avatar != null ? NetworkImage(user!.avatar!) : null,
-                child: user?.avatar == null
-                    ? Text(_initials(user?.name ?? ''), style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary))
-                    : null,
-              ),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 32),
-        _buildField(label: 'Full Name', controller: _nameController, icon: Icons.person_outline),
-        const SizedBox(height: 16),
-        _buildField(label: 'Email', controller: _emailController, icon: Icons.email_outlined, readOnly: true),
-        const SizedBox(height: 16),
-        _buildField(label: 'Phone Number', controller: _phoneController, icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
-      ],
-    );
-  }
-
-  // ── Step 2: Business Info ───────────────────────────
-  Widget _buildStep2BusinessInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildField(label: 'Business Name (optional)', controller: _businessNameController, icon: Icons.business_outlined),
-        const SizedBox(height: 16),
-        _buildField(label: 'Bio / Description', controller: _bioController, icon: Icons.description_outlined, maxLines: 4),
-        const SizedBox(height: 20),
-        // Years of experience
-        Text('Years of Experience', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
-        const SizedBox(height: 8),
-        Row(
-          children: List.generate(11, (i) {
-            final selected = _yearsExperience == i;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => setState(() => _yearsExperience = i),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: selected ? AppColors.primary : Colors.grey.shade300),
-                  ),
-                  child: Center(
-                    child: Text(
-                      i == 10 ? '10+' : '$i',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: selected ? Colors.white : Colors.grey.shade700),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 20),
-        // Service radius
-        Text('Service Radius: ${_serviceRadius.toInt()} km', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
-        Slider(
-          value: _serviceRadius,
-          min: 5,
-          max: 50,
-          divisions: 9,
-          label: '${_serviceRadius.toInt()} km',
-          activeColor: AppColors.primary,
-          onChanged: (v) => setState(() => _serviceRadius = v),
-        ),
-      ],
-    );
-  }
-
-  // ── Step 3: Select Categories ───────────────────────
-  Widget _buildStep3Categories() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('What services do you offer?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+        Text('What service do you offer?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
         const SizedBox(height: 6),
-        Text('Select all that apply', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
-        const SizedBox(height: 20),
+        Text('Choose one category. One provider = one service.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+        const SizedBox(height: 24),
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: ServiceCategories.all.map((cat) {
-            final selected = _selectedCategories.contains(cat.name);
+            final selected = _selectedCategory == cat.name;
             return GestureDetector(
-              onTap: () {
-                setState(() {
-                  if (selected) {
-                    _selectedCategories.remove(cat.name);
-                    _offerings.remove(cat.name);
-                  } else {
-                    _selectedCategories.add(cat.name);
-                  }
-                });
-              },
+              onTap: () => setState(() => _selectedCategory = cat.name),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: selected ? cat.color.withValues(alpha: 0.15) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: selected ? cat.color.shade600 : Colors.grey.shade300, width: selected ? 2 : 1),
+                  border: Border.all(
+                    color: selected ? cat.color.shade600 : Colors.grey.shade300,
+                    width: selected ? 2.5 : 1,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(cat.icon, size: 20, color: selected ? cat.color.shade700 : Colors.grey.shade600),
+                    Icon(cat.icon, size: 22, color: selected ? cat.color.shade700 : Colors.grey.shade600),
                     const SizedBox(width: 8),
-                    Text(cat.name, style: TextStyle(fontWeight: FontWeight.w600, color: selected ? cat.color.shade800 : Colors.grey.shade700)),
+                    Text(cat.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: selected ? cat.color.shade800 : Colors.grey.shade700)),
                     if (selected) ...[
                       const SizedBox(width: 6),
                       Icon(Icons.check_circle, size: 18, color: cat.color.shade600),
@@ -412,123 +392,209 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     );
   }
 
-  // ── Step 4: Pricing per category ────────────────────
-  Widget _buildStep4Pricing() {
+  // ── Step 1: Profile Photo ────────────────────────────
+  Widget _buildStepProfilePhoto() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Set your prices', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+        Text('Profile Photo', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
         const SizedBox(height: 6),
-        Text('Add at least one service per category', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+        Text('This appears on your profile, search results, and booking pages.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+        const SizedBox(height: 32),
+        Center(
+          child: GestureDetector(
+            onTap: _pickProfilePhoto,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey.shade100,
+                border: Border.all(color: Colors.grey.shade300, width: 2),
+              ),
+              child: _profilePhoto != null
+                  ? ClipOval(child: Image.file(_profilePhoto!, fit: BoxFit.cover))
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.camera_alt, size: 40, color: Colors.grey.shade400),
+                        const SizedBox(height: 8),
+                        Text('Add Photo', style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
+                      ],
+                    ),
+            ),
+          ),
+        ),
         const SizedBox(height: 20),
-        ..._selectedCategories.map((catName) {
-          final cat = ServiceCategories.getByName(catName);
-          final offerings = _offerings.putIfAbsent(catName, () => [_ServiceOffering()]);
-          return _buildCategoryPricing(catName, cat, offerings);
+        Center(
+          child: Text('JPG or PNG, max 5 MB', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+        ),
+        if (_profilePhoto != null) ...[
+          const SizedBox(height: 16),
+          Center(
+            child: TextButton.icon(
+              onPressed: _pickProfilePhoto,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Change Photo'),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ── Step 2: Portfolio Photos ─────────────────────────
+  Widget _buildStepPortfolio() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Work Portfolio', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+        const SizedBox(height: 6),
+        Text('Show your best work. Customers trust photos.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+        const SizedBox(height: 8),
+        Text('$_minPortfolioPhotos minimum, $_maxPortfolioPhotos maximum',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+        const SizedBox(height: 24),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
+          itemCount: _portfolioPhotos.length + 1,
+          itemBuilder: (context, index) {
+            if (index == _portfolioPhotos.length) {
+              if (_portfolioPhotos.length >= _maxPortfolioPhotos) return const SizedBox();
+              return GestureDetector(
+                onTap: _pickPortfolioPhoto,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300, width: 1.5, style: BorderStyle.solid),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_photo_alternate, size: 32, color: Colors.grey.shade400),
+                      const SizedBox(height: 4),
+                      Text('Add', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(_portfolioPhotos[index], fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _portfolioPhotos.removeAt(index)),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                      child: const Icon(Icons.close, size: 14, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        if (_portfolioPhotos.isNotEmpty && _portfolioPhotos.length < _minPortfolioPhotos) ...[
+          const SizedBox(height: 12),
+          Text('${_minPortfolioPhotos - _portfolioPhotos.length} more photos needed',
+              style: TextStyle(fontSize: 13, color: Colors.orange.shade700, fontWeight: FontWeight.w500)),
+        ],
+      ],
+    );
+  }
+
+  // ── Step 3: Verification Documents ───────────────────
+  Widget _buildStepVerification() {
+    final docTypes = [
+      ('National ID', Icons.badge_outlined),
+      ('Business Permit', Icons.description_outlined),
+      ('Professional License', Icons.workspace_premium_outlined),
+      ('KRA PIN', Icons.receipt_outlined),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Verification Documents', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+        const SizedBox(height: 6),
+        Text('Private. Only admins can see these.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+        const SizedBox(height: 8),
+        Text('At least one required for approval.', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+        const SizedBox(height: 24),
+        ...docTypes.map((entry) {
+          final type = entry.$1;
+          final icon = entry.$2;
+          final uploadedDocs = _verificationDocs.where((d) => d.type == type).toList();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 24, color: AppColors.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(type, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      if (uploadedDocs.isNotEmpty)
+                        Text('${uploadedDocs.length} uploaded', style: TextStyle(fontSize: 12, color: Colors.green.shade600))
+                      else
+                        Text('Not uploaded', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _pickVerificationDoc(type),
+                  icon: Icon(uploadedDocs.isNotEmpty ? Icons.add_circle_outline : Icons.upload_outlined, color: AppColors.primary),
+                ),
+              ],
+            ),
+          );
         }),
       ],
     );
   }
 
-  Widget _buildCategoryPricing(String catName, ServiceCategory? cat, List<_ServiceOffering> offerings) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(cat?.icon ?? Icons.handyman, size: 22, color: cat?.color.shade600 ?? Colors.blue),
-              const SizedBox(width: 10),
-              Text(catName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...offerings.asMap().entries.map((entry) {
-            final i = entry.key;
-            final o = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                children: [
-                  _buildField(label: 'Service Name', controller: o.titleController, icon: Icons.build_outlined),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: o.pricingType,
-                          decoration: InputDecoration(
-                            labelText: 'Pricing',
-                            labelStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: 'FIXED', child: Text('Fixed Price')),
-                            DropdownMenuItem(value: 'HOURLY', child: Text('Per Hour')),
-                            DropdownMenuItem(value: 'NEGOTIABLE', child: Text('Negotiable')),
-                          ],
-                          onChanged: (v) => setState(() => o.pricingType = v ?? 'NEGOTIABLE'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          controller: o.priceController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Price (KES)',
-                            labelStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (offerings.length > 1)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => setState(() => offerings.removeAt(i)),
-                        child: Text('Remove', style: TextStyle(color: Colors.red.shade600, fontSize: 12)),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          }),
-          TextButton.icon(
-            onPressed: () => setState(() => offerings.add(_ServiceOffering())),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Add another service'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Step 5: Location ────────────────────────────────
-  Widget _buildStep5Location() {
+  // ── Step 4: Location ────────────────────────────────
+  Widget _buildStepLocation() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Your service location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+        Text('Your service location', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
         const SizedBox(height: 6),
         Text('This helps customers find you nearby', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+        const SizedBox(height: 8),
+        // Bio
+        TextField(
+          controller: _bioController,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Tell customers about yourself...',
+            hintStyle: TextStyle(color: Colors.grey.shade400),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.all(16),
+          ),
+        ),
         const SizedBox(height: 24),
-        // GPS capture button
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
@@ -590,72 +656,46 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     );
   }
 
-  // ── Shared widgets ──────────────────────────────────
-  Widget _buildField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    bool readOnly = false,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-  }) {
-    return TextField(
-      controller: controller,
-      readOnly: readOnly,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A2E)),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        filled: true,
-        fillColor: readOnly ? Colors.grey.shade100 : Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-    );
-  }
-
+  // ── Bottom Button ────────────────────────────────────
   Widget _buildBottomButton() {
     final isLastStep = _currentStep == 4;
+    bool canProceed = false;
+    switch (_currentStep) {
+      case 0: canProceed = _selectedCategory != null;
+      case 1: canProceed = true;
+      case 2: canProceed = true;
+      case 3: canProceed = true;
+      case 4: canProceed = true;
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       color: Colors.white,
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: _isSubmitting ? null : (isLastStep ? _submit : () => setState(() => _currentStep++)),
+          onPressed: (_isSubmitting || !canProceed) ? null : (isLastStep ? _submit : () => setState(() => _currentStep++)),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
+            disabledBackgroundColor: Colors.grey.shade300,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: _isSubmitting
               ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : Text(isLastStep ? 'Submit Registration' : 'Continue', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              : Text(
+                  isLastStep ? 'Submit Registration' : 'Continue',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
         ),
       ),
     );
   }
-
-  String _initials(String name) {
-    if (name.trim().isEmpty) return '?';
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
 }
 
-class _ServiceOffering {
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController priceController = TextEditingController();
-  String pricingType = 'NEGOTIABLE';
-
-  double get price {
-    final v = double.tryParse(priceController.text) ?? 0;
-    return v;
-  }
+class _VerificationDoc {
+  final String type;
+  final File file;
+  const _VerificationDoc({required this.type, required this.file});
 }
