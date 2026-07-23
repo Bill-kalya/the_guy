@@ -27,6 +27,8 @@ import '../features/admin/presentation/pages/admin_providers_page.dart';
 import '../features/admin/presentation/pages/admin_users_page.dart';
 import '../features/admin/presentation/pages/admin_finance_page.dart';
 import '../features/admin/presentation/pages/admin_analytics_page.dart';
+import '../features/admin/presentation/pages/admin_jobs_page.dart';
+import '../features/admin/presentation/pages/admin_settings_page.dart';
 import '../features/admin/presentation/pages/trust_safety_center_page.dart';
 
 // Provider routes
@@ -165,6 +167,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdminUsersPage(),
       ),
       GoRoute(
+        name: 'admin-jobs',
+        path: '/admin/jobs',
+        builder: (context, state) => const AdminJobsPage(),
+      ),
+      GoRoute(
         name: 'admin-finance',
         path: '/admin/finance',
         builder: (context, state) => const AdminFinancePage(),
@@ -187,7 +194,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: 'admin-settings',
         path: '/admin/settings',
-        builder: (context, state) => const AdminHomePage(),
+        builder: (context, state) => const AdminSettingsPage(),
       ),
 
       // Public landing page (root)
