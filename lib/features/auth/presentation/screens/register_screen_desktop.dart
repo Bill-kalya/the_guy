@@ -1,12 +1,15 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../home/providers/location_provider.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/utils/error_handler.dart';
+import '../../../../core/errors/app_exception.dart';
+import '../../../../core/errors/error_mapper.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../../shared/widgets/password_validator.dart';
 
 class RegisterScreenDesktop extends ConsumerStatefulWidget {
   const RegisterScreenDesktop({super.key});
@@ -27,6 +30,13 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
   bool _agreeToTerms = false;
   int _currentStep = 0;
 
+  String? _nameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
+  String? _generalError;
+  String _password = '';
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -34,6 +44,54 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _clearErrors() {
+    setState(() {
+      _nameError = null;
+      _emailError = null;
+      _passwordError = null;
+      _confirmPasswordError = null;
+      _generalError = null;
+    });
+  }
+
+  void _handleError(dynamic error) {
+    if (error is AppException) {
+      setState(() {
+        if (error.fieldErrors != null && error.fieldErrors!.isNotEmpty) {
+          for (final fe in error.fieldErrors!) {
+            switch (fe.field) {
+              case 'fullName':
+              case 'name':
+                _nameError = fe.message;
+                break;
+              case 'email':
+                _emailError = fe.message;
+                break;
+              case 'password':
+                _passwordError = fe.message;
+                break;
+            }
+          }
+        } else {
+          final mapped = ErrorMapper.map(error.code);
+          _generalError = '${mapped.title}\n${mapped.message}';
+        }
+      });
+    } else {
+      setState(() {
+        _generalError = 'Something went wrong. Please try again.';
+      });
+    }
+  }
+
+  bool _validatePassword(String password) {
+    return password.length >= 8 &&
+        password.contains(RegExp(r'[A-Z]')) &&
+        password.contains(RegExp(r'[a-z]')) &&
+        password.contains(RegExp(r'[0-9]')) &&
+        password.contains(RegExp(r'[!@#\$%^&+=]'));
   }
 
   @override
@@ -342,8 +400,10 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
             hintText: 'John Doe', prefixIcon: const Icon(Icons.person),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true, fillColor: Colors.grey.shade50,
+            errorText: _nameError,
           ),
           validator: (value) => Validators.validateName(value, fieldName: 'Full name'),
+          onChanged: (_) { if (_nameError != null) setState(() => _nameError = null); },
         ),
         const SizedBox(height: 20),
         Text('Email', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey.shade700)),
@@ -354,8 +414,10 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
             hintText: 'john@example.com', prefixIcon: const Icon(Icons.email),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true, fillColor: Colors.grey.shade50,
+            errorText: _emailError,
           ),
           validator: (value) => Validators.validateEmail(value),
+          onChanged: (_) { if (_emailError != null) setState(() => _emailError = null); },
         ),
         const SizedBox(height: 20),
         Text('Password', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey.shade700)),
@@ -363,12 +425,19 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
         TextFormField(
           controller: _passwordController, obscureText: true, textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            hintText: 'At least 6 characters', prefixIcon: const Icon(Icons.lock),
+            hintText: 'At least 8 characters', prefixIcon: const Icon(Icons.lock),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true, fillColor: Colors.grey.shade50,
+            errorText: _passwordError,
           ),
           validator: (value) => Validators.validatePassword(value),
+          onChanged: (value) {
+            setState(() => _password = value);
+            if (_passwordError != null) setState(() => _passwordError = null);
+          },
         ),
+        const SizedBox(height: 8),
+        PasswordValidator(password: _password),
         const SizedBox(height: 32),
         Row(
           children: [
@@ -418,6 +487,38 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
         const SizedBox(height: 8),
         Text('Review your information before creating your account', style: TextStyle(fontSize: 15, color: Colors.grey.shade600)),
         const SizedBox(height: 32),
+        if (_generalError != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.error_outline, size: 16, color: Colors.red.shade600),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_generalError!, style: TextStyle(color: Colors.red.shade700, fontSize: 13)),
+                    ),
+                  ],
+                ),
+                if (_generalError!.contains('already exists')) ...[
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => context.go('/login'),
+                    child: const Text('Sign In Instead'),
+                  ),
+                ],
+              ],
+            ),
+          ),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(16)),
@@ -440,12 +541,14 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
             hintText: 'Re-enter your password', prefixIcon: const Icon(Icons.lock_outline),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true, fillColor: Colors.grey.shade50,
+            errorText: _confirmPasswordError,
           ),
           validator: (value) {
             if (value == null || value.isEmpty) return 'Please confirm your password';
             if (value != _passwordController.text) return 'Passwords do not match';
             return null;
           },
+          onChanged: (_) { if (_confirmPasswordError != null) setState(() => _confirmPasswordError = null); },
         ),
         const SizedBox(height: 16),
         Row(
@@ -515,12 +618,31 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
   }
 
   Future<void> _register() async {
+    _clearErrors();
+
+    if (!_validatePassword(_passwordController.text)) {
+      setState(() {
+        _passwordError = 'Password must include uppercase, lowercase, number, and special character.';
+      });
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _confirmPasswordError = 'Passwords do not match';
+      });
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
+
     try {
       final apiClient = ref.read(apiClientProvider);
       final locationState = ref.read(locationProvider);
       final location = locationState.currentPosition;
+
       final response = await apiClient.post(
         Endpoints.register,
         data: {
@@ -528,16 +650,22 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
           'email': _emailController.text.trim(),
           'password': _passwordController.text,
           'role': _selectedRole.toUpperCase(),
-
           'latitude': location?.latitude,
           'longitude': location?.longitude,
         },
       );
+
       if (response.statusCode == 201 && mounted) {
         context.push('/verify-email', extra: _emailController.text.trim());
       }
+    } on DioException catch (e) {
+      if (e.error is AppException) {
+        _handleError(e.error);
+      } else {
+        _handleError(e);
+      }
     } catch (e) {
-      if (mounted) ErrorHandler.showErrorSnackBar(context, 'Registration failed. Please try again.');
+      _handleError(e);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

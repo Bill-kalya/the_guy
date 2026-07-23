@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/auth_state.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../../core/errors/error_mapper.dart';
 
 class LoginScreenDesktop extends ConsumerStatefulWidget {
   const LoginScreenDesktop({super.key});
@@ -321,21 +322,7 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                 ),
                 if (authState.error != null) ...[
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(authState.error!, style: TextStyle(color: Colors.red.shade700))),
-                      ],
-                    ),
-                  ),
+                  _buildErrorBanner(authState),
                 ],
               ],
             ),
@@ -351,6 +338,82 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
     ref.read(authProvider.notifier).loginWithEmail(
       _emailController.text.trim(),
       _passwordController.text,
+    );
+  }
+
+  Widget _buildErrorBanner(AuthState authState) {
+    final mapped = ErrorMapper.map(authState.errorCode ?? '');
+    final isNotVerified = authState.errorCode == 'EMAIL_NOT_VERIFIED';
+    final isLocked = authState.errorCode == 'ACCOUNT_LOCKED' || authState.errorCode == 'ACCOUNT_SUSPENDED';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      mapped.title,
+                      style: TextStyle(color: Colors.red.shade800, fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      mapped.message,
+                      style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (isNotVerified) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/verify-email', extra: _emailController.text.trim()),
+                icon: const Icon(Icons.mail_outline, size: 18),
+                label: const Text('Verify Email'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                  side: BorderSide(color: Colors.red.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ],
+          if (isLocked) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.support_agent, size: 18),
+                label: const Text('Contact Support'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                  side: BorderSide(color: Colors.red.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

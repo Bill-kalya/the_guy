@@ -1,3 +1,4 @@
+import '../../../core/errors/app_exception.dart';
 import 'user_model.dart';
 
 class AuthState {
@@ -5,11 +6,12 @@ class AuthState {
   final UserModel? user;
   final bool isAuthenticated;
   final String? error;
+  final String? errorCode;
+  final List<FieldError>? fieldErrors;
   final String? pendingEmail;
   final bool emailVerified;
   final bool otpSent;
 
-  // Password reset flow
   final String? resetEmail;
   final bool resetOtpSent;
   final bool resetOtpVerified;
@@ -19,6 +21,8 @@ class AuthState {
     this.user,
     this.isAuthenticated = false,
     this.error,
+    this.errorCode,
+    this.fieldErrors,
     this.pendingEmail,
     this.emailVerified = false,
     this.otpSent = true,
@@ -48,13 +52,16 @@ class AuthState {
   factory AuthState.resetOtpVerified(String email) =>
       AuthState(resetEmail: email, resetOtpSent: true, resetOtpVerified: true);
 
-  factory AuthState.error(String message) => AuthState(error: message);
+  factory AuthState.error(String message, {String? errorCode, List<FieldError>? fieldErrors}) =>
+      AuthState(error: message, errorCode: errorCode, fieldErrors: fieldErrors);
 
   AuthState copyWith({
     bool? isLoading,
     UserModel? user,
     bool? isAuthenticated,
     String? error,
+    String? errorCode,
+    List<FieldError>? fieldErrors,
     String? pendingEmail,
     bool? emailVerified,
     bool? otpSent,
@@ -67,6 +74,8 @@ class AuthState {
       user: user ?? this.user,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       error: error ?? this.error,
+      errorCode: errorCode ?? this.errorCode,
+      fieldErrors: fieldErrors ?? this.fieldErrors,
       pendingEmail: pendingEmail ?? this.pendingEmail,
       emailVerified: emailVerified ?? this.emailVerified,
       otpSent: otpSent ?? this.otpSent,

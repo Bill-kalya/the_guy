@@ -23,6 +23,10 @@ import '../features/profile/screens/edit_profile_screen.dart';
 // Admin routes
 import '../features/admin/presentation/pages/admin_home_page.dart';
 import '../features/admin/presentation/pages/admin_profile_page.dart';
+import '../features/admin/presentation/pages/admin_providers_page.dart';
+import '../features/admin/presentation/pages/admin_users_page.dart';
+import '../features/admin/presentation/pages/admin_finance_page.dart';
+import '../features/admin/presentation/pages/admin_analytics_page.dart';
 import '../features/admin/presentation/pages/trust_safety_center_page.dart';
 
 // Provider routes
@@ -151,14 +155,39 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdminHomePage(),
       ),
       GoRoute(
-        name: 'admin-profile',
-        path: '/admin/profile',
-        builder: (context, state) => const AdminProfilePage(),
+        name: 'admin-providers',
+        path: '/admin/providers',
+        builder: (context, state) => const AdminProvidersPage(),
+      ),
+      GoRoute(
+        name: 'admin-users',
+        path: '/admin/users',
+        builder: (context, state) => const AdminUsersPage(),
+      ),
+      GoRoute(
+        name: 'admin-finance',
+        path: '/admin/finance',
+        builder: (context, state) => const AdminFinancePage(),
+      ),
+      GoRoute(
+        name: 'admin-analytics',
+        path: '/admin/analytics',
+        builder: (context, state) => const AdminAnalyticsPage(),
       ),
       GoRoute(
         name: 'admin-trust-safety',
         path: '/admin/trust-safety',
         builder: (context, state) => const TrustSafetyCenterPage(),
+      ),
+      GoRoute(
+        name: 'admin-profile',
+        path: '/admin/profile',
+        builder: (context, state) => const AdminProfilePage(),
+      ),
+      GoRoute(
+        name: 'admin-settings',
+        path: '/admin/settings',
+        builder: (context, state) => const AdminHomePage(),
       ),
 
       // Public landing page (root)

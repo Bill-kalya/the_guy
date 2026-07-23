@@ -1,8 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/network/websocket_service.dart';
-import '../../../core/utils/error_handler.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../core/errors/error_codes.dart';
 import '../../../core/network/endpoints.dart';
 import '../models/auth_state.dart';
 import '../models/user_model.dart';
@@ -93,7 +95,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final response = await _apiClient.post(
         Endpoints.register,
         data: {
-          'name': name,
+          'fullName': name,
           'email': email,
           'password': password,
           'role': role,
@@ -106,9 +108,11 @@ class AuthNotifier extends Notifier<AuthState> {
         final otpSent = response.data['data']?['otpSent'] ?? true;
         state = AuthState.emailVerificationPending(email, otpSent: otpSent);
       }
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code, fieldErrors: parsed.fieldErrors);
     } catch (e) {
-      ErrorHandler.logError('Registration failed', e);
-      state = AuthState.error('Registration failed. Please try again.');
+      state = AuthState.error('Registration failed. Please try again.', errorCode: ErrorCodes.serverError);
     }
   }
 
@@ -132,18 +136,17 @@ class AuthNotifier extends Notifier<AuthState> {
         return;
       }
 
-      if (response.statusCode == 403 &&
-          response.data?['message'] == 'EMAIL_NOT_VERIFIED') {
-        state = AuthState.emailVerificationPending(email);
-        return;
-      }
-
+      final code = response.data?['errorCode'] as String?;
+      final message = response.data?['message'] as String?;
       state = AuthState.error(
-        response.data?['message'] ?? 'Invalid email or password.',
+        message ?? 'Email or password is incorrect.',
+        errorCode: code ?? ErrorCodes.invalidCredentials,
       );
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code, fieldErrors: parsed.fieldErrors);
     } catch (e) {
-      ErrorHandler.logError('Login failed', e);
-      state = AuthState.error('Invalid email or password. Please try again.');
+      state = AuthState.error('Something went wrong. Please try again.', errorCode: ErrorCodes.serverError);
     }
   }
 
@@ -164,14 +167,18 @@ class AuthNotifier extends Notifier<AuthState> {
         return;
       }
 
-      state = AuthState.error(
-        response.data?['message'] ??
-            'Invalid or expired verification code. Please try again.',
-      );
-    } catch (e) {
-      ErrorHandler.logError('Email verification failed', e);
+      final code = response.data?['errorCode'] as String?;
       state = AuthState.error(
         'Invalid or expired verification code. Please try again.',
+        errorCode: code ?? ErrorCodes.otpInvalid,
+      );
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code);
+    } catch (e) {
+      state = AuthState.error(
+        'Invalid or expired verification code. Please try again.',
+        errorCode: ErrorCodes.otpInvalid,
       );
     }
   }
@@ -185,10 +192,13 @@ class AuthNotifier extends Notifier<AuthState> {
         Endpoints.resendVerification,
         data: {'email': email},
       );
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code);
     } catch (e) {
-      ErrorHandler.logError('Failed to resend verification', e);
       state = AuthState.error(
         'Too many requests. Please wait before resending.',
+        errorCode: ErrorCodes.rateLimited,
       );
     }
   }
@@ -208,10 +218,13 @@ class AuthNotifier extends Notifier<AuthState> {
       if (response.statusCode == 200) {
         state = AuthState.forgotPasswordOtpSent(email);
       }
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code);
     } catch (e) {
-      ErrorHandler.logError('Forgot password request failed', e);
       state = AuthState.error(
         'Failed to send reset code. Please check your email is correct.',
+        errorCode: ErrorCodes.serverError,
       );
     }
   }
@@ -231,10 +244,13 @@ class AuthNotifier extends Notifier<AuthState> {
       if (response.statusCode == 200) {
         state = AuthState.resetOtpVerified(email);
       }
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code);
     } catch (e) {
-      ErrorHandler.logError('Reset OTP verification failed', e);
       state = AuthState.error(
         'Invalid or expired reset code. Please try again.',
+        errorCode: ErrorCodes.otpInvalid,
       );
     }
   }
@@ -248,10 +264,13 @@ class AuthNotifier extends Notifier<AuthState> {
         Endpoints.forgotPassword,
         data: {'email': email},
       );
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code);
     } catch (e) {
-      ErrorHandler.logError('Failed to resend reset OTP', e);
       state = AuthState.error(
         'Too many requests. Please wait before resending.',
+        errorCode: ErrorCodes.rateLimited,
       );
     }
   }
@@ -277,13 +296,15 @@ class AuthNotifier extends Notifier<AuthState> {
       );
 
       if (response.statusCode == 200) {
-        // Password reset successful — navigate to login
         state = AuthState.unauthenticated();
       }
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code);
     } catch (e) {
-      ErrorHandler.logError('Password reset failed', e);
       state = AuthState.error(
         'Failed to reset password. Please try again.',
+        errorCode: ErrorCodes.serverError,
       );
     }
   }
@@ -338,4 +359,49 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> checkAuthStatus() async {
     await _restoreSession();
   }
+
+  _ParsedError _parseError(DioException e) {
+    if (e.response?.data is Map) {
+      final data = e.response!.data as Map;
+      final code = data['errorCode'] as String? ?? ErrorCodes.serverError;
+      final message = data['message'] as String? ?? 'Something went wrong.';
+      final rawErrors = data['errors'] as List?;
+      List<FieldError>? fieldErrors;
+      if (rawErrors != null && rawErrors.isNotEmpty) {
+        fieldErrors = rawErrors
+            .map((e) => FieldError(
+                  field: e['field'] ?? '',
+                  code: e['code'] ?? '',
+                  message: e['message'] ?? '',
+                ))
+            .toList();
+      }
+      return _ParsedError(code: code, message: message, fieldErrors: fieldErrors);
+    }
+
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.connectionError) {
+      return _ParsedError(code: ErrorCodes.networkError, message: 'No internet connection. Check your network and try again.');
+    }
+
+    if (e.response?.statusCode == 429) {
+      return _ParsedError(code: ErrorCodes.rateLimited, message: 'Too many requests. Please wait a moment.');
+    }
+
+    if (e.response?.statusCode != null && e.response!.statusCode! >= 500) {
+      return _ParsedError(code: ErrorCodes.serverError, message: 'Something went wrong. Please try again.');
+    }
+
+    return _ParsedError(code: ErrorCodes.serverError, message: 'Something went wrong. Please try again.');
+  }
+}
+
+class _ParsedError {
+  final String code;
+  final String message;
+  final List<FieldError>? fieldErrors;
+
+  const _ParsedError({required this.code, required this.message, this.fieldErrors});
 }

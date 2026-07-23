@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/auth_state.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
-import 'login_screen_desktop.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../../core/errors/error_mapper.dart';
+import 'login_screen_desktop.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -54,7 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 24),
                   _buildCreateAccountLink(),
                   const SizedBox(height: 32),
-                  if (authState.error != null) _buildErrorBanner(authState.error!),
+                  if (authState.error != null) _buildErrorBanner(authState),
                 ],
               ),
             ),
@@ -209,24 +210,84 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildErrorBanner(String error) {
+  Widget _buildErrorBanner(AuthState authState) {
+    final mapped = ErrorMapper.map(authState.errorCode ?? '');
+    final isAccountLocked = authState.errorCode == 'ACCOUNT_LOCKED';
+    final isSuspended = authState.errorCode == 'ACCOUNT_SUSPENDED';
+    final isNotVerified = authState.errorCode == 'EMAIL_NOT_VERIFIED';
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.red.shade200),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              error,
-              style: TextStyle(color: Colors.red.shade700, fontSize: 14),
-            ),
+          Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      mapped.title,
+                      style: TextStyle(
+                        color: Colors.red.shade800,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      mapped.message,
+                      style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          if (isNotVerified) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/verify-email', extra: _emailController.text.trim()),
+                icon: const Icon(Icons.mail_outline, size: 18),
+                label: const Text('Verify Email'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                  side: BorderSide(color: Colors.red.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ],
+          if (isAccountLocked || isSuspended) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // TODO: wire up support contact
+                },
+                icon: const Icon(Icons.support_agent, size: 18),
+                label: const Text('Contact Support'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                  side: BorderSide(color: Colors.red.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
