@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../providers/availability_provider.dart';
 import '../../providers/earnings_provider.dart';
+import '../../providers/provider_profile_provider.dart';
+import '../../models/provider_profile_model.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../auth/models/user_model.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../../shared/constants/service_categories.dart';
 
 class ProviderProfileScreen extends ConsumerStatefulWidget {
   const ProviderProfileScreen({super.key});
@@ -21,6 +24,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(earningsProvider.notifier).fetchEarnings();
+      ref.read(providerProfileProvider.notifier).fetchProfile();
     });
   }
 
@@ -29,7 +33,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     final authState = ref.watch(authProvider);
     final availabilityState = ref.watch(availabilityProvider);
     final earningsState = ref.watch(earningsProvider);
+    final providerProfileState = ref.watch(providerProfileProvider);
     final user = authState.user;
+    final providerProfile = providerProfileState.profile;
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text('Not logged in')));
@@ -52,8 +58,12 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     const SizedBox(height: 20),
                     _buildAboutMe(user),
                     const SizedBox(height: 20),
-                    _buildServicesCard(),
+                    _buildServiceCard(providerProfile),
                     const SizedBox(height: 20),
+                    if (providerProfile != null && providerProfile.portfolioImageUrls.isNotEmpty) ...[
+                      _buildPortfolioCard(providerProfile),
+                      const SizedBox(height: 20),
+                    ],
                     _buildContactInfo(user),
                     const SizedBox(height: 20),
                     _buildProviderMetrics(user, earningsState),
@@ -262,35 +272,94 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     );
   }
 
-  // ── Services (placeholder — wired to real data later) ───
-  Widget _buildServicesCard() {
-    final services = [
-      ('Plumbing', Icons.plumbing, Colors.blue),
-      ('Electrical', Icons.electrical_services, Colors.amber),
-      ('Carpentry', Icons.carpenter, Colors.brown),
-    ];
+  // ── Service Category ───────────────────────────────────
+  Widget _buildServiceCard(ProviderProfileModel? profile) {
+    final categoryId = profile?.categoryId;
+    final cat = categoryId != null ? ServiceCategories.getByName(categoryId) : null;
 
     return _card(
-      title: 'Services',
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: services.map((s) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: s.$3.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: s.$3.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(s.$2, size: 18, color: s.$3.shade700),
-              const SizedBox(width: 8),
-              Text(s.$1, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: s.$3.shade800)),
-            ],
-          ),
-        )).toList(),
+      title: 'Service',
+      child: cat != null
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: cat.color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cat.color.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(cat.icon, size: 24, color: cat.color.shade700),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(cat.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cat.color.shade800)),
+                        const SizedBox(height: 2),
+                        Text('Your service category', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                      ],
+                    ),
+                  ),
+                  if (profile?.verificationLevel != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _verificationColor(profile!.verificationLevel).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        profile.verificationLevel.replaceAll('_', ' '),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _verificationColor(profile.verificationLevel)),
+                      ),
+                    ),
+                ],
+              ),
+            )
+          : Text(
+              categoryId ?? 'No category set',
+              style: TextStyle(fontSize: 15, color: categoryId != null ? const Color(0xFF1A1A2E) : Colors.grey.shade500),
+            ),
+    );
+  }
+
+  Color _verificationColor(String level) {
+    switch (level) {
+      case 'BUSINESS': return Colors.green.shade700;
+      case 'ID_VERIFIED': return Colors.blue.shade700;
+      case 'BASIC': return Colors.orange.shade700;
+      default: return Colors.grey.shade600;
+    }
+  }
+
+  // ── Portfolio ─────────────────────────────────────────
+  Widget _buildPortfolioCard(ProviderProfileModel profile) {
+    return _card(
+      title: 'Work Portfolio',
+      child: SizedBox(
+        height: 120,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: profile.portfolioImageUrls.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 10),
+          itemBuilder: (context, index) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                profile.portfolioImageUrls[index],
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stack) => Container(
+                  width: 120,
+                  height: 120,
+                  color: Colors.grey.shade200,
+                  child: Icon(Icons.image_not_supported, color: Colors.grey.shade400),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
