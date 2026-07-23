@@ -25,6 +25,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(earningsProvider.notifier).fetchEarnings();
       ref.read(providerProfileProvider.notifier).fetchProfile();
+      ref.read(providerProfileProvider.notifier).fetchCompletion();
     });
   }
 
@@ -54,13 +55,13 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   children: [
                     _buildHeader(context, ref, user, availabilityState),
                     const SizedBox(height: 20),
-                    _buildProfileCompletion(user),
+                    _buildProfileCompletion(user, providerProfileState.completion),
                     const SizedBox(height: 20),
                     _buildAboutMe(user),
                     const SizedBox(height: 20),
                     _buildServiceCard(providerProfile),
                     const SizedBox(height: 20),
-                    if (providerProfile != null && providerProfile.portfolioImageUrls.isNotEmpty) ...[
+                    if (providerProfile != null && providerProfile.portfolioImages.isNotEmpty) ...[
                       _buildPortfolioCard(providerProfile),
                       const SizedBox(height: 20),
                     ],
@@ -209,14 +210,27 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   }
 
   // ── Profile Completion ──────────────────────────────────
-  Widget _buildProfileCompletion(UserModel user) {
-    final checks = [
-      ('Profile Photo', user.avatar != null),
-      ('Email Verified', user.isVerified),
-      ('Phone Added', user.phone.isNotEmpty),
-    ];
-    final completed = checks.where((c) => c.$2).length;
-    final pct = (completed / checks.length * 100).round();
+  Widget _buildProfileCompletion(UserModel user, Map<String, dynamic>? completion) {
+    final score = completion?['score'] as int? ?? 0;
+    final label = completion?['label'] as String? ?? 'Just started';
+    final checksMap = completion?['checks'] as Map<String, dynamic>?;
+
+    final checks = <MapEntry<String, bool>>[];
+    if (checksMap != null) {
+      for (final entry in checksMap.entries) {
+        final check = entry.value as Map<String, dynamic>;
+        checks.add(MapEntry(check['label'] as String, check['completed'] as bool));
+      }
+    } else {
+      // Fallback if completion endpoint hasn't loaded yet
+      checks.addAll([
+        MapEntry('Profile Photo', user.avatar != null),
+        MapEntry('Email Verified', user.isVerified),
+        MapEntry('Phone Added', user.phone.isNotEmpty),
+      ]);
+    }
+
+    final displayPct = checksMap != null ? score : ((checks.where((c) => c.value).length / checks.length * 100).round());
 
     return _card(
       title: 'Profile Completion',
@@ -228,15 +242,21 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
-                    value: pct / 100,
+                    value: displayPct / 100,
                     backgroundColor: Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation(pct == 100 ? Colors.green.shade500 : AppColors.primary),
+                    valueColor: AlwaysStoppedAnimation(displayPct == 100 ? Colors.green.shade500 : AppColors.primary),
                     minHeight: 8,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Text('$pct%', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: pct == 100 ? Colors.green.shade700 : AppColors.primary)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('$displayPct%', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: displayPct == 100 ? Colors.green.shade700 : AppColors.primary)),
+                  Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -244,10 +264,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
               children: [
-                Icon(c.$2 ? Icons.check_circle : Icons.radio_button_unchecked,
-                    size: 20, color: c.$2 ? Colors.green.shade500 : Colors.grey.shade400),
+                Icon(c.value ? Icons.check_circle : Icons.radio_button_unchecked,
+                    size: 20, color: c.value ? Colors.green.shade500 : Colors.grey.shade400),
                 const SizedBox(width: 10),
-                Text(c.$1, style: TextStyle(fontSize: 14, color: c.$2 ? const Color(0xFF1A1A2E) : Colors.grey.shade600)),
+                Text(c.key, style: TextStyle(fontSize: 14, color: c.value ? const Color(0xFF1A1A2E) : Colors.grey.shade600)),
               ],
             ),
           )),
@@ -340,13 +360,14 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         height: 120,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          itemCount: profile.portfolioImageUrls.length,
+          itemCount: profile.portfolioImages.length,
           separatorBuilder: (context, index) => const SizedBox(width: 10),
           itemBuilder: (context, index) {
+            final img = profile.portfolioImages[index];
             return ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
-                profile.portfolioImageUrls[index],
+                img.imageUrl,
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,

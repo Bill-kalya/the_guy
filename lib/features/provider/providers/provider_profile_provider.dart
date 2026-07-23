@@ -38,17 +38,35 @@ class ProviderProfileNotifier extends Notifier<ProviderProfileState> {
     }
   }
 
+  Future<void> fetchCompletion() async {
+    try {
+      final response = await _apiClient.get(Endpoints.providerMeCompletion);
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final completionData = data is Map<String, dynamic> && data.containsKey('data')
+            ? data['data'] as Map<String, dynamic>
+            : data as Map<String, dynamic>;
+        state = state.copyWith(completion: completionData);
+      }
+    } catch (e) {
+      // Silent fail — completion is non-critical
+    }
+  }
+
   Future<void> refreshProfile() async {
     await fetchProfile();
+    await fetchCompletion();
   }
 }
 
 class ProviderProfileState {
   final ProviderProfileModel? profile;
+  final Map<String, dynamic>? completion;
   final bool isLoading;
   final String? error;
 
-  ProviderProfileState({this.profile, this.isLoading = false, this.error});
+  ProviderProfileState({this.profile, this.completion, this.isLoading = false, this.error});
 
   factory ProviderProfileState.initial() {
     return ProviderProfileState();
@@ -56,11 +74,13 @@ class ProviderProfileState {
 
   ProviderProfileState copyWith({
     ProviderProfileModel? profile,
+    Map<String, dynamic>? completion,
     bool? isLoading,
     String? error,
   }) {
     return ProviderProfileState(
       profile: profile ?? this.profile,
+      completion: completion ?? this.completion,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
     );

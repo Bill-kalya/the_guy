@@ -13,7 +13,7 @@ class ProviderProfileModel {
   final double responseRate;
   final double repeatClientsPercentage;
   final bool isOnline;
-  final List<String> portfolioImageUrls;
+  final List<PortfolioImageModel> portfolioImages;
   final double? serviceQualityScore;
   final int? reviewCount;
   final Map<String, double>? scoreBreakdown;
@@ -33,7 +33,7 @@ class ProviderProfileModel {
     this.responseRate = 0.0,
     this.repeatClientsPercentage = 0.0,
     this.isOnline = false,
-    this.portfolioImageUrls = const [],
+    this.portfolioImages = const [],
     this.serviceQualityScore,
     this.reviewCount,
     this.scoreBreakdown,
@@ -55,8 +55,10 @@ class ProviderProfileModel {
       responseRate: (json['responseRate'] ?? 0.0).toDouble(),
       repeatClientsPercentage: (json['repeatClientsPercentage'] ?? 0.0).toDouble(),
       isOnline: json['isOnline'] ?? false,
-      portfolioImageUrls: json['portfolioImageUrls'] != null
-          ? List<String>.from(json['portfolioImageUrls'])
+      portfolioImages: json['portfolioImages'] != null
+          ? (json['portfolioImages'] as List)
+              .map((e) => PortfolioImageModel.fromJson(e as Map<String, dynamic>))
+              .toList()
           : [],
       serviceQualityScore: json['serviceQualityScore'] != null
           ? (json['serviceQualityScore'] as num).toDouble()
@@ -66,6 +68,29 @@ class ProviderProfileModel {
           ? Map<String, double>.from(
               (json['scoreBreakdown'] as Map).map((k, v) => MapEntry(k.toString(), (v as num).toDouble())))
           : null,
+    );
+  }
+}
+
+class PortfolioImageModel {
+  final String? id;
+  final String imageUrl;
+  final String? publicId;
+  final int? sortOrder;
+
+  PortfolioImageModel({
+    this.id,
+    required this.imageUrl,
+    this.publicId,
+    this.sortOrder,
+  });
+
+  factory PortfolioImageModel.fromJson(Map<String, dynamic> json) {
+    return PortfolioImageModel(
+      id: json['id'],
+      imageUrl: json['imageUrl'] ?? '',
+      publicId: json['publicId'],
+      sortOrder: json['sortOrder'],
     );
   }
 }

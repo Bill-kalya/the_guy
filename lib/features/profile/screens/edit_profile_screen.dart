@@ -82,9 +82,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-        final avatarUrl = responseData is Map<String, dynamic>
-            ? (responseData['data'] as String?)
-            : responseData as String?;
+        final payload = responseData is Map<String, dynamic> ? responseData['data'] : responseData;
+        String? avatarUrl;
+        if (payload is Map<String, dynamic>) {
+          avatarUrl = payload['url']?.toString();
+        } else if (payload is String) {
+          avatarUrl = payload;
+        }
         if (avatarUrl != null) {
           // Save the avatar URL to profile
           final api = ref.read(apiClientProvider);

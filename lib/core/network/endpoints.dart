@@ -57,6 +57,7 @@ class Endpoints {
   static const String nearbyProviders = '/api/providers/nearby';
   static const String providerDetails = '/api/providers';
   static const String providerMe = '/api/providers/me';
+  static const String providerMeCompletion = '/api/providers/me/completion';
   static const String providerEarnings = '/api/providers/earnings';
   static const String updateAvailability = '/api/providers/availability';
 

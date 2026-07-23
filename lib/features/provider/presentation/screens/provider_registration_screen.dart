@@ -35,10 +35,11 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   // Step 2 — Profile Photo
   File? _profilePhoto;
   String? _profilePhotoUrl;
+  String? _profilePhotoPublicId;
 
   // Step 3 — Portfolio Photos
   final List<File> _portfolioPhotos = [];
-  final List<String> _portfolioUrls = [];
+  final List<Map<String, String>> _portfolioData = [];
 
   // Step 4 — Verification Documents
   final List<_VerificationDoc> _verificationDocs = [];
@@ -77,7 +78,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   }
 
   // ── Image Upload ──────────────────────────────────────
-  Future<String?> _uploadImage(File file, String folder) async {
+  Future<Map<String, String>?> _uploadImage(File file, String folder) async {
     try {
       final secureStorage = ref.read(secureStorageProvider);
       final token = await secureStorage.getAccessToken();
@@ -99,7 +100,13 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
       if (response.statusCode == 200) {
         final data = response.data;
-        return data is Map<String, dynamic> ? data['data'] as String? : data as String?;
+        final payload = data is Map<String, dynamic> ? data['data'] : data;
+        if (payload is Map<String, dynamic>) {
+          return {
+            'url': payload['url']?.toString() ?? '',
+            'publicId': payload['publicId']?.toString() ?? '',
+          };
+        }
       }
       return null;
     } catch (e) {
@@ -193,23 +200,30 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     try {
       // Upload profile photo
       if (_profilePhoto != null) {
-        _profilePhotoUrl = await _uploadImage(_profilePhoto!, 'profile');
+        final result = await _uploadImage(_profilePhoto!, 'profile');
+        if (result != null) {
+          _profilePhotoUrl = result['url'];
+          _profilePhotoPublicId = result['publicId'];
+        }
       }
 
       // Upload portfolio photos
       for (final photo in _portfolioPhotos) {
-        final url = await _uploadImage(photo, 'portfolio');
-        if (url != null) _portfolioUrls.add(url);
+        final result = await _uploadImage(photo, 'portfolio');
+        if (result != null) {
+          _portfolioData.add({'imageUrl': result['url']!, 'publicId': result['publicId']!});
+        }
       }
 
       // Upload verification docs
       final verificationData = <Map<String, String>>[];
       for (final doc in _verificationDocs) {
-        final url = await _uploadImage(doc.file, 'verification');
-        if (url != null) {
+        final result = await _uploadImage(doc.file, 'documents');
+        if (result != null) {
           verificationData.add({
             'documentType': doc.type,
-            'imageUrl': url,
+            'imageUrl': result['url']!,
+            'publicId': result['publicId']!,
           });
         }
       }
@@ -222,7 +236,8 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
           'bio': _bioController.text.trim(),
           'categoryId': _selectedCategory,
           'profileImageUrl': _profilePhotoUrl,
-          'portfolioImageUrls': _portfolioUrls,
+          'profileImagePublicId': _profilePhotoPublicId,
+          'portfolioImages': _portfolioData,
           'verificationDocuments': verificationData,
           'latitude': _latitude,
           'longitude': _longitude,
