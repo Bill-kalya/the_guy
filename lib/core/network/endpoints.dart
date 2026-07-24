@@ -7,6 +7,10 @@ class Endpoints {
   // ============ Admin ============
   static const String adminBase = '/api/v1/admin';
   static const String adminAuditLogs = '$adminBase/audit-logs';
+  static const String adminSafetySummary = '$adminBase/trust-safety/summary';
+  static const String adminSafetyAlerts = '$adminBase/trust-safety/alerts';
+  static const String adminSafetyHeatmap = '$adminBase/trust-safety/heatmap';
+  static const String adminSafetyModerationQueue = '$adminBase/trust-safety/moderation-queue';
 
   // These don't exist yet in backend
   // static const String adminDashboard = '$adminBase/dashboard';
@@ -103,4 +107,13 @@ class EndpointBuilder {
 
   static String providerAvailability(bool online) =>
       '/api/providers/status?online=$online';
+
+  static String adminSuspendProvider(String providerId) =>
+      '${Endpoints.adminBase}/trust-safety/providers/$providerId/suspend';
+
+  static String adminBanProvider(String providerId) =>
+      '${Endpoints.adminBase}/trust-safety/providers/$providerId/ban';
+
+  static String adminReinstateProvider(String providerId) =>
+      '${Endpoints.adminBase}/trust-safety/providers/$providerId/reinstate';
 }
