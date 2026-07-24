@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/admin_shell.dart';
-import '../providers/admin_safety_provider.dart';
+import '../../providers/admin_safety_provider.dart';
 import '../../../../core/themes/colors.dart';
 
 class TrustSafetyCenterPage extends ConsumerStatefulWidget {

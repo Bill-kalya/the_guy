@@ -1,9 +1,45 @@
 import 'package:flutter/material.dart';
 import '../widgets/admin_shell.dart';
+import '../widgets/admin_widgets.dart';
 import '../../../../core/themes/colors.dart';
 
-class AdminUsersPage extends StatelessWidget {
+class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
+
+  @override
+  State<AdminUsersPage> createState() => _AdminUsersPageState();
+}
+
+class _AdminUsersPageState extends State<AdminUsersPage> {
+  String _filter = 'All';
+  final _searchController = TextEditingController();
+
+  static const _filterOptions = ['All', 'Customers', 'Providers', 'Admins', 'Verified', 'Blocked'];
+
+  static const _users = [
+    (name: 'John Doe', email: 'john@gmail.com', role: 'Customer', status: 'Active', joined: 'Today'),
+    (name: 'Mary Smith', email: 'mary@gmail.com', role: 'Provider', status: 'Pending', joined: 'Today'),
+    (name: 'Peter Kamau', email: 'peter@gmail.com', role: 'Customer', status: 'Suspended', joined: 'Yesterday'),
+    (name: 'Grace Wanjiku', email: 'grace@gmail.com', role: 'Provider', status: 'Active', joined: 'Yesterday'),
+    (name: 'David Ochieng', email: 'david@gmail.com', role: 'Admin', status: 'Active', joined: '3 days ago'),
+    (name: 'Sarah Njeri', email: 'sarah@gmail.com', role: 'Customer', status: 'Active', joined: '3 days ago'),
+    (name: 'James Mwangi', email: 'james@gmail.com', role: 'Provider', status: 'Active', joined: '5 days ago'),
+    (name: 'Alice Adhiambo', email: 'alice@gmail.com', role: 'Customer', status: 'Blocked', joined: '7 days ago'),
+  ];
+
+  static const _recentRegistrations = [
+    (name: 'John Doe', role: 'Customer', time: '10 min ago', initials: 'JD'),
+    (name: 'Mary Smith', role: 'Provider', time: '32 min ago', initials: 'MS'),
+    (name: 'Peter Kamau', role: 'Customer', time: '1 hour ago', initials: 'PK'),
+    (name: 'Grace Wanjiku', role: 'Provider', time: '2 hours ago', initials: 'GW'),
+    (name: 'David Ochieng', role: 'Admin', time: '5 hours ago', initials: 'DO'),
+  ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,34 +50,196 @@ class AdminUsersPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.person, color: AppColors.primary, size: 28),
-                const SizedBox(width: 12),
-                const Text('Users', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              ],
+            AdminPageHeader(
+              title: 'Users',
+              subtitle: 'Manage everyone using the platform',
+              trailing: Row(
+                children: [
+                  _actionChip(Icons.person_add, 'Add Admin', AppColors.primary),
+                  const SizedBox(width: 8),
+                  _actionChip(Icons.download, 'Export CSV', Colors.grey),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
-            _buildComingSoon('View and manage platform users'),
+            _buildKpiCards(),
+            const SizedBox(height: 24),
+            _buildSearchAndFilters(),
+            const SizedBox(height: 20),
+            _buildMainContent(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildComingSoon(String subtitle) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(64),
-        child: Column(
+  Widget _buildKpiCards() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 800;
+        final cardWidth = isWide ? (constraints.maxWidth - 36) / 4 : (constraints.maxWidth - 12) / 2;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
           children: [
-            Icon(Icons.construction, size: 64, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            const Text('Coming Soon', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey)),
-            const SizedBox(height: 8),
-            Text(subtitle, style: TextStyle(color: Colors.grey.shade500)),
+            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'Total Users', value: '12,847', icon: Icons.people, color: AppColors.primary, subtitle: '+124 this week')),
+            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'Active Today', value: '3,421', icon: Icons.person, color: AppColors.success)),
+            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'Suspended', value: '89', icon: Icons.block, color: AppColors.error)),
+            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'New Today', value: '47', icon: Icons.person_add, color: AppColors.accent)),
           ],
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchAndFilters() {
+    return Column(
+      children: [
+        AdminSearchBar(controller: _searchController, hintText: 'Search users by name or email...'),
+        const SizedBox(height: 12),
+        AdminFilterBar(options: _filterOptions, selected: _filter, onSelected: (v) => setState(() => _filter = v)),
+      ],
+    );
+  }
+
+  Widget _buildMainContent() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 900) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: _buildUserTable()),
+              const SizedBox(width: 20),
+              SizedBox(width: 280, child: _buildRecentPanel()),
+            ],
+          );
+        }
+        return Column(
+          children: [
+            _buildUserTable(),
+            const SizedBox(height: 20),
+            _buildRecentPanel(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildUserTable() {
+    return AdminSectionCard(
+      title: 'User List',
+      titleIcon: Icons.table_chart,
+      child: Column(
+        children: [
+          const AdminTableHeader(
+            columns: ['User', 'Role', 'Status', 'Joined'],
+            flexes: [3, 2, 2, 2],
+          ),
+          const SizedBox(height: 8),
+          ..._users.map((u) => _userRow(u)),
+        ],
+      ),
+    );
+  }
+
+  Widget _userRow(dynamic u) {
+    final statusColor = u.status == 'Active'
+        ? AppColors.success
+        : u.status == 'Suspended' || u.status == 'Blocked'
+            ? AppColors.error
+            : AppColors.warning;
+    final initials = u.name.toString().split(' ').map((w) => w[0]).take(2).join();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: AppColors.primaryLight,
+                  child: Text(initials, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(u.name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFF1A1A2E))),
+                    Text(u.email, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(u.role, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          ),
+          Expanded(flex: 2, child: AdminStatusBadge(label: u.status, color: statusColor)),
+          Expanded(
+            flex: 2,
+            child: Text(u.joined, style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentPanel() {
+    return AdminSectionCard(
+      title: 'Recent Registrations',
+      titleIcon: Icons.schedule,
+      child: Column(
+        children: [
+          ..._recentRegistrations.map((r) {
+            final color = r.role == 'Provider' ? AppColors.primary : AppColors.secondary;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: color.withValues(alpha: 0.1),
+                    child: Text(r.initials, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(r.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E))),
+                        Text(r.role, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                      ],
+                    ),
+                  ),
+                  Text(r.time, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color)),
+        ],
       ),
     );
   }
