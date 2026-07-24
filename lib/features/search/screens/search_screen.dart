@@ -40,7 +40,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           children: [
             TextField(
               controller: _controller,
-              decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'What service do you need?'),
+              style: const TextStyle(color: Colors.black),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'What service do you need?',
+                hintStyle: TextStyle(color: Colors.grey.shade500),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onChanged: (v) => setState(() {}),
               onSubmitted: _onSubmit,
             ),

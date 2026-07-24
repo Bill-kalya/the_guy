@@ -212,9 +212,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 labelText: 'Amount',
                 prefixText: '${wallet.currency} ',
+                filled: true,
+                fillColor: Colors.white,
                 border: const OutlineInputBorder(),
               ),
             ),

@@ -18,11 +18,15 @@ class PhoneInputField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.phone,
+      style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Phone Number',
         hintText: '0712345678',
+        hintStyle: TextStyle(color: Colors.grey.shade500),
         prefixIcon: const Icon(Icons.phone_android),
         prefixText: '+254 ',
+        filled: true,
+        fillColor: Colors.white,
         errorText: errorText,
         helperText: 'Enter your Kenyan phone number',
       ),

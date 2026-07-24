@@ -105,11 +105,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.done,
-      decoration: const InputDecoration(
+      style: const TextStyle(color: Colors.black),
+      decoration: InputDecoration(
         labelText: 'Email',
         hintText: 'john@example.com',
-        prefixIcon: Icon(Icons.email),
-        border: OutlineInputBorder(),
+        hintStyle: TextStyle(color: Colors.grey.shade500),
+        prefixIcon: const Icon(Icons.email),
+        filled: true,
+        fillColor: Colors.white,
+        border: const OutlineInputBorder(),
       ),
       validator: (value) => Validators.validateEmail(value),
     );

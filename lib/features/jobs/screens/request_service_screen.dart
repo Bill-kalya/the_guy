@@ -72,10 +72,15 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
     return TextFormField(
       controller: _descriptionController,
       maxLines: 4,
-      decoration: const InputDecoration(
+      style: const TextStyle(color: Colors.black),
+      decoration: InputDecoration(
         labelText: 'Description',
         hintText: 'Describe the service you need...',
-        prefixIcon: Icon(Icons.description),
+        hintStyle: TextStyle(color: Colors.grey.shade500),
+        prefixIcon: const Icon(Icons.description),
+        filled: true,
+        fillColor: Colors.white,
+        border: const OutlineInputBorder(),
       ),
       validator: (value) => Validators.validateDescription(value),
       onChanged: (_) => _estimatePrice(),

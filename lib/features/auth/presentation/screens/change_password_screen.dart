@@ -165,8 +165,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       controller: controller,
       obscureText: obscure,
       validator: validator,
+      style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
         labelText: label,
+        hintText: label == 'Current Password' ? 'Enter current password' : 'Enter new password',
+        hintStyle: TextStyle(color: Colors.grey.shade500),
+        filled: true,
+        fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         suffixIcon: IconButton(

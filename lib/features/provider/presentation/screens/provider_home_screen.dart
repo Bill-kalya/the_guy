@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../providers/provider_profile_provider.dart';
+import '../../providers/performance_provider.dart';
+import '../../providers/goals_provider.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import 'provider_home_screen_desktop.dart';
 import '../../../../core/themes/colors.dart';
@@ -21,6 +23,8 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(providerProfileProvider.notifier).fetchProfile();
+      ref.read(performanceProvider.notifier).fetchPerformance();
+      ref.read(goalsProvider.notifier).fetchGoals();
     });
   }
 
@@ -78,6 +82,10 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
                   ],
                   const SizedBox(height: 16),
                   _buildKpiGrid(),
+                  const SizedBox(height: 20),
+                  _buildPerformanceSection(),
+                  const SizedBox(height: 20),
+                  _buildGoalsAchievementsSection(),
                   const SizedBox(height: 20),
                   _buildIncomingJobsSection(jobState),
                   const SizedBox(height: 20),
@@ -641,6 +649,217 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
         ),
       ),
     );
+  }
+
+  // ── Performance Section ─────────────────────────────────
+  Widget _buildPerformanceSection() {
+    final perfState = ref.watch(performanceProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.speed, color: Colors.blue, size: 20),
+                SizedBox(width: 8),
+                Text('Performance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
+              ],
+            ),
+            const SizedBox(height: 14),
+            if (perfState.isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (perfState.performance != null) ...[
+              _perfRow('Acceptance Rate', '${perfState.performance!.acceptanceRate.toStringAsFixed(0)}%', perfState.performance!.trend['acceptanceRate'] ?? ''),
+              _perfRow('Completion Rate', '${perfState.performance!.completionRate.toStringAsFixed(0)}%', perfState.performance!.trend['completionRate'] ?? ''),
+              _perfRow('Avg Response', '${perfState.performance!.avgResponseTime.toStringAsFixed(0)}s', perfState.performance!.trend['avgResponseTime'] ?? ''),
+              _perfRow('Repeat Customers', '${perfState.performance!.repeatCustomerCount}%', ''),
+              _perfRow('Cancellation Rate', '${perfState.performance!.cancellationRate.toStringAsFixed(0)}%', ''),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.workspace_premium, size: 16, color: AppColors.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      perfState.performance!.ranking,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+            ] else
+              const Text('Performance data not available', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _perfRow(String label, String value, String trend) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+          Row(
+            children: [
+              Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+              if (trend.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Text(trend, style: TextStyle(
+                  fontSize: 11,
+                  color: trend.startsWith('+') || trend.startsWith('-') && label.contains('Response')
+                      ? Colors.green
+                      : Colors.grey.shade500,
+                )),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Goals & Achievements ────────────────────────────────
+  Widget _buildGoalsAchievementsSection() {
+    final goalsState = ref.watch(goalsProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.flag, color: Colors.orange, size: 20),
+                SizedBox(width: 8),
+                Text('Goals & Achievements', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
+              ],
+            ),
+            const SizedBox(height: 14),
+            if (goalsState.isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (goalsState.goals != null) ...[
+              // Weekly Goal
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Weekly Goal', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+                    const SizedBox(height: 8),
+                    Text(
+                      'KES ${goalsState.goals!.weeklyProgress.toStringAsFixed(0)} / KES ${goalsState.goals!.weeklyTarget.toStringAsFixed(0)}',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E)),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: (goalsState.goals!.weeklyPercentage / 100).clamp(0.0, 1.0),
+                        backgroundColor: Colors.green.shade200,
+                        valueColor: AlwaysStoppedAnimation(Colors.green.shade600),
+                        minHeight: 8,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${goalsState.goals!.weeklyPercentage}% completed',
+                      style: TextStyle(fontSize: 12, color: Colors.green.shade700),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              // Achievements
+              const Text('Achievements', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: goalsState.goals!.achievements.map((a) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: a.unlocked ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _getAchievementEmoji(a.icon),
+                          style: TextStyle(fontSize: 16, color: a.unlocked ? null : Colors.grey),
+                        ),
+                        const SizedBox(width: 6),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              a.title,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: a.unlocked ? const Color(0xFF1A1A2E) : Colors.grey,
+                              ),
+                            ),
+                            if (!a.unlocked && a.progress != null && a.target != null)
+                              Text(
+                                '(${a.progress}/${a.target})',
+                                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ] else
+              const Text('Goals data not available', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getAchievementEmoji(String icon) {
+    switch (icon) {
+      case 'trophy': return '\u{1F3C6}';
+      case 'star': return '\u2B50';
+      case 'lightning': return '\u26A1';
+      case 'fire': return '\u{1F525}';
+      case 'diamond': return '\u{1F48E}';
+      default: return '\u{1F3C5}';
+    }
   }
 
 }

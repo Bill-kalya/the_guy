@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/admin_shell.dart';
 import '../widgets/admin_widgets.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../auth/providers/auth_provider.dart';
 
-class AdminUsersPage extends StatefulWidget {
+class AdminUsersPage extends ConsumerStatefulWidget {
   const AdminUsersPage({super.key});
 
   @override
-  State<AdminUsersPage> createState() => _AdminUsersPageState();
+  ConsumerState<AdminUsersPage> createState() => _AdminUsersPageState();
 }
 
-class _AdminUsersPageState extends State<AdminUsersPage> {
+class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   String _filter = 'All';
   final _searchController = TextEditingController();
 
@@ -184,9 +187,62 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
             flex: 2,
             child: Text(u.joined, style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
           ),
+          _buildActionMenu(u),
         ],
       ),
     );
+  }
+
+  Widget _buildActionMenu(dynamic u) {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert, color: Colors.grey.shade400, size: 20),
+      onSelected: (value) => _handleAction(value, u),
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'view_profile', child: _MenuAction(icon: Icons.person, label: 'View Profile')),
+        const PopupMenuItem(value: 'view_jobs', child: _MenuAction(icon: Icons.work, label: 'View Jobs')),
+        const PopupMenuItem(value: 'view_wallet', child: _MenuAction(icon: Icons.account_balance_wallet, label: 'View Wallet')),
+        const PopupMenuDivider(),
+        if (u.role != 'Admin')
+          PopupMenuItem(
+            value: 'view_as',
+            child: _MenuAction(icon: Icons.remove_red_eye, label: 'View as ${u.role}', isHighlight: true),
+          ),
+        if (u.status == 'Active')
+          const PopupMenuItem(value: 'suspend', child: _MenuAction(icon: Icons.block, label: 'Suspend', isDestructive: true)),
+      ],
+    );
+  }
+
+  void _handleAction(String action, dynamic u) async {
+    switch (action) {
+      case 'view_as':
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('View as User'),
+            content: Text('You will be viewing the app as ${u.name}. Your admin session will be restored when you return.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('View as ${u.name}', style: const TextStyle(color: AppColors.primary)),
+              ),
+            ],
+          ),
+        );
+        if (confirmed == true && mounted) {
+          // TODO: Replace with real user ID from API
+          final mockUserId = '00000000-0000-0000-0000-000000000001';
+          await ref.read(authProvider.notifier).impersonateUser(mockUserId);
+          if (mounted) context.go('/');
+        }
+        break;
+      case 'suspend':
+        // TODO: Implement suspend
+        break;
+      default:
+        break;
+    }
   }
 
   Widget _buildRecentPanel() {
@@ -241,6 +297,37 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color)),
         ],
       ),
+    );
+  }
+}
+
+class _MenuAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isHighlight;
+  final bool isDestructive;
+
+  const _MenuAction({
+    required this.icon,
+    required this.label,
+    this.isHighlight = false,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive
+        ? AppColors.error
+        : isHighlight
+            ? AppColors.primary
+            : Colors.grey.shade700;
+
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 10),
+        Text(label, style: TextStyle(fontSize: 13, color: color, fontWeight: isHighlight ? FontWeight.w600 : FontWeight.normal)),
+      ],
     );
   }
 }

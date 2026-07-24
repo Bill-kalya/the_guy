@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/admin_shell.dart';
 import '../widgets/admin_widgets.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../auth/providers/auth_provider.dart';
 
-class AdminProvidersPage extends StatefulWidget {
+class AdminProvidersPage extends ConsumerStatefulWidget {
   const AdminProvidersPage({super.key});
 
   @override
-  State<AdminProvidersPage> createState() => _AdminProvidersPageState();
+  ConsumerState<AdminProvidersPage> createState() => _AdminProvidersPageState();
 }
 
-class _AdminProvidersPageState extends State<AdminProvidersPage> {
+class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
   String _statusFilter = 'All';
   final _searchController = TextEditingController();
 
@@ -259,9 +262,62 @@ class _AdminProvidersPageState extends State<AdminProvidersPage> {
                 : Text('-', style: TextStyle(color: Colors.grey.shade400)),
           ),
           Expanded(flex: 2, child: AdminStatusBadge(label: p.status, color: statusColor)),
+          _buildProviderActionMenu(p),
         ],
       ),
     );
+  }
+
+  Widget _buildProviderActionMenu(dynamic p) {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert, color: Colors.grey.shade400, size: 20),
+      onSelected: (value) => _handleProviderAction(value, p),
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'view_profile', child: _ProviderMenuAction(icon: Icons.person, label: 'View Profile')),
+        const PopupMenuItem(value: 'view_portfolio', child: _ProviderMenuAction(icon: Icons.photo_library, label: 'View Portfolio')),
+        const PopupMenuItem(value: 'view_reviews', child: _ProviderMenuAction(icon: Icons.star, label: 'View Reviews')),
+        const PopupMenuItem(value: 'view_analytics', child: _ProviderMenuAction(icon: Icons.analytics, label: 'View Analytics')),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'view_as',
+          child: _ProviderMenuAction(icon: Icons.remove_red_eye, label: 'View as Provider', isHighlight: true),
+        ),
+        if (p.status == 'Active')
+          const PopupMenuItem(value: 'suspend', child: _ProviderMenuAction(icon: Icons.block, label: 'Suspend', isDestructive: true)),
+      ],
+    );
+  }
+
+  void _handleProviderAction(String action, dynamic p) async {
+    switch (action) {
+      case 'view_as':
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('View as Provider'),
+            content: Text('You will be viewing the app as ${p.name}. Your admin session will be restored when you return.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('View as ${p.name}', style: const TextStyle(color: AppColors.primary)),
+              ),
+            ],
+          ),
+        );
+        if (confirmed == true && mounted) {
+          // TODO: Replace with real user ID from API
+          final mockUserId = '00000000-0000-0000-0000-000000000002';
+          await ref.read(authProvider.notifier).impersonateUser(mockUserId);
+          if (mounted) context.go('/provider/home');
+        }
+        break;
+      case 'suspend':
+        // TODO: Implement suspend
+        break;
+      default:
+        break;
+    }
   }
 
   Widget _buildPendingVerifications() {
@@ -371,6 +427,37 @@ class _AdminProvidersPageState extends State<AdminProvidersPage> {
           );
         }).toList(),
       ),
+    );
+  }
+}
+
+class _ProviderMenuAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isHighlight;
+  final bool isDestructive;
+
+  const _ProviderMenuAction({
+    required this.icon,
+    required this.label,
+    this.isHighlight = false,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive
+        ? AppColors.error
+        : isHighlight
+            ? AppColors.primary
+            : Colors.grey.shade700;
+
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 10),
+        Text(label, style: TextStyle(fontSize: 13, color: color, fontWeight: isHighlight ? FontWeight.w600 : FontWeight.normal)),
+      ],
     );
   }
 }

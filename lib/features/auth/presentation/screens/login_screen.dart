@@ -98,11 +98,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
       style: const TextStyle(color: Colors.black),
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Email Address',
         hintText: 'john@example.com',
-        prefixIcon: Icon(Icons.email_outlined),
-        border: OutlineInputBorder(),
+        hintStyle: TextStyle(color: Colors.grey.shade500),
+        prefixIcon: const Icon(Icons.email_outlined),
+        filled: true,
+        fillColor: Colors.white,
+        border: const OutlineInputBorder(),
       ),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
@@ -128,7 +131,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       decoration: InputDecoration(
         labelText: 'Password',
         hintText: 'Enter your password',
+        hintStyle: TextStyle(color: Colors.grey.shade500),
         prefixIcon: const Icon(Icons.lock_outlined),
+        filled: true,
+        fillColor: Colors.white,
         border: const OutlineInputBorder(),
         suffixIcon: IconButton(
           icon: Icon(

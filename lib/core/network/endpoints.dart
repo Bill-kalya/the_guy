@@ -11,6 +11,7 @@ class Endpoints {
   static const String adminSafetyAlerts = '$adminBase/trust-safety/alerts';
   static const String adminSafetyHeatmap = '$adminBase/trust-safety/heatmap';
   static const String adminSafetyModerationQueue = '$adminBase/trust-safety/moderation-queue';
+  static const String adminImpersonate = '$adminBase/impersonate';
 
   // These don't exist yet in backend
   // static const String adminDashboard = '$adminBase/dashboard';
@@ -62,6 +63,11 @@ class Endpoints {
   static const String providerDetails = '/api/providers';
   static const String providerMe = '/api/providers/me';
   static const String providerMeCompletion = '/api/providers/me/completion';
+  static const String providerMePerformance = '/api/providers/me/performance';
+  static const String providerMeGoals = '/api/providers/me/goals';
+  static const String providerMeReputation = '/api/providers/me/reputation';
+  static const String providerMeInsights = '/api/providers/me/insights';
+  static const String providerMeWallet = '/api/providers/me/wallet';
   static const String providerEarnings = '/api/providers/earnings';
   static const String updateAvailability = '/api/providers/availability';
 
@@ -78,6 +84,10 @@ class Endpoints {
   // Search
   static const String searchProviders = '/api/search/providers';
   static const String searchSuggestions = '/api/search/suggestions';
+
+  // Reviews
+  static const String reviews = '/api/reviews';
+  static String reviewSummary(String providerId) => '/api/reviews/provider/$providerId/summary';
 
   // Chat
   static const String chatHistory = '/api/chat/history';

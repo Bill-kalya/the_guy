@@ -6,6 +6,7 @@ import '../widgets/nearby_providers_list.dart';
 import '../providers/location_provider.dart';
 import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../admin/presentation/widgets/admin_mode_banner.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../core/themes/colors.dart';
@@ -62,7 +63,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return ResponsiveLayout(
       mobile: Scaffold(
-        body: _buildBody(locationState, isAuthenticated, nearbyProvidersAsync, liveLocations),
+        body: Column(
+          children: [
+            const AdminModeBanner(),
+            Expanded(
+              child: _buildBody(locationState, isAuthenticated, nearbyProvidersAsync, liveLocations),
+            ),
+          ],
+        ),
         bottomNavigationBar: _buildBottomNavBar(),
         floatingActionButton: isAuthenticated && _currentIndex == 0
             ? FloatingActionButton.extended(
@@ -292,10 +300,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: TextField(
+                            style: const TextStyle(color: Colors.black),
                             decoration: InputDecoration(
                               hintText: 'Search for plumbing, cleaning, tutoring...',
+                              hintStyle: TextStyle(color: Colors.grey.shade500),
                               prefixIcon: const Icon(Icons.search),
                               suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                              filled: true,
+                              fillColor: Colors.white,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide.none,

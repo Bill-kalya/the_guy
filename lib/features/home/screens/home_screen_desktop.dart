@@ -141,8 +141,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   width: 240,
                   height: 40,
                   child: TextField(
+                    style: const TextStyle(color: Colors.black),
                     decoration: InputDecoration(
                       hintText: 'Search services...',
+                      hintStyle: TextStyle(color: Colors.grey.shade500),
                       prefixIcon: const Icon(Icons.search, size: 20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -154,7 +156,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       ),
                       contentPadding: const EdgeInsets.symmetric(vertical: 8),
                       filled: true,
-                      fillColor: Colors.grey.shade50,
+                      fillColor: Colors.white,
                     ),
                   ),
                 ),
@@ -370,10 +372,14 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                               Expanded(
                                 flex: 3,
                                 child: TextField(
+                                  style: const TextStyle(color: Colors.black),
                                   decoration: InputDecoration(
                                     hintText: 'What service do you need?',
+                                    hintStyle: TextStyle(color: Colors.grey.shade500),
                                     prefixIcon: const Icon(Icons.search, color: Colors.grey),
                                     border: InputBorder.none,
+                                    filled: true,
+                                    fillColor: Colors.white,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 20,
                                       vertical: 16,
@@ -388,10 +394,14 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                               Expanded(
                                 flex: 2,
                                 child: TextField(
+                                  style: const TextStyle(color: Colors.black),
                                   decoration: InputDecoration(
                                     hintText: 'Location',
+                                    hintStyle: TextStyle(color: Colors.grey.shade500),
                                     prefixIcon: const Icon(Icons.location_on_outlined, color: Colors.grey),
                                     border: InputBorder.none,
+                                    filled: true,
+                                    fillColor: Colors.white,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 20,
                                       vertical: 16,

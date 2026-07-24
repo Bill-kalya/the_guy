@@ -396,10 +396,13 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _nameController, textInputAction: TextInputAction.next,
+          style: const TextStyle(color: Colors.black),
           decoration: InputDecoration(
-            hintText: 'John Doe', prefixIcon: const Icon(Icons.person),
+            hintText: 'John Doe',
+            hintStyle: TextStyle(color: Colors.grey.shade500),
+            prefixIcon: const Icon(Icons.person),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true, fillColor: Colors.grey.shade50,
+            filled: true, fillColor: Colors.white,
             errorText: _nameError,
           ),
           validator: (value) => Validators.validateName(value, fieldName: 'Full name'),
@@ -410,10 +413,13 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _emailController, keyboardType: TextInputType.emailAddress, textInputAction: TextInputAction.next,
+          style: const TextStyle(color: Colors.black),
           decoration: InputDecoration(
-            hintText: 'john@example.com', prefixIcon: const Icon(Icons.email),
+            hintText: 'john@example.com',
+            hintStyle: TextStyle(color: Colors.grey.shade500),
+            prefixIcon: const Icon(Icons.email),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true, fillColor: Colors.grey.shade50,
+            filled: true, fillColor: Colors.white,
             errorText: _emailError,
           ),
           validator: (value) => Validators.validateEmail(value),
@@ -424,10 +430,13 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _passwordController, obscureText: true, textInputAction: TextInputAction.next,
+          style: const TextStyle(color: Colors.black),
           decoration: InputDecoration(
-            hintText: 'At least 8 characters', prefixIcon: const Icon(Icons.lock),
+            hintText: 'At least 8 characters',
+            hintStyle: TextStyle(color: Colors.grey.shade500),
+            prefixIcon: const Icon(Icons.lock),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true, fillColor: Colors.grey.shade50,
+            filled: true, fillColor: Colors.white,
             errorText: _passwordError,
           ),
           validator: (value) => Validators.validatePassword(value),
@@ -537,10 +546,13 @@ class _RegisterScreenDesktopState extends ConsumerState<RegisterScreenDesktop> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _confirmPasswordController, obscureText: true, textInputAction: TextInputAction.done,
+          style: const TextStyle(color: Colors.black),
           decoration: InputDecoration(
-            hintText: 'Re-enter your password', prefixIcon: const Icon(Icons.lock_outline),
+            hintText: 'Re-enter your password',
+            hintStyle: TextStyle(color: Colors.grey.shade500),
+            prefixIcon: const Icon(Icons.lock_outline),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true, fillColor: Colors.grey.shade50,
+            filled: true, fillColor: Colors.white,
             errorText: _confirmPasswordError,
           ),
           validator: (value) {

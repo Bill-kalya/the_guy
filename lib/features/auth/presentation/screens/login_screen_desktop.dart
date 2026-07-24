@@ -225,10 +225,11 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                   style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
                     hintText: 'john@example.com',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
                     prefixIcon: const Icon(Icons.email_outlined),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: Colors.white,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) return 'Email is required';
@@ -247,10 +248,11 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                   style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
                     prefixIcon: const Icon(Icons.lock_outlined),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: Colors.white,
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),

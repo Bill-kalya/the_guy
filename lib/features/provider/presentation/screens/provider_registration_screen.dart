@@ -600,9 +600,10 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
         TextField(
           controller: _bioController,
           maxLines: 3,
+          style: const TextStyle(color: Colors.black),
           decoration: InputDecoration(
             hintText: 'Tell customers about yourself...',
-            hintStyle: TextStyle(color: Colors.grey.shade400),
+            hintStyle: TextStyle(color: Colors.grey.shade500),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             filled: true,
             fillColor: Colors.white,

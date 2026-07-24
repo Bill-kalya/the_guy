@@ -50,10 +50,11 @@ import '../features/auth/models/auth_state.dart';
 class GoRouterRefreshNotifier extends ChangeNotifier {
   GoRouterRefreshNotifier(Ref ref) {
     ref.listen<AuthState>(authProvider, (previous, next) {
-      // Only notify if the auth status actually changed (login/logout),
+      // Only notify if the auth status actually changed (login/logout/impersonation),
       // not on every internal state update (loading, error, etc.)
       if (previous?.isAuthenticated != next.isAuthenticated ||
-          previous?.user?.role != next.user?.role) {
+          previous?.user?.role != next.user?.role ||
+          previous?.isImpersonating != next.isImpersonating) {
         notifyListeners();
       }
     });
@@ -73,6 +74,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       final isAuthenticated = authState.isAuthenticated;
+      final isImpersonating = authState.isImpersonating;
       final location = state.matchedLocation;
       final isAuthRoute = location == '/login' ||
           location == '/register' ||
@@ -89,13 +91,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/verify-email';
       }
 
+      // When impersonating, treat the admin as the impersonated user's role
+      final effectiveRole = isImpersonating
+          ? (authState.user?.role ?? 'customer')
+          : (authState.user?.role ?? 'customer');
+
       // Authenticated and on an auth route — redirect to role-appropriate home
       if (isAuthenticated && isAuthRoute) {
-        final userRole = authState.user?.role ?? 'customer';
-        if (userRole == 'provider') {
+        if (effectiveRole == 'provider') {
           return '/provider/home';
         }
-        if (userRole == 'admin') {
+        if (effectiveRole == 'admin' && !isImpersonating) {
           return '/admin';
         }
         return '/';
@@ -104,11 +110,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Root path — redirect non-customer roles to their homes
       if (isHomeRoute) {
         if (isAuthenticated) {
-          final userRole = authState.user?.role ?? 'customer';
-          if (userRole == 'admin') {
+          if (effectiveRole == 'admin' && !isImpersonating) {
             return '/admin';
           }
-          if (userRole == 'provider') {
+          if (effectiveRole == 'provider') {
             return '/provider/home';
           }
         }
@@ -117,11 +122,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Redirect /profile to role-appropriate profile screen
       if (isAuthenticated && location == '/profile') {
-        final userRole = authState.user?.role ?? 'customer';
-        if (userRole == 'provider') {
+        if (effectiveRole == 'provider') {
           return '/provider/profile';
         }
-        if (userRole == 'admin') {
+        if (effectiveRole == 'admin' && !isImpersonating) {
           return '/admin';
         }
       }
@@ -145,6 +149,14 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (!isAuthenticated && isAuthRequired) {
         return '/login';
+      }
+
+      // When impersonating, block /admin routes — redirect to appropriate dashboard
+      if (isImpersonating && location.startsWith('/admin')) {
+        if (effectiveRole == 'provider') {
+          return '/provider/home';
+        }
+        return '/';
       }
 
       return null;

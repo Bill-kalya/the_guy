@@ -16,6 +16,10 @@ class AuthState {
   final bool resetOtpSent;
   final bool resetOtpVerified;
 
+  // Impersonation
+  final bool isImpersonating;
+  final UserModel? originalAdminUser;
+
   const AuthState({
     this.isLoading = false,
     this.user,
@@ -29,6 +33,8 @@ class AuthState {
     this.resetEmail,
     this.resetOtpSent = false,
     this.resetOtpVerified = false,
+    this.isImpersonating = false,
+    this.originalAdminUser,
   });
 
   factory AuthState.initial() => const AuthState();
@@ -68,6 +74,8 @@ class AuthState {
     String? resetEmail,
     bool? resetOtpSent,
     bool? resetOtpVerified,
+    bool? isImpersonating,
+    UserModel? originalAdminUser,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -82,6 +90,8 @@ class AuthState {
       resetEmail: resetEmail ?? this.resetEmail,
       resetOtpSent: resetOtpSent ?? this.resetOtpSent,
       resetOtpVerified: resetOtpVerified ?? this.resetOtpVerified,
+      isImpersonating: isImpersonating ?? this.isImpersonating,
+      originalAdminUser: originalAdminUser ?? this.originalAdminUser,
     );
   }
 }

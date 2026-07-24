@@ -122,10 +122,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       controller: _newPasswordController,
       obscureText: _obscureNew,
       textInputAction: TextInputAction.next,
+      style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
         labelText: 'New Password',
         hintText: 'At least 6 characters',
+        hintStyle: TextStyle(color: Colors.grey.shade500),
         prefixIcon: const Icon(Icons.lock),
+        filled: true,
+        fillColor: Colors.white,
         border: const OutlineInputBorder(),
         suffixIcon: IconButton(
           icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
@@ -141,10 +145,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       controller: _confirmPasswordController,
       obscureText: _obscureConfirm,
       textInputAction: TextInputAction.done,
+      style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Confirm New Password',
         hintText: 'Re-enter your new password',
+        hintStyle: TextStyle(color: Colors.grey.shade500),
         prefixIcon: const Icon(Icons.lock_outline),
+        filled: true,
+        fillColor: Colors.white,
         border: const OutlineInputBorder(),
         suffixIcon: IconButton(
           icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),

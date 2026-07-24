@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../admin/presentation/widgets/admin_mode_banner.dart';
 
 class ProviderShellScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -10,7 +11,12 @@ class ProviderShellScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: navigationShell,
+      body: Column(
+        children: [
+          const AdminModeBanner(),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: _buildBottomNav(context),
     );
   }

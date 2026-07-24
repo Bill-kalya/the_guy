@@ -31,6 +31,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
   /// Restore session from cache instantly, then validate in background.
   Future<void> _restoreSession() async {
+    // Check if we were impersonating before a restart
+    final wasImpersonating = await _secureStorage.isImpersonating();
+
     final token = await _secureStorage.getAccessToken();
     final userData = await _secureStorage.getUserData();
 
@@ -42,6 +45,18 @@ class AuthNotifier extends Notifier<AuthState> {
     // Instant restore — no network call, no loading spinner
     final user = UserModel.fromJson(userData);
     state = AuthState.authenticated(user);
+
+    // If impersonating, also restore the admin's identity
+    if (wasImpersonating) {
+      final adminData = await _secureStorage.getAdminUserData();
+      if (adminData != null) {
+        final adminUser = UserModel.fromJson(adminData);
+        state = state.copyWith(
+          isImpersonating: true,
+          originalAdminUser: adminUser,
+        );
+      }
+    }
 
     // Silent background validation — if token is expired,
     // the interceptor handles refresh; if truly dead, we go unauthenticated.
@@ -306,6 +321,113 @@ class AuthNotifier extends Notifier<AuthState> {
         'Failed to reset password. Please try again.',
         errorCode: ErrorCodes.serverError,
       );
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // Impersonation — View as User/Provider
+  // ──────────────────────────────────────────
+  Future<void> impersonateUser(String targetUserId) async {
+    try {
+      // Save the admin's current session before switching
+      final adminToken = await _secureStorage.getAccessToken();
+      final adminRefreshToken = await _secureStorage.getRefreshToken();
+      final adminUserData = await _secureStorage.getUserData();
+
+      if (adminToken == null || adminUserData == null) return;
+
+      await _secureStorage.saveAdminSession(
+        accessToken: adminToken,
+        refreshToken: adminRefreshToken ?? '',
+        userData: adminUserData,
+      );
+
+      // Call backend to get impersonation token
+      final response = await _apiClient.post(
+        Endpoints.adminImpersonate,
+        data: {'userId': targetUserId},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final token = data['token'] as String;
+        final targetData = data['targetUser'] as Map<String, dynamic>;
+
+        // Swap tokens
+        await _secureStorage.saveImpersonationToken(
+          accessToken: token,
+          refreshToken: token, // impersonation tokens don't refresh
+        );
+
+        // Build the impersonated user model
+        final impersonatedUser = UserModel(
+          id: targetData['id'],
+          name: targetData['name'],
+          email: targetData['email'],
+          phone: '',
+          role: targetData['role'],
+          isVerified: true,
+          createdAt: DateTime.now(),
+        );
+
+        await _secureStorage.saveUserData(impersonatedUser.toJson());
+
+        // Parse admin user from saved data
+        final adminUser = UserModel.fromJson(adminUserData);
+
+        state = AuthState(
+          user: impersonatedUser,
+          isAuthenticated: true,
+          isImpersonating: true,
+          originalAdminUser: adminUser,
+        );
+
+        // Reconnect websocket with new identity
+        await ref.read(webSocketServiceProvider).disconnect();
+        _connectWebSocketLazy();
+      }
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code);
+    } catch (e) {
+      state = AuthState.error('Failed to impersonate user.', errorCode: ErrorCodes.serverError);
+    }
+  }
+
+  Future<void> exitImpersonation() async {
+    try {
+      // Restore admin's original tokens
+      final adminToken = await _secureStorage.getAdminAccessToken();
+      final adminRefreshToken = await _secureStorage.getAdminRefreshToken();
+      final adminUserData = await _secureStorage.getAdminUserData();
+
+      if (adminToken == null || adminUserData == null) {
+        // Fallback: just log out
+        await logout();
+        return;
+      }
+
+      // Restore admin tokens as active
+      await _secureStorage.saveTokens(
+        accessToken: adminToken,
+        refreshToken: adminRefreshToken ?? '',
+      );
+      await _secureStorage.saveUserData(adminUserData);
+      await _secureStorage.clearImpersonation();
+
+      // Clear admin session storage
+      await _secureStorage.clearAdminSession();
+
+      // Restore admin state
+      final adminUser = UserModel.fromJson(adminUserData);
+      state = AuthState.authenticated(adminUser);
+
+      // Reconnect websocket
+      await ref.read(webSocketServiceProvider).disconnect();
+      _connectWebSocketLazy();
+    } catch (e) {
+      // If anything fails, force logout
+      await logout();
     }
   }
 

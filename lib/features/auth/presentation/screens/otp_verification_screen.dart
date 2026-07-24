@@ -186,8 +186,11 @@ class _EmailVerificationScreenState
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               maxLength: 1,
+              style: const TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 counterText: '',
+                filled: true,
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

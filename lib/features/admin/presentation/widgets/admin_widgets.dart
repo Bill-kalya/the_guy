@@ -113,10 +113,13 @@ class AdminSearchBar extends StatelessWidget {
             child: TextField(
               controller: controller,
               onChanged: onChanged,
+              style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 border: InputBorder.none,
+                filled: true,
+                fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
