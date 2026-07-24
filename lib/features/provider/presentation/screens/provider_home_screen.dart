@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
+import '../../providers/provider_profile_provider.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import 'provider_home_screen_desktop.dart';
 import '../../../../core/themes/colors.dart';
@@ -16,8 +17,17 @@ class ProviderHomeScreen extends ConsumerStatefulWidget {
 
 class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(providerProfileProvider.notifier).fetchProfile();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final jobState = ref.watch(providerJobProvider);
+    final profileState = ref.watch(providerProfileProvider);
 
     return ResponsiveLayout(
       mobile: Scaffold(
@@ -57,6 +67,15 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
               padding: const EdgeInsets.only(bottom: 80),
               child: Column(
                 children: [
+                  if (profileState.profileNotFound) ...[
+                    const SizedBox(height: 16),
+                    _buildCompleteProfileBanner(),
+                  ] else if (profileState.profile != null &&
+                      profileState.completion != null &&
+                      (profileState.completion!['score'] ?? 0) < 100) ...[
+                    const SizedBox(height: 16),
+                    _buildCompletionBanner(profileState.completion!),
+                  ],
                   const SizedBox(height: 16),
                   _buildKpiGrid(),
                   const SizedBox(height: 20),
@@ -83,6 +102,138 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
         ),
       ),
       desktop: ProviderHomeScreenDesktop(),
+    );
+  }
+
+  // ── Complete Profile Banner (no provider entity) ──────────
+  Widget _buildCompleteProfileBanner() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.person_add, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Complete Your Provider Profile',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Set up your service category, portfolio, verification documents, and location to start receiving jobs.',
+              style: TextStyle(fontSize: 14, color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.push('/provider/register'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('Set Up Profile', style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Completion Progress Banner ─────────────────────────
+  Widget _buildCompletionBanner(Map<String, dynamic> completion) {
+    final score = (completion['score'] ?? 0) as int;
+    final items = completion['items'] as List<dynamic>? ?? [];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.amber.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.amber.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.pending_actions, color: Colors.amber.shade700, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Profile $score% Complete',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: score / 100.0,
+                backgroundColor: Colors.amber.shade100,
+                valueColor: AlwaysStoppedAnimation(Colors.amber.shade600),
+                minHeight: 6,
+              ),
+            ),
+            if (items.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ...items.where((item) => item['completed'] == false).take(3).map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.circle, size: 6, color: Colors.amber.shade400),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item['label']?.toString() ?? '',
+                          style: TextStyle(fontSize: 13, color: Colors.amber.shade800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () => context.push('/provider/register'),
+              child: const Text('Complete Profile'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

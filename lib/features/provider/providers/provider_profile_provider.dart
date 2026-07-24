@@ -17,7 +17,7 @@ class ProviderProfileNotifier extends Notifier<ProviderProfileState> {
   }
 
   Future<void> fetchProfile() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, profileNotFound: false);
 
     try {
       final response = await _apiClient.get(Endpoints.providerMe);
@@ -30,9 +30,13 @@ class ProviderProfileNotifier extends Notifier<ProviderProfileState> {
         final profile = ProviderProfileModel.fromJson(profileData);
         state = state.copyWith(profile: profile, isLoading: false);
       }
-    } catch (e) {
+    } on Exception catch (e) {
+      final isNotFound = e.toString().contains('404') ||
+          e.toString().contains('not found') ||
+          e.toString().contains('Provider profile not found');
       state = state.copyWith(
-        error: 'Failed to load provider profile',
+        error: isNotFound ? null : 'Failed to load provider profile',
+        profileNotFound: isNotFound,
         isLoading: false,
       );
     }
@@ -64,9 +68,10 @@ class ProviderProfileState {
   final ProviderProfileModel? profile;
   final Map<String, dynamic>? completion;
   final bool isLoading;
+  final bool profileNotFound;
   final String? error;
 
-  ProviderProfileState({this.profile, this.completion, this.isLoading = false, this.error});
+  ProviderProfileState({this.profile, this.completion, this.isLoading = false, this.profileNotFound = false, this.error});
 
   factory ProviderProfileState.initial() {
     return ProviderProfileState();
@@ -76,13 +81,15 @@ class ProviderProfileState {
     ProviderProfileModel? profile,
     Map<String, dynamic>? completion,
     bool? isLoading,
+    bool? profileNotFound,
     String? error,
   }) {
     return ProviderProfileState(
       profile: profile ?? this.profile,
       completion: completion ?? this.completion,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      profileNotFound: profileNotFound ?? this.profileNotFound,
+      error: error,
     );
   }
 }
