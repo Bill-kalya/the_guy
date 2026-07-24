@@ -395,7 +395,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           const Divider(height: 24),
           _infoRow(Icons.phone_outlined, 'Phone', user.phone.isNotEmpty ? user.phone : 'Not provided'),
           const Divider(height: 24),
-          _infoRow(Icons.location_on_outlined, 'Location', 'Nairobi, Kenya'),
+          _infoRow(Icons.location_on_outlined, 'Location', 'Kenya'),
           const Divider(height: 24),
           _infoRow(Icons.calendar_today_outlined, 'Member since', _formatDate(user.createdAt)),
         ],

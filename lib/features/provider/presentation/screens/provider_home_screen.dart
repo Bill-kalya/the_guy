@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../providers/provider_profile_provider.dart';
-import '../../providers/performance_provider.dart';
-import '../../providers/goals_provider.dart';
+import '../../providers/dashboard_summary_provider.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import 'provider_home_screen_desktop.dart';
 import '../../../../core/themes/colors.dart';
@@ -23,8 +22,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(providerProfileProvider.notifier).fetchProfile();
-      ref.read(performanceProvider.notifier).fetchPerformance();
-      ref.read(goalsProvider.notifier).fetchGoals();
+      ref.read(dashboardSummaryProvider.notifier).fetchDashboard();
     });
   }
 
@@ -32,12 +30,18 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
   Widget build(BuildContext context) {
     final jobState = ref.watch(providerJobProvider);
     final profileState = ref.watch(providerProfileProvider);
+    final dashboardState = ref.watch(dashboardSummaryProvider);
 
     return ResponsiveLayout(
       mobile: Scaffold(
         appBar: AppBar(
           title: const Text('Provider Dashboard'),
           actions: [
+            if (dashboardState.isRefreshing)
+              const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
             Container(
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -67,36 +71,36 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
         ),
         body: Stack(
           children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: Column(
-                children: [
-                  if (profileState.profileNotFound) ...[
-                    const SizedBox(height: 16),
-                    _buildCompleteProfileBanner(),
-                  ] else if (profileState.profile != null &&
-                      profileState.completion != null &&
-                      (profileState.completion!['score'] ?? 0) < 100) ...[
-                    const SizedBox(height: 16),
-                    _buildCompletionBanner(profileState.completion!),
-                  ],
-                  const SizedBox(height: 16),
-                  _buildKpiGrid(),
-                  const SizedBox(height: 20),
-                  _buildPerformanceSection(),
-                  const SizedBox(height: 20),
-                  _buildGoalsAchievementsSection(),
-                  const SizedBox(height: 20),
-                  _buildIncomingJobsSection(jobState),
-                  const SizedBox(height: 20),
-                  _buildActiveJobAndActions(jobState),
-                  const SizedBox(height: 20),
-                  _buildEarningsChart(),
-                  const SizedBox(height: 20),
-                  _buildDemandHeatMap(),
-                ],
-              ),
-            ),
+            dashboardState.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: () => ref.read(dashboardSummaryProvider.notifier).refreshDashboard(),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(bottom: 80),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        children: [
+                          if (profileState.profileNotFound) ...[
+                            const SizedBox(height: 16),
+                            _buildCompleteProfileBanner(),
+                          ] else if (profileState.profile != null &&
+                              profileState.completion != null &&
+                              (profileState.completion!['score'] ?? 0) < 100) ...[
+                            const SizedBox(height: 16),
+                            _buildCompletionBanner(profileState.completion!),
+                          ],
+                          const SizedBox(height: 16),
+                          _buildKpiGrid(dashboardState),
+                          const SizedBox(height: 20),
+                          _buildIncomingJobsSection(jobState),
+                          const SizedBox(height: 20),
+                          _buildActiveJobAndActions(jobState, dashboardState),
+                          const SizedBox(height: 20),
+                          _buildEarningsChart(dashboardState),
+                        ],
+                      ),
+                    ),
+                  ),
             if (jobState.hasIncomingJob && jobState.incomingJob != null)
               Positioned(
                 top: 0, left: 0, right: 0,
@@ -113,7 +117,6 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  // ── Complete Profile Banner (no provider entity) ──────────
   Widget _buildCompleteProfileBanner() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -175,7 +178,6 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  // ── Completion Progress Banner ─────────────────────────
   Widget _buildCompletionBanner(Map<String, dynamic> completion) {
     final score = (completion['score'] ?? 0) as int;
     final items = completion['items'] as List<dynamic>? ?? [];
@@ -245,25 +247,34 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  // ── KPI Grid (2×2) ──────────────────────────────────────
-  Widget _buildKpiGrid() {
+  Widget _buildKpiGrid(DashboardSummaryState dashboardState) {
+    final d = dashboardState.summary;
+    final earningsVal = d != null ? 'KES ${_formatNumber(d.todayEarnings)}' : 'KES 0';
+    final earningsSub = d != null ? 'KES ${_formatNumber(d.weekEarnings)} this week' : 'Loading...';
+    final jobsVal = d != null ? '${d.todayJobs}' : '0';
+    final jobsSub = d != null ? '${d.activeJobs} in progress' : 'No active jobs';
+    final ratingVal = d != null && d.totalReviews > 0 ? '${d.averageRating.toStringAsFixed(1)} ★' : 'No ratings';
+    final ratingSub = d != null ? '${d.totalReviews} reviews' : 'No reviews yet';
+    final responseVal = d != null ? '${d.responseRate.toStringAsFixed(0)}%' : '--';
+    final responseSub = d != null ? 'Completion ${d.completionRate.toStringAsFixed(0)}%' : 'Loading...';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
           Row(
             children: [
-              Expanded(child: _kpiCard('Earnings', 'KES 24,500', Icons.attach_money, Colors.green, '↑ 12% this week')),
+              Expanded(child: _kpiCard('Earnings', earningsVal, Icons.attach_money, Colors.green, earningsSub)),
               const SizedBox(width: 12),
-              Expanded(child: _kpiCard('Jobs Today', '18', Icons.work, Colors.blue, '3 in progress')),
+              Expanded(child: _kpiCard('Jobs Today', jobsVal, Icons.work, Colors.blue, jobsSub)),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _kpiCard('Rating', '4.9 ★', Icons.star, Colors.amber, '142 reviews')),
+              Expanded(child: _kpiCard('Rating', ratingVal, Icons.star, Colors.amber, ratingSub)),
               const SizedBox(width: 12),
-              Expanded(child: _kpiCard('Response', '97%', Icons.timer, Colors.purple, 'Avg 2m 30s')),
+              Expanded(child: _kpiCard('Response', responseVal, Icons.timer, Colors.purple, responseSub)),
             ],
           ),
         ],
@@ -306,13 +317,12 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  // ── Incoming Jobs ────────────────────────────────────────
   Widget _buildIncomingJobsSection(ProviderJobState jobState) {
-    final sampleJobs = [
-      ('John Doe', 'Plumbing', '2km', 'KES 2,500'),
-      ('Jane Smith', 'Cleaning', '5km', 'KES 3,000'),
-      ('Peter Kamau', 'Electrical', '8km', 'KES 4,500'),
-    ];
+    if (jobState.incomingJob == null && !jobState.hasIncomingJob) {
+      return const SizedBox.shrink();
+    }
+
+    final job = jobState.incomingJob!;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -334,73 +344,66 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            ...sampleJobs.map((job) => _incomingJobRow(job.$1, job.$2, job.$3, job.$4)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _incomingJobRow(String customer, String service, String distance, String price) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: AppColors.primaryLight,
-                  child: Text(customer[0], style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Row(
                     children: [
-                      Text(customer, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      Text('$service • $distance', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: AppColors.primaryLight,
+                        child: Text(job.customerName.isNotEmpty ? job.customerName[0] : '?', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(job.customerName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                            Text('${job.category} \u2022 ${job.distance.toStringAsFixed(1)}km', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                          ],
+                        ),
+                      ),
+                      Text('KES ${_formatNumber(job.price)}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.green.shade700)),
                     ],
                   ),
-                ),
-                Text(price, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.green.shade700)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.green.shade50,
-                      foregroundColor: Colors.green.shade700,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => ref.read(providerJobProvider.notifier).acceptJob(job.id),
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.green.shade50,
+                            foregroundColor: Colors.green.shade700,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => ref.read(providerJobProvider.notifier).declineJob(job.id),
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.red.shade50,
+                            foregroundColor: Colors.red.shade700,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.red.shade50,
-                      foregroundColor: Colors.red.shade700,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -408,8 +411,10 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  // ── Active Job + Quick Actions ───────────────────────────
-  Widget _buildActiveJobAndActions(ProviderJobState jobState) {
+  Widget _buildActiveJobAndActions(ProviderJobState jobState, DashboardSummaryState dashboardState) {
+    final d = dashboardState.summary;
+    final availableBalance = d?.availableBalance ?? 0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -422,7 +427,6 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Active Job
             const Row(
               children: [
                 Icon(Icons.work, color: Colors.green, size: 20),
@@ -456,7 +460,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/provider/active-job'),
+                  onPressed: () => context.push('/provider/active-job'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -467,19 +471,15 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
                 ),
               ),
             ],
-            // Divider
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Divider(color: Colors.grey.shade200),
             ),
-            // Quick Actions
             const Text('Quick Actions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
             const SizedBox(height: 14),
-            _quickAction(Icons.toggle_on, 'Toggle Availability', 'Go online/offline'),
+            _quickAction(Icons.toggle_on, 'Toggle Availability', 'Go online/offline', onTap: () {}),
             const SizedBox(height: 12),
-            _quickAction(Icons.map, 'View Service Area', 'See demand around you'),
-            const SizedBox(height: 12),
-            _quickAction(Icons.attach_money, 'Withdraw Earnings', 'KES 24,500 available'),
+            _quickAction(Icons.attach_money, 'Withdraw Earnings', 'KES ${_formatNumber(availableBalance)} available', onTap: () => context.push('/provider/earnings')),
           ],
         ),
       ),
@@ -495,9 +495,9 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  Widget _quickAction(IconData icon, String title, String subtitle) {
+  Widget _quickAction(IconData icon, String title, String subtitle, {VoidCallback? onTap}) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Row(
         children: [
@@ -522,11 +522,15 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  // ── Earnings Chart ───────────────────────────────────────
-  Widget _buildEarningsChart() {
-    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final amounts = [3200.0, 5800.0, 4100.0, 7200.0, 9500.0, 6800.0, 4500.0];
-    final maxAmount = amounts.reduce((a, b) => a > b ? a : b);
+  Widget _buildEarningsChart(DashboardSummaryState dashboardState) {
+    final d = dashboardState.summary;
+    final chartData = d?.weeklyChart ?? [];
+
+    if (chartData.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final maxAmount = chartData.map((e) => e.amount).fold<double>(0, (a, b) => a > b ? a : b);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -552,15 +556,16 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
               height: 160,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(days.length, (i) {
-                  final height = (amounts[i] / maxAmount) * 120;
+                children: List.generate(chartData.length, (i) {
+                  final point = chartData[i];
+                  final height = maxAmount > 0 ? (point.amount / maxAmount) * 120 : 0.0;
                   return Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 3),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text('KES ${(amounts[i] / 1000).toStringAsFixed(1)}k',
+                          Text('KES ${(point.amount / 1000).toStringAsFixed(1)}k',
                               style: TextStyle(fontSize: 9, color: Colors.grey.shade500)),
                           const SizedBox(height: 3),
                           Container(
@@ -575,7 +580,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(days[i], style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+                          Text(point.day, style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ),
@@ -589,277 +594,10 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  // ── Demand Heat Map ──────────────────────────────────────
-  Widget _buildDemandHeatMap() {
-    final areas = [
-      ('Nairobi CBD', 0.85, Colors.green),
-      ('Westlands', 0.65, Colors.green),
-      ('Karen', 0.45, Colors.amber),
-      ('Roysambu', 0.55, Colors.amber),
-      ('Kilimani', 0.75, Colors.green),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.map, color: Color(0xFF1A1A2E), size: 20),
-                SizedBox(width: 8),
-                Text('Demand Around You', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...areas.map((area) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(area.$1, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E))),
-                      Text('${(area.$2 * 100).toInt()}%',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: area.$3.shade600)),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: area.$2,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: AlwaysStoppedAnimation(area.$3.shade500),
-                      minHeight: 7,
-                    ),
-                  ),
-                ],
-              ),
-            )),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Performance Section ─────────────────────────────────
-  Widget _buildPerformanceSection() {
-    final perfState = ref.watch(performanceProvider);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.speed, color: Colors.blue, size: 20),
-                SizedBox(width: 8),
-                Text('Performance', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (perfState.isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (perfState.performance != null) ...[
-              _perfRow('Acceptance Rate', '${perfState.performance!.acceptanceRate.toStringAsFixed(0)}%', perfState.performance!.trend['acceptanceRate'] ?? ''),
-              _perfRow('Completion Rate', '${perfState.performance!.completionRate.toStringAsFixed(0)}%', perfState.performance!.trend['completionRate'] ?? ''),
-              _perfRow('Avg Response', '${perfState.performance!.avgResponseTime.toStringAsFixed(0)}s', perfState.performance!.trend['avgResponseTime'] ?? ''),
-              _perfRow('Repeat Customers', '${perfState.performance!.repeatCustomerCount}%', ''),
-              _perfRow('Cancellation Rate', '${perfState.performance!.cancellationRate.toStringAsFixed(0)}%', ''),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.workspace_premium, size: 16, color: AppColors.primary),
-                    const SizedBox(width: 6),
-                    Text(
-                      perfState.performance!.ranking,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
-                    ),
-                  ],
-                ),
-              ),
-            ] else
-              const Text('Performance data not available', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _perfRow(String label, String value, String trend) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-          Row(
-            children: [
-              Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
-              if (trend.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Text(trend, style: TextStyle(
-                  fontSize: 11,
-                  color: trend.startsWith('+') || trend.startsWith('-') && label.contains('Response')
-                      ? Colors.green
-                      : Colors.grey.shade500,
-                )),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Goals & Achievements ────────────────────────────────
-  Widget _buildGoalsAchievementsSection() {
-    final goalsState = ref.watch(goalsProvider);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.flag, color: Colors.orange, size: 20),
-                SizedBox(width: 8),
-                Text('Goals & Achievements', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (goalsState.isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (goalsState.goals != null) ...[
-              // Weekly Goal
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Weekly Goal', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
-                    const SizedBox(height: 8),
-                    Text(
-                      'KES ${goalsState.goals!.weeklyProgress.toStringAsFixed(0)} / KES ${goalsState.goals!.weeklyTarget.toStringAsFixed(0)}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E)),
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: (goalsState.goals!.weeklyPercentage / 100).clamp(0.0, 1.0),
-                        backgroundColor: Colors.green.shade200,
-                        valueColor: AlwaysStoppedAnimation(Colors.green.shade600),
-                        minHeight: 8,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${goalsState.goals!.weeklyPercentage}% completed',
-                      style: TextStyle(fontSize: 12, color: Colors.green.shade700),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              // Achievements
-              const Text('Achievements', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: goalsState.goals!.achievements.map((a) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: a.unlocked ? AppColors.primary.withValues(alpha: 0.1) : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _getAchievementEmoji(a.icon),
-                          style: TextStyle(fontSize: 16, color: a.unlocked ? null : Colors.grey),
-                        ),
-                        const SizedBox(width: 6),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              a.title,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: a.unlocked ? const Color(0xFF1A1A2E) : Colors.grey,
-                              ),
-                            ),
-                            if (!a.unlocked && a.progress != null && a.target != null)
-                              Text(
-                                '(${a.progress}/${a.target})',
-                                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ] else
-              const Text('Goals data not available', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getAchievementEmoji(String icon) {
-    switch (icon) {
-      case 'trophy': return '\u{1F3C6}';
-      case 'star': return '\u2B50';
-      case 'lightning': return '\u26A1';
-      case 'fire': return '\u{1F525}';
-      case 'diamond': return '\u{1F48E}';
-      default: return '\u{1F3C5}';
+  String _formatNumber(double value) {
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
     }
+    return value.toStringAsFixed(0);
   }
-
 }

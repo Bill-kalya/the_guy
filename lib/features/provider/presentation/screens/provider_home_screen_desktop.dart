@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
+import '../../providers/dashboard_summary_provider.dart';
 import '../../../../core/themes/colors.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -19,8 +20,17 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
   String _currentRoute = 'dashboard';
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(dashboardSummaryProvider.notifier).fetchDashboard();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final jobState = ref.watch(providerJobProvider);
+    final dashboardState = ref.watch(dashboardSummaryProvider);
 
     return Scaffold(
       body: Row(
@@ -31,31 +41,32 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
               children: [
                 _buildTopBar(),
                 Expanded(
-                  child: Container(
-                    color: Colors.grey.shade50,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildKpiRow(),
-                          const SizedBox(height: 24),
-                          _buildIncomingJobs(jobState),
-                          const SizedBox(height: 24),
-                          _buildActiveJobSection(jobState),
-                          const SizedBox(height: 24),
-                          _buildEarningsChart(),
-                          const SizedBox(height: 24),
-                          _buildDemandHeatMap(),
-                        ],
-                      ),
-                    ),
-                  ),
+                  child: dashboardState.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Container(
+                          color: Colors.grey.shade50,
+                          child: RefreshIndicator(
+                            onRefresh: () => ref.read(dashboardSummaryProvider.notifier).refreshDashboard(),
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.all(24),
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildKpiRow(dashboardState),
+                                  const SizedBox(height: 24),
+                                  _buildActiveJobSection(jobState, dashboardState),
+                                  const SizedBox(height: 24),
+                                  _buildEarningsChart(dashboardState),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                 ),
               ],
             ),
           ),
-          // Incoming job overlay
           if (jobState.hasIncomingJob && jobState.incomingJob != null)
             Positioned(
               top: 80,
@@ -211,13 +222,23 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
     );
   }
 
-  Widget _buildKpiRow() {
+  Widget _buildKpiRow(DashboardSummaryState dashboardState) {
+    final d = dashboardState.summary;
+    final earningsVal = d != null ? 'KES ${_formatNumber(d.todayEarnings)}' : 'KES 0';
+    final earningsSub = d != null ? 'KES ${_formatNumber(d.weekEarnings)} this week' : 'Loading...';
+    final jobsVal = d != null ? '${d.todayJobs}' : '0';
+    final jobsSub = d != null ? '${d.activeJobs} in progress' : 'No active jobs';
+    final ratingVal = d != null && d.totalReviews > 0 ? '${d.averageRating.toStringAsFixed(1)} \u2605' : 'No ratings';
+    final ratingSub = d != null ? 'Based on ${d.totalReviews} reviews' : 'No reviews yet';
+    final responseVal = d != null ? '${d.responseRate.toStringAsFixed(0)}%' : '--';
+    final responseSub = d != null ? 'Completion ${d.completionRate.toStringAsFixed(0)}%' : 'Loading...';
+
     return Row(
       children: [
-        _kpiCard('Earnings', 'KES 24,500', Icons.attach_money, Colors.green, '↑ 12% this week'),
-        _kpiCard('Jobs Today', '18', Icons.work, Colors.blue, '3 in progress'),
-        _kpiCard('Rating', '4.9 ★', Icons.star, Colors.amber, 'Based on 142 reviews'),
-        _kpiCard('Response', '97%', Icons.timer, Colors.purple, 'Avg 2m 30s'),
+        _kpiCard('Earnings', earningsVal, Icons.attach_money, Colors.green, earningsSub),
+        _kpiCard('Jobs Today', jobsVal, Icons.work, Colors.blue, jobsSub),
+        _kpiCard('Rating', ratingVal, Icons.star, Colors.amber, ratingSub),
+        _kpiCard('Response', responseVal, Icons.timer, Colors.purple, responseSub),
       ],
     );
   }
@@ -254,83 +275,10 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
     );
   }
 
-  Widget _buildIncomingJobs(ProviderJobState jobState) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.notifications_active, color: Colors.orange, size: 22),
-              SizedBox(width: 8),
-              Text('Incoming Jobs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Table header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8)),
-            child: Row(
-              children: [
-                const Expanded(flex: 2, child: Text('Customer', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey))),
-                Expanded(flex: 2, child: Text('Service', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey))),
-                Expanded(flex: 1, child: Text('Distance', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey))),
-                Expanded(flex: 1, child: Text('Price', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey))),
-                Expanded(flex: 2, child: Text('Action', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey))),
-              ],
-            ),
-          ),
-          // Sample rows
-          ...List.generate(3, (i) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
-            child: Row(
-              children: [
-                Expanded(flex: 2, child: Row(
-                  children: [
-                    CircleAvatar(radius: 14, backgroundColor: AppColors.primaryLight, child: Text('J${i+1}', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12))),
-                    const SizedBox(width: 8),
-                    const Text('John Doe', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                  ],
-                )),
-                Expanded(flex: 2, child: Text('Plumbing', style: TextStyle(fontSize: 14, color: Colors.grey.shade700))),
-                Expanded(flex: 1, child: Text('${2 + i * 3}km', style: TextStyle(fontSize: 14, color: Colors.grey.shade700))),
-                Expanded(flex: 1, child: Text('KES ${2500 + i * 500}', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.green.shade700))),
-                Expanded(flex: 2, child: Row(
-                  children: [
-                    _tableButton('Accept', Colors.green),
-                    const SizedBox(width: 8),
-                    _tableButton('Decline', Colors.red),
-                  ],
-                )),
-              ],
-            ),
-          )),
-        ],
-      ),
-    );
-  }
+  Widget _buildActiveJobSection(ProviderJobState jobState, DashboardSummaryState dashboardState) {
+    final d = dashboardState.summary;
+    final availableBalance = d?.availableBalance ?? 0;
 
-  Widget _tableButton(String label, MaterialColor color) {
-    return TextButton(
-      onPressed: () {},
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        backgroundColor: color.shade50,
-        foregroundColor: color.shade700,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-    );
-  }
-
-  Widget _buildActiveJobSection(ProviderJobState jobState) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
@@ -364,7 +312,7 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
                   _infoRow('Status', jobState.activeJob!.status),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => context.push('/provider/active-job'),
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                     child: const Text('View Job Details'),
                   ),
@@ -385,9 +333,7 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
                 const SizedBox(height: 16),
                 _quickAction(Icons.toggle_on, 'Toggle Availability', 'Go online/offline'),
                 const SizedBox(height: 12),
-                _quickAction(Icons.map, 'View Service Area', 'See demand around you'),
-                const SizedBox(height: 12),
-                _quickAction(Icons.attach_money, 'Withdraw Earnings', 'KES 24,500 available'),
+                _quickAction(Icons.attach_money, 'Withdraw Earnings', 'KES ${_formatNumber(availableBalance)} available'),
               ],
             ),
           ),
@@ -426,10 +372,15 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
     );
   }
 
-  Widget _buildEarningsChart() {
-    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final amounts = [3200.0, 5800.0, 4100.0, 7200.0, 9500.0, 6800.0, 4500.0];
-    final maxAmount = amounts.reduce((a, b) => a > b ? a : b);
+  Widget _buildEarningsChart(DashboardSummaryState dashboardState) {
+    final d = dashboardState.summary;
+    final chartData = d?.weeklyChart ?? [];
+
+    if (chartData.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final maxAmount = chartData.map((e) => e.amount).fold<double>(0, (a, b) => a > b ? a : b);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -451,15 +402,16 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
             height: 200,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(days.length, (i) {
-                final height = (amounts[i] / maxAmount) * 160;
+              children: List.generate(chartData.length, (i) {
+                final point = chartData[i];
+                final height = maxAmount > 0 ? (point.amount / maxAmount) * 160 : 0.0;
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Text('KES ${amounts[i].toInt()}', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                        Text('KES ${point.amount.toInt()}', style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
                         const SizedBox(height: 4),
                         Container(
                           height: height,
@@ -469,7 +421,7 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(days[i], style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+                        Text(point.day, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
                       ],
                     ),
                   ),
@@ -482,58 +434,10 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
     );
   }
 
-  Widget _buildDemandHeatMap() {
-    final areas = [
-      ('Nairobi CBD', 0.85, Colors.green),
-      ('Westlands', 0.65, Colors.green),
-      ('Karen', 0.45, Colors.amber),
-      ('Roysambu', 0.55, Colors.amber),
-      ('Kilimani', 0.75, Colors.green),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.map, color: Color(0xFF1A1A2E), size: 22),
-              SizedBox(width: 8),
-              Text('Demand Around You', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ...areas.map((area) => Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(area.$1, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E))),
-                    Text('${(area.$2 * 100).toInt()}%', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: area.$3.shade600)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: area.$2,
-                    backgroundColor: Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation(area.$3.shade500),
-                    minHeight: 8,
-                  ),
-                ),
-              ],
-            ),
-          )),
-        ],
-      ),
-    );
+  String _formatNumber(double value) {
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
+    }
+    return value.toStringAsFixed(0);
   }
 }

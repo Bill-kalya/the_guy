@@ -68,6 +68,7 @@ class Endpoints {
   static const String providerMeReputation = '/api/providers/me/reputation';
   static const String providerMeInsights = '/api/providers/me/insights';
   static const String providerMeWallet = '/api/providers/me/wallet';
+  static const String providerMeDashboard = '/api/providers/me/dashboard';
   static const String providerEarnings = '/api/providers/earnings';
   static const String updateAvailability = '/api/providers/availability';
 
