@@ -269,7 +269,7 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => context.push('/forgot-password'),
                     child: const Text('Forgot Password?', style: TextStyle(color: Colors.blue)),
                   ),
                 ),
@@ -302,7 +302,7 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: authState.isLoading ? null : _loginWithGoogle,
                   icon: const Icon(Icons.g_mobiledata, size: 24),
                   label: const Text('Continue with Google'),
                   style: OutlinedButton.styleFrom(
@@ -341,6 +341,11 @@ class _LoginScreenDesktopState extends ConsumerState<LoginScreenDesktop> {
       _emailController.text.trim(),
       _passwordController.text,
     );
+  }
+
+  void _loginWithGoogle() {
+    if (ref.read(authProvider).isLoading) return;
+    ref.read(authProvider.notifier).loginWithGoogle();
   }
 
   Widget _buildErrorBanner(AuthState authState) {

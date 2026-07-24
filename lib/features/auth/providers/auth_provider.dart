@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/network/websocket_service.dart';
@@ -162,6 +163,60 @@ class AuthNotifier extends Notifier<AuthState> {
       state = AuthState.error(parsed.message, errorCode: parsed.code, fieldErrors: parsed.fieldErrors);
     } catch (e) {
       state = AuthState.error('Something went wrong. Please try again.', errorCode: ErrorCodes.serverError);
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // Google Sign-In
+  // ──────────────────────────────────────────
+  Future<void> loginWithGoogle() async {
+    state = AuthState.loading();
+
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? account = await googleSignIn.signIn();
+
+      if (account == null) {
+        // User cancelled the sign-in flow
+        state = AuthState.unauthenticated();
+        return;
+      }
+
+      final GoogleSignInAuthentication auth = await account.authentication;
+      final String? idToken = auth.idToken;
+
+      if (idToken == null) {
+        state = AuthState.error(
+          'Google authentication failed. Please try again.',
+          errorCode: ErrorCodes.serverError,
+        );
+        return;
+      }
+
+      final response = await _apiClient.post(
+        Endpoints.googleAuth,
+        data: {'idToken': idToken},
+      );
+
+      if (response.statusCode == 200) {
+        await _persistSession(response.data);
+        return;
+      }
+
+      final code = response.data?['errorCode'] as String?;
+      final message = response.data?['message'] as String?;
+      state = AuthState.error(
+        message ?? 'Google sign-in failed. Please try again.',
+        errorCode: code ?? ErrorCodes.serverError,
+      );
+    } on DioException catch (e) {
+      final parsed = _parseError(e);
+      state = AuthState.error(parsed.message, errorCode: parsed.code);
+    } catch (e) {
+      state = AuthState.error(
+        'Google sign-in failed. Please try again.',
+        errorCode: ErrorCodes.serverError,
+      );
     }
   }
 

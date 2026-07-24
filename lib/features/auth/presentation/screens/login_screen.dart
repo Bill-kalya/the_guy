@@ -52,6 +52,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   _buildForgotPasswordLink(),
                   const SizedBox(height: 24),
                   _buildLoginButton(authState),
+                  const SizedBox(height: 16),
+                  _buildOrDivider(),
+                  const SizedBox(height: 16),
+                  _buildGoogleButton(authState),
                   const SizedBox(height: 24),
                   _buildCreateAccountLink(),
                   const SizedBox(height: 32),
@@ -198,6 +202,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _emailController.text.trim(),
       _passwordController.text,
     );
+  }
+
+  Widget _buildOrDivider() {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: Colors.grey.shade300)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text('or', style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+        ),
+        Expanded(child: Divider(color: Colors.grey.shade300)),
+      ],
+    );
+  }
+
+  Widget _buildGoogleButton(AuthState authState) {
+    return OutlinedButton.icon(
+      onPressed: authState.isLoading ? null : _loginWithGoogle,
+      icon: const Icon(Icons.g_mobiledata, size: 24),
+      label: const Text('Continue with Google'),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        side: BorderSide(color: Colors.grey.shade300),
+      ),
+    );
+  }
+
+  void _loginWithGoogle() {
+    if (ref.read(authProvider).isLoading) return;
+    ref.read(authProvider.notifier).loginWithGoogle();
   }
 
   Widget _buildCreateAccountLink() {

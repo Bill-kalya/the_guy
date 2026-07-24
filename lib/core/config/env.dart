@@ -19,6 +19,12 @@ class Env {
     defaultValue: '',
   );
 
+  // Google Sign-In (Web Client ID for OAuth)
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '',
+  );
+
   // Environment type
   static const bool isProduction = bool.fromEnvironment(
     'IS_PRODUCTION',
