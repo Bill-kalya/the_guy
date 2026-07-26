@@ -58,7 +58,7 @@ class JobNotifier extends Notifier<JobState> {
 
   Future<void> completeJob() async {
     if (state.jobId == null) return;
-    await _apiClient.patch(EndpointBuilder.completeJob(state.jobId!));
+    await _apiClient.post(EndpointBuilder.completeJob(state.jobId!));
     state = state.copyWith(status: JobStatus.completed);
   }
 }

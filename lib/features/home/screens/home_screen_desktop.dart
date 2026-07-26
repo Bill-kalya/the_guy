@@ -13,6 +13,7 @@ import '../../../core/themes/colors.dart';
 import '../../../shared/constants/service_categories.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../widgets/download_app_section.dart';
+import '../providers/platform_stats_provider.dart';
 class HomeScreenDesktop extends ConsumerStatefulWidget {
   const HomeScreenDesktop({super.key});
 
@@ -283,6 +284,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _buildHeroSection() {
+    final platformStats = ref.watch(platformStatsProvider).valueOrNull ?? {};
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -474,7 +476,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          '500+ Providers Available',
+                          '${platformStats['totalProviders'] ?? 0}+ Providers Available',
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.white.withValues(alpha: 0.7),
@@ -506,7 +508,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Join 10,000+ satisfied customers',
+                          'Join ${platformStats['totalUsers'] ?? 0}+ users on The Guy',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.white.withValues(alpha: 0.6),
@@ -581,6 +583,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _buildStatsSection() {
+    final platformStats = ref.watch(platformStatsProvider).valueOrNull ?? {};
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1400),
@@ -588,15 +591,22 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Row(
             children: [
-              _statCard(Icons.people, '500+', 'Providers', Colors.blue),
-              _statCard(Icons.work, '10K+', 'Jobs Done', Colors.green),
-              _statCard(Icons.star, '4.8', 'Avg Rating', Colors.amber),
-              _statCard(Icons.timer, '< 5 min', 'Avg Response', Colors.purple),
+              _statCard(Icons.people, '${platformStats['totalProviders'] ?? 0}+', 'Providers', Colors.blue),
+              _statCard(Icons.work, _fmtCount(platformStats['totalJobs'] ?? 0), 'Jobs Done', Colors.green),
+              _statCard(Icons.star, '${platformStats['totalReviews'] ?? 0}', 'Reviews', Colors.amber),
+              _statCard(Icons.timer, '${platformStats['totalUsers'] ?? 0}+', 'Users', Colors.purple),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _fmtCount(dynamic v) {
+    final n = v is num ? v.toInt() : 0;
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return n.toString();
   }
 
   Widget _statCard(IconData icon, String value, String label, MaterialColor color) {
@@ -943,6 +953,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _buildBecomeProviderSection(bool isAuthenticated) {
+    final platformStats = ref.watch(platformStatsProvider).valueOrNull ?? {};
     return Container(
       width: double.infinity,
       color: Colors.green.shade50,
@@ -1036,7 +1047,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         Icon(Icons.work_history, size: 64, color: Colors.green.shade400),
                         const SizedBox(height: 16),
                         Text(
-                          'Join 500+ Active Providers',
+                          'Join ${platformStats['totalProviders'] ?? 0}+ Active Providers',
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.green.shade700,

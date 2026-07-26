@@ -75,7 +75,7 @@ class PaymentNotifier extends Notifier<PaymentState> {
 
       try {
         final response = await _apiClient.get(
-          '${Endpoints.checkPaymentStatus}/$checkoutRequestId',
+          Endpoints.paymentStatus(checkoutRequestId),
         );
 
         if (response.statusCode == 200 && !_disposed) {

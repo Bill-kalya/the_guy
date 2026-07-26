@@ -1,90 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/admin_shell.dart';
 import '../widgets/admin_widgets.dart';
 import '../../../../core/themes/colors.dart';
+import '../../providers/admin_finance_provider.dart';
 
-class AdminFinancePage extends StatefulWidget {
+class AdminFinancePage extends ConsumerStatefulWidget {
   const AdminFinancePage({super.key});
 
   @override
-  State<AdminFinancePage> createState() => _AdminFinancePageState();
+  ConsumerState<AdminFinancePage> createState() => _AdminFinancePageState();
 }
 
-class _AdminFinancePageState extends State<AdminFinancePage> {
-  final _searchController = TextEditingController();
-
-  static const _transactions = [
-    (id: 'TXN-001', customer: 'John Doe', provider: 'Grace Wanjiku', service: 'Plumbing', amount: 'KES 4,500', fee: 'KES 450', status: 'Completed', time: '10 min ago'),
-    (id: 'TXN-002', customer: 'Mary Smith', provider: 'James Mwangi', service: 'Electrical', amount: 'KES 8,200', fee: 'KES 820', status: 'Escrow', time: '30 min ago'),
-    (id: 'TXN-003', customer: 'Sarah Njeri', provider: 'Peter Kamau', service: 'Painting', amount: 'KES 12,000', fee: 'KES 1,200', status: 'Disputed', time: '2h ago'),
-    (id: 'TXN-004', customer: 'David Ochieng', provider: 'Alice Adhiambo', service: 'Carpentry', amount: 'KES 3,500', fee: 'KES 350', status: 'Refunded', time: '5h ago'),
-    (id: 'TXN-005', customer: 'Grace Wanjiku', provider: 'David Ochieng', service: 'Cleaning', amount: 'KES 6,000', fee: 'KES 600', status: 'Completed', time: '8h ago'),
-    (id: 'TXN-006', customer: 'Peter Kamau', provider: 'Daniel Kipchoge', service: 'Landscaping', amount: 'KES 15,000', fee: 'KES 1,500', status: 'Pending', time: '1d ago'),
-    (id: 'TXN-007', customer: 'Alice Adhiambo', provider: 'Sarah Njeri', service: 'Tailoring', amount: 'KES 2,800', fee: 'KES 280', status: 'Completed', time: '2d ago'),
-    (id: 'TXN-008', customer: 'James Mwangi', provider: 'Faith Wambui', service: 'Roofing', amount: 'KES 22,000', fee: 'KES 2,200', status: 'Completed', time: '3d ago'),
-  ];
-
-  static const _todaySummary = [
-    (label: 'Transactions', value: '47'),
-    (label: 'Revenue Collected', value: 'KES 186,400'),
-    (label: 'Platform Fees', value: 'KES 18,640'),
-    (label: 'Payouts Processed', value: 'KES 124,200'),
-    (label: 'Refunds Issued', value: 'KES 8,200'),
-    (label: 'Net Revenue', value: 'KES 10,440'),
-  ];
-
-  static const _upcomingPayouts = [
-    (name: 'Grace Wanjiku', amount: 'KES 45,000', due: 'Today', status: 'Processing'),
-    (name: 'James Mwangi', amount: 'KES 32,000', due: 'Today', status: 'Pending'),
-    (name: 'David Ochieng', amount: 'KES 28,500', due: 'Tomorrow', status: 'Scheduled'),
-    (name: 'Daniel Kipchoge', amount: 'KES 19,800', due: 'Tomorrow', status: 'Scheduled'),
-    (name: 'Sarah Njeri', amount: 'KES 14,200', due: 'In 2 days', status: 'Scheduled'),
-  ];
-
-  static const _monthlyRevenue = [
-    (month: 'Jan', revenue: 2100000.0),
-    (month: 'Feb', revenue: 2450000.0),
-    (month: 'Mar', revenue: 2800000.0),
-    (month: 'Apr', revenue: 2650000.0),
-    (month: 'May', revenue: 3200000.0),
-    (month: 'Jun', revenue: 3450000.0),
-    (month: 'Jul', revenue: 3100000.0),
-  ];
-
+class _AdminFinancePageState extends ConsumerState<AdminFinancePage> {
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(adminFinanceProvider.notifier).loadAll());
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(adminFinanceProvider);
+
     return AdminShell(
       currentRoute: 'finance',
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const AdminPageHeader(
-              title: 'Finance',
-              subtitle: 'Track revenue, payouts and financial health',
+      body: state.isLoading && state.summary == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AdminPageHeader(title: 'Finance', subtitle: 'Track revenue, payouts and financial health'),
+                  const SizedBox(height: 24),
+                  _buildKpiCards(state),
+                  const SizedBox(height: 24),
+                  _buildRevenueChart(state),
+                  const SizedBox(height: 24),
+                  _buildMainContent(state),
+                  const SizedBox(height: 24),
+                  _buildBottomRow(state),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
-            _buildKpiCards(),
-            const SizedBox(height: 24),
-            _buildRevenueChart(),
-            const SizedBox(height: 24),
-            _buildMainContent(),
-            const SizedBox(height: 24),
-            _buildBottomRow(),
-          ],
-        ),
-      ),
     );
   }
 
-  Widget _buildKpiCards() {
+  Widget _buildKpiCards(AdminFinanceState state) {
+    final s = state.summary ?? {};
+    final totalRevenue = s['totalRevenue'] ?? 0.0;
+    final totalGMV = s['totalGMV'] ?? 0.0;
+    final totalEscrow = s['totalEscrow'] ?? 0.0;
+    final taxLiability = s['totalTaxLiability'] ?? 0.0;
+    final pendingPayouts = s['pendingPayoutsTotal'] ?? 0.0;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 900;
@@ -93,71 +63,71 @@ class _AdminFinancePageState extends State<AdminFinancePage> {
           spacing: 12,
           runSpacing: 12,
           children: [
-            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'Total Revenue', value: 'KES 18.6M', icon: Icons.trending_up, color: AppColors.success, subtitle: '+18% vs last month')),
-            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'Platform Fees', value: 'KES 1.86M', icon: Icons.account_balance_wallet, color: AppColors.primary)),
-            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'Provider Payouts', value: 'KES 14.2M', icon: Icons.send, color: Colors.blue)),
-            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'Escrow Balance', value: 'KES 2.4M', icon: Icons.lock, color: Colors.orange)),
-            SizedBox(width: cardWidth, child: const AdminStatCard(title: 'Tax Collected', value: 'KES 2.8M', icon: Icons.receipt, color: Colors.purple)),
+            SizedBox(width: cardWidth, child: AdminStatCard(title: 'Total GMV', value: _fmtMoney(totalGMV), icon: Icons.trending_up, color: AppColors.success)),
+            SizedBox(width: cardWidth, child: AdminStatCard(title: 'Platform Revenue', value: _fmtMoney(totalRevenue), icon: Icons.account_balance_wallet, color: AppColors.primary)),
+            SizedBox(width: cardWidth, child: AdminStatCard(title: 'Escrow Balance', value: _fmtMoney(totalEscrow), icon: Icons.lock, color: Colors.orange)),
+            SizedBox(width: cardWidth, child: AdminStatCard(title: 'Tax Liability', value: _fmtMoney(taxLiability), icon: Icons.receipt, color: Colors.purple)),
+            SizedBox(width: cardWidth, child: AdminStatCard(title: 'Pending Payouts', value: _fmtMoney(pendingPayouts), icon: Icons.send, color: Colors.blue)),
           ],
         );
       },
     );
   }
 
-  Widget _buildRevenueChart() {
+  Widget _buildRevenueChart(AdminFinanceState state) {
+    final trend = state.revenueTrend;
+    final Map<String, double> gmvByMonth = {};
+    for (final entry in trend) {
+      final date = entry['date'] ?? '';
+      final gmv = (entry['gmv'] ?? 0.0) as num;
+      final monthKey = date.toString().substring(0, 7);
+      gmvByMonth[monthKey] = (gmvByMonth[monthKey] ?? 0) + gmv.toDouble();
+    }
+
+    final chartData = gmvByMonth.entries.toList();
+    final shortLabels = chartData.map((e) {
+      final parts = e.key.split('-');
+      final months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final m = int.tryParse(parts.length > 1 ? parts[1] : '1') ?? 1;
+      return months[m.clamp(1, 12)];
+    }).toList();
+
     return AdminSectionCard(
-      title: 'Revenue Overview',
+      title: 'Revenue Trend',
       titleIcon: Icons.bar_chart,
-      trailing: Wrap(
-        spacing: 8,
-        children: ['Week', 'Month', 'Quarter'].map((period) {
-          final isSelected = period == 'Month';
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(period, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : Colors.grey.shade600)),
-          );
-        }).toList(),
-      ),
       child: Column(
         children: [
-          SizedBox(
-            height: 180,
-            child: AdminMiniBarChart(
-              data: _monthlyRevenue.map((m) => MapEntry(m.month, m.revenue)).toList(),
-              barColor: AppColors.success,
-              maxHeight: 160,
+          if (chartData.isEmpty)
+            const SizedBox(
+              height: 180,
+              child: AdminEmptyState(icon: Icons.bar_chart, title: 'No revenue data', subtitle: 'Revenue trend will appear here'),
+            )
+          else
+            SizedBox(
+              height: 180,
+              child: AdminMiniBarChart(
+                data: List.generate(chartData.length, (i) => MapEntry(shortLabels[i], chartData[i].value)),
+                barColor: AppColors.success,
+                maxHeight: 160,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(width: 10, height: 10, decoration: BoxDecoration(color: AppColors.success, borderRadius: BorderRadius.circular(3))),
-              const SizedBox(width: 6),
-              Text('Monthly Revenue (KES)', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-            ],
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildMainContent(AdminFinanceState state) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 900) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 3, child: _buildTransactionTable()),
+              Expanded(flex: 3, child: _buildLedgerTable(state)),
               const SizedBox(width: 20),
               SizedBox(width: 280, child: Column(
                 children: [
-                  _buildTodaySummary(),
+                  _buildFinancialRisk(state),
                   const SizedBox(height: 20),
                   _buildFeeBreakdown(),
                 ],
@@ -167,9 +137,9 @@ class _AdminFinancePageState extends State<AdminFinancePage> {
         }
         return Column(
           children: [
-            _buildTransactionTable(),
+            _buildLedgerTable(state),
             const SizedBox(height: 20),
-            _buildTodaySummary(),
+            _buildFinancialRisk(state),
             const SizedBox(height: 20),
             _buildFeeBreakdown(),
           ],
@@ -178,93 +148,83 @@ class _AdminFinancePageState extends State<AdminFinancePage> {
     );
   }
 
-  Widget _buildTransactionTable() {
+  Widget _buildLedgerTable(AdminFinanceState state) {
+    final ledger = state.ledger;
+
     return AdminSectionCard(
-      title: 'Transactions',
+      title: 'Ledger Entries',
       titleIcon: Icons.receipt_long,
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-        child: Text('${_transactions.length} recent', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary)),
+        child: Text('${ledger.length} entries', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary)),
       ),
-      child: Column(
-        children: [
-          const AdminTableHeader(
-            columns: ['ID', 'Customer \u2192 Provider', 'Service', 'Amount', 'Fee', 'Status'],
-            flexes: [1, 3, 2, 2, 2, 2],
-          ),
-          const SizedBox(height: 8),
-          ..._transactions.map((t) => _transactionRow(t)),
-        ],
-      ),
+      child: ledger.isEmpty
+          ? const AdminEmptyState(icon: Icons.receipt_long, title: 'No ledger entries', subtitle: 'Financial entries will appear here')
+          : Column(
+              children: [
+                const AdminTableHeader(columns: ['Account', 'Type', 'Amount', 'Reference'], flexes: [3, 2, 2, 3]),
+                const SizedBox(height: 8),
+                ...ledger.take(10).map((entry) => _ledgerRow(entry)),
+              ],
+            ),
     );
   }
 
-  Widget _transactionRow(dynamic t) {
-    final statusColor = t.status == 'Completed'
-        ? AppColors.success
-        : t.status == 'Escrow' || t.status == 'Pending'
-            ? Colors.orange
-            : t.status == 'Disputed'
-                ? AppColors.error
-                : Colors.grey;
+  Widget _ledgerRow(dynamic entry) {
+    final accountCode = entry['accountCode'] ?? '';
+    final entryType = entry['entryType'] ?? '';
+    final amount = entry['amount'] ?? 0.0;
+    final referenceType = entry['referenceType'] ?? '';
+    final typeColor = entryType.toString() == 'CREDIT' ? AppColors.success : AppColors.error;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Expanded(
-            flex: 1,
-            child: Text(t.id, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey.shade600)),
-          ),
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('${t.customer} \u2192 ${t.provider}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E))),
-                Text(t.time, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(4)),
-              child: Text(t.service, style: const TextStyle(fontSize: 11, color: AppColors.primary)),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(t.amount, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(t.fee, style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
-          ),
-          Expanded(flex: 2, child: AdminStatusBadge(label: t.status, color: statusColor)),
+          Expanded(flex: 3, child: Text(accountCode.toString(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E)))),
+          Expanded(flex: 2, child: AdminStatusBadge(label: entryType.toString(), color: typeColor)),
+          Expanded(flex: 2, child: Text(_fmtMoney(amount), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)))),
+          Expanded(flex: 3, child: Text(referenceType.toString(), style: TextStyle(fontSize: 12, color: Colors.grey.shade500))),
         ],
       ),
     );
   }
 
-  Widget _buildTodaySummary() {
+  Widget _buildFinancialRisk(AdminFinanceState state) {
+    final s = state.summary ?? {};
+    final failedPayments = s['failedPayments'] ?? 0;
+    final openDisputes = s['openDisputesTotal'] ?? 0;
+    final refundExposure = s['refundExposure'] ?? 0.0;
+
     return AdminSectionCard(
-      title: "Today's Summary",
-      titleIcon: Icons.today,
+      title: 'Financial Risk',
+      titleIcon: Icons.shield,
       child: Column(
-        children: _todaySummary.map((s) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(s.label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-              Text(s.value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
-            ],
-          ),
-        )).toList(),
+        children: [
+          _riskRow('Failed Payments', '$failedPayments', failedPayments > 0 ? Colors.orange : AppColors.success, failedPayments > 0 ? 'Monitor' : 'Healthy'),
+          const SizedBox(height: 16),
+          _riskRow('Open Disputes', '$openDisputes', openDisputes > 0 ? AppColors.error : AppColors.success, openDisputes > 0 ? 'Requires attention' : 'Clear'),
+          const SizedBox(height: 16),
+          _riskRow('Refund Exposure', _fmtMoney(refundExposure), refundExposure > 0 ? Colors.orange : AppColors.success, refundExposure > 0 ? 'Monitor' : 'Low risk'),
+        ],
       ),
+    );
+  }
+
+  Widget _riskRow(String label, String value, Color color, String status) {
+    return Row(
+      children: [
+        Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Icon(Icons.circle, size: 10, color: color)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E))),
+            Text(status, style: TextStyle(fontSize: 11, color: color)),
+          ]),
+        ),
+        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
+      ],
     );
   }
 
@@ -289,11 +249,7 @@ class _AdminFinancePageState extends State<AdminFinancePage> {
   Widget _feeRow(String label, String rate, Color color) {
     return Row(
       children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
-        ),
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
         const SizedBox(width: 10),
         Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600))),
         Text(rate, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
@@ -301,110 +257,115 @@ class _AdminFinancePageState extends State<AdminFinancePage> {
     );
   }
 
-  Widget _buildBottomRow() {
+  Widget _buildBottomRow(AdminFinanceState state) {
+    final payouts = state.pendingPayouts;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 700) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _buildUpcomingPayouts()),
+              Expanded(child: _buildUpcomingPayouts(payouts)),
               const SizedBox(width: 20),
-              Expanded(child: _buildRiskCard()),
+              Expanded(child: _buildSummaryCard(state)),
             ],
           );
         }
         return Column(
           children: [
-            _buildUpcomingPayouts(),
+            _buildUpcomingPayouts(payouts),
             const SizedBox(height: 20),
-            _buildRiskCard(),
+            _buildSummaryCard(state),
           ],
         );
       },
     );
   }
 
-  Widget _buildUpcomingPayouts() {
+  Widget _buildUpcomingPayouts(List<dynamic> payouts) {
     return AdminSectionCard(
-      title: 'Upcoming Payouts',
+      title: 'Pending Payouts',
       titleIcon: Icons.send,
-      child: Column(
-        children: _upcomingPayouts.map((p) {
-          final statusColor = p.status == 'Processing'
-              ? Colors.blue
-              : p.status == 'Pending'
-                  ? Colors.orange
-                  : Colors.grey;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: Colors.blue.withValues(alpha: 0.1),
-                  child: Text(
-                    p.name.toString().split(' ').map((w) => w[0]).take(2).join(),
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      child: payouts.isEmpty
+          ? const AdminEmptyState(icon: Icons.send, title: 'No pending payouts', subtitle: 'Payout requests will appear here')
+          : Column(
+              children: payouts.take(5).map((p) {
+                final name = p['providerName'] ?? 'Unknown';
+                final amount = p['amount'] ?? 0.0;
+                final method = p['method'] ?? 'UNKNOWN';
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Row(
                     children: [
-                      Text(p.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E))),
-                      Text('${p.due} \u00b7 ${p.status}', style: TextStyle(fontSize: 11, color: statusColor)),
+                      CircleAvatar(
+                        radius: 14,
+                        backgroundColor: Colors.blue.withValues(alpha: 0.1),
+                        child: Text(
+                          name.toString().split(' ').map((w) => w[0]).take(2).join(),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name.toString(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E))),
+                            Text(method.toString(), style: TextStyle(fontSize: 11, color: Colors.orange)),
+                          ],
+                        ),
+                      ),
+                      Text(_fmtMoney(amount), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
                     ],
                   ),
-                ),
-                Text(p.amount, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
-              ],
+                );
+              }).toList(),
             ),
-          );
-        }).toList(),
-      ),
     );
   }
 
-  Widget _buildRiskCard() {
+  Widget _buildSummaryCard(AdminFinanceState state) {
+    final s = state.summary ?? {};
+    final totalGMV = s['totalGMV'] ?? 0.0;
+    final totalRevenue = s['totalRevenue'] ?? 0.0;
+    final taxLiability = s['totalTaxLiability'] ?? 0.0;
+    final totalEscrow = s['totalEscrow'] ?? 0.0;
+    final failedPayments = s['failedPayments'] ?? 0;
+
     return AdminSectionCard(
-      title: 'Financial Risk',
-      titleIcon: Icons.shield,
+      title: 'Financial Summary',
+      titleIcon: Icons.summarize,
       child: Column(
         children: [
-          _riskRow('Fraud Detection', '0.02%', AppColors.success, 'Low risk'),
-          const SizedBox(height: 16),
-          _riskRow('Failed Payments', '1.3%', Colors.orange, 'Monitor'),
-          const SizedBox(height: 16),
-          _riskRow('Chargeback Rate', '0.1%', AppColors.success, 'Healthy'),
-          const SizedBox(height: 16),
-          _riskRow('Dispute Resolution', '94%', AppColors.primary, 'Above target'),
+          _summaryRow('Total GMV', _fmtMoney(totalGMV)),
+          _summaryRow('Platform Revenue', _fmtMoney(totalRevenue)),
+          _summaryRow('Tax Liability', _fmtMoney(taxLiability)),
+          _summaryRow('Escrow Balance', _fmtMoney(totalEscrow)),
+          _summaryRow('Failed Payments', '$failedPayments'),
         ],
       ),
     );
   }
 
-  Widget _riskRow(String label, String value, Color color, String status) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-          child: Icon(Icons.circle, size: 10, color: color),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF1A1A2E))),
-              Text(status, style: TextStyle(fontSize: 11, color: color)),
-            ],
-          ),
-        ),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color)),
-      ],
+  Widget _summaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+        ],
+      ),
     );
+  }
+
+  String _fmtMoney(dynamic v) {
+    final n = v is num ? v.toDouble() : 0.0;
+    if (n >= 1000000) return 'KES ${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return 'KES ${(n / 1000).toStringAsFixed(1)}K';
+    return 'KES ${n.toStringAsFixed(0)}';
   }
 }

@@ -5,6 +5,7 @@ import '../../../shared/widgets/service_quality_score.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/review_model.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/endpoints.dart';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -324,7 +325,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       );
 
       final api = ref.read(apiClientProvider);
-      final response = await api.post('/reviews', data: request.toJson());
+      final response = await api.post(Endpoints.reviews, data: request.toJson());
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {

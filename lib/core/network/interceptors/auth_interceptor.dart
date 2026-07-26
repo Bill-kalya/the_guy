@@ -81,13 +81,15 @@ class AuthInterceptor extends Interceptor {
     try {
       final response = await _dio.post(
         '${Endpoints.baseUrl}${Endpoints.refreshToken}',
-        data: {'refreshToken': refreshToken},
+        options: Options(
+          headers: {'Authorization': 'Bearer $refreshToken'},
+        ),
       );
 
       if (response.statusCode == 200) {
         await _secureStorage.saveTokens(
           accessToken: response.data['accessToken'],
-          refreshToken: response.data['refreshToken'],
+          refreshToken: response.data['refreshToken'] ?? refreshToken,
         );
         return true;
       }

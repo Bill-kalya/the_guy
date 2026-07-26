@@ -7,18 +7,35 @@ class Endpoints {
   // ============ Admin ============
   static const String adminBase = '/api/v1/admin';
   static const String adminAuditLogs = '$adminBase/audit-logs';
+  static const String adminImpersonate = '$adminBase/impersonate';
+
+  // Admin Users
+  static const String adminUsersSummary = '$adminBase/users/summary';
+  static const String adminUsersRiskOverview = '$adminBase/users/risk-overview';
+  static const String adminUsers = '$adminBase/users';
+  static String adminUserDetail(String userId) => '$adminBase/users/$userId';
+
+  // Admin Providers
+  static const String adminProvidersSummary = '$adminBase/providers/summary';
+  static const String adminProviders = '$adminBase/providers';
+  static String adminProviderDetail(String providerId) => '$adminBase/providers/$providerId';
+
+  // Admin Finance
+  static const String adminFinanceSummary = '$adminBase/finance/summary';
+  static const String adminFinanceRevenueTrend = '$adminBase/finance/revenue-trend';
+  static const String adminFinancePendingPayouts = '$adminBase/finance/payouts/pending';
+  static const String adminFinanceLedger = '$adminBase/finance/ledger';
+
+  // Admin Jobs
+  static const String adminJobsSummary = '$adminBase/jobs/summary';
+  static const String adminJobs = '$adminBase/jobs';
+
+  // Admin Trust & Safety
   static const String adminSafetySummary = '$adminBase/trust-safety/summary';
   static const String adminSafetyAlerts = '$adminBase/trust-safety/alerts';
   static const String adminSafetyHeatmap = '$adminBase/trust-safety/heatmap';
   static const String adminSafetyModerationQueue = '$adminBase/trust-safety/moderation-queue';
-  static const String adminImpersonate = '$adminBase/impersonate';
-
-  // These don't exist yet in backend
-  // static const String adminDashboard = '$adminBase/dashboard';
-  // static const String adminProviders = '$adminBase/providers';
-  // static const String adminDisputes = '$adminBase/disputes';
-  // static const String adminModerationCases = '$adminBase/moderation/cases';
-  // static const String adminSettings = '$adminBase/settings';
+  static const String adminSafetyRiskScores = '$adminBase/trust-safety/risk-scores';
 
   // Auth
   static const String register = '/api/auth/register';
@@ -51,8 +68,8 @@ class Endpoints {
   static const String customerStats = '/api/jobs/stats';
 
   // Payments
-  static const String initiateMpesa = '/api/payments/mpesa/initiate';
-  static const String checkPaymentStatus = '/api/payments/status';
+  static const String initiateMpesa = '/api/payments/initiate';
+  static String paymentStatus(String paymentId) => '/api/payments/$paymentId/status';
   static const String paymentHistory = '/api/payments/history';
 
   // Location
@@ -62,6 +79,7 @@ class Endpoints {
   // Providers
   static const String nearbyProviders = '/api/providers/nearby';
   static const String providerDetails = '/api/providers';
+  static const String providerRegister = '/api/providers/register';
   static const String providerMe = '/api/providers/me';
   static const String providerMeCompletion = '/api/providers/me/completion';
   static const String providerMePerformance = '/api/providers/me/performance';
@@ -99,6 +117,9 @@ class Endpoints {
   // Categories
   static const String categories = '/api/categories';
   static const String subCategories = '/api/categories/sub';
+
+  // Platform (public)
+  static const String platformStats = '/api/platform/stats';
 }
 
 class EndpointBuilder {

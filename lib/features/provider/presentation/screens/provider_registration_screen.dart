@@ -231,7 +231,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       // Submit registration
       final api = ref.read(apiClientProvider);
       final response = await api.post(
-        '/api/providers/register',
+        Endpoints.providerRegister,
         data: {
           'bio': _bioController.text.trim(),
           'categoryId': _selectedCategory,
