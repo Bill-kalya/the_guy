@@ -91,7 +91,7 @@ class ProviderProfileState {
       completion: completion ?? this.completion,
       isLoading: isLoading ?? this.isLoading,
       profileNotFound: profileNotFound ?? this.profileNotFound,
-      error: error,
+      error: error ?? this.error,
     );
   }
 }

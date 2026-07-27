@@ -5,6 +5,7 @@ import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../providers/provider_profile_provider.dart';
 import '../../providers/dashboard_summary_provider.dart';
+import '../../providers/availability_provider.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import 'provider_home_screen_desktop.dart';
 import '../../../../core/themes/colors.dart';
@@ -31,6 +32,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     final jobState = ref.watch(providerJobProvider);
     final profileState = ref.watch(providerProfileProvider);
     final dashboardState = ref.watch(dashboardSummaryProvider);
+    final availabilityState = ref.watch(availabilityProvider);
 
     return ResponsiveLayout(
       mobile: Scaffold(
@@ -46,16 +48,16 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
+                color: availabilityState.isOnline ? Colors.green.shade50 : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.green.shade200),
+                border: Border.all(color: availabilityState.isOnline ? Colors.green.shade200 : Colors.grey.shade300),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(width: 7, height: 7, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
+                  Container(width: 7, height: 7, decoration: BoxDecoration(color: availabilityState.isOnline ? Colors.green : Colors.grey, shape: BoxShape.circle)),
                   const SizedBox(width: 5),
-                  Text('Online', style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w600, fontSize: 12)),
+                  Text(availabilityState.isOnline ? 'Online' : 'Offline', style: TextStyle(color: availabilityState.isOnline ? Colors.green.shade700 : Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 12)),
                 ],
               ),
             ),
@@ -73,7 +75,27 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
           children: [
             dashboardState.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
+                : dashboardState.error != null && dashboardState.summary == null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+                              const SizedBox(height: 16),
+                              Text(dashboardState.error!, textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: Colors.grey.shade700)),
+                              const SizedBox(height: 16),
+                              TextButton.icon(
+                                onPressed: () => ref.read(dashboardSummaryProvider.notifier).refreshDashboard(),
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : RefreshIndicator(
                     onRefresh: () => ref.read(dashboardSummaryProvider.notifier).refreshDashboard(),
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.only(bottom: 80),
@@ -94,7 +116,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
                           const SizedBox(height: 20),
                           _buildIncomingJobsSection(jobState),
                           const SizedBox(height: 20),
-                          _buildActiveJobAndActions(jobState, dashboardState),
+                          _buildActiveJobAndActions(jobState, dashboardState, availabilityState),
                           const SizedBox(height: 20),
                           _buildEarningsChart(dashboardState),
                         ],
@@ -179,7 +201,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
   }
 
   Widget _buildCompletionBanner(Map<String, dynamic> completion) {
-    final score = (completion['score'] ?? 0) as int;
+    final score = ((completion['score'] ?? 0) as num).toInt();
     final items = completion['items'] as List<dynamic>? ?? [];
 
     return Padding(
@@ -411,7 +433,7 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
     );
   }
 
-  Widget _buildActiveJobAndActions(ProviderJobState jobState, DashboardSummaryState dashboardState) {
+  Widget _buildActiveJobAndActions(ProviderJobState jobState, DashboardSummaryState dashboardState, AvailabilityState availabilityState) {
     final d = dashboardState.summary;
     final availableBalance = d?.availableBalance ?? 0;
 
@@ -477,7 +499,9 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
             ),
             const Text('Quick Actions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
             const SizedBox(height: 14),
-            _quickAction(Icons.toggle_on, 'Toggle Availability', 'Go online/offline', onTap: () {}),
+            _quickAction(Icons.toggle_on, 'Toggle Availability', availabilityState.isOnline ? 'Go offline' : 'Go online', onTap: () {
+              ref.read(availabilityProvider.notifier).toggleAvailability();
+            }),
             const SizedBox(height: 12),
             _quickAction(Icons.attach_money, 'Withdraw Earnings', 'KES ${_formatNumber(availableBalance)} available', onTap: () => context.push('/provider/earnings')),
           ],

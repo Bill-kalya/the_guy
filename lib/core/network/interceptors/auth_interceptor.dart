@@ -9,7 +9,11 @@ class AuthInterceptor extends Interceptor {
   bool _isRefreshing = false;
   bool _sessionExpired = false;
   AuthInterceptor(this._secureStorage) {
-    _dio = Dio();
+    _dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+      sendTimeout: const Duration(seconds: 10),
+    ));
   }
 
   @override
@@ -56,9 +60,9 @@ class AuthInterceptor extends Interceptor {
     if (!_isRefreshing) {
       _isRefreshing = true;
       final refreshed = await _refreshToken();
-      _isRefreshing = false;
 
       if (refreshed) {
+        _isRefreshing = false;
         final newToken = await _secureStorage.getAccessToken();
         final newOptions = err.requestOptions;
         newOptions.headers['Authorization'] = 'Bearer $newToken';
@@ -73,6 +77,7 @@ class AuthInterceptor extends Interceptor {
       }
 
       _sessionExpired = true;
+      _isRefreshing = false;
       await _secureStorage.clearAll();
       return handler.reject(err);
     }

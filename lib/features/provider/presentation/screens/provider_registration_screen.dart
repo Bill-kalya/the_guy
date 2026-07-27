@@ -198,6 +198,10 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     setState(() => _isSubmitting = true);
 
     try {
+      _portfolioData.clear();
+      _profilePhotoUrl = null;
+      _profilePhotoPublicId = null;
+
       // Upload profile photo
       if (_profilePhoto != null) {
         final result = await _uploadImage(_profilePhoto!, 'profile');
@@ -246,11 +250,12 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {
-          if (_profilePhotoUrl != null) {
-            final currentUser = ref.read(authProvider).user;
-            if (currentUser != null) {
-              ref.read(authProvider.notifier).updateUser(currentUser.copyWith(avatar: _profilePhotoUrl));
-            }
+          final currentUser = ref.read(authProvider).user;
+          if (currentUser != null) {
+            ref.read(authProvider.notifier).updateUser(currentUser.copyWith(
+              avatar: _profilePhotoUrl ?? currentUser.avatar,
+              providerRegistered: true,
+            ));
           }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Provider registration successful!')),
@@ -285,15 +290,17 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text('Become a Provider'),
-        leading: _currentStep > 0
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => setState(() => _currentStep--),
-              )
-            : IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => context.pop(),
-              ),
+        leading: _isSubmitting
+            ? const SizedBox.shrink()
+            : _currentStep > 0
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => setState(() => _currentStep--),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => context.pop(),
+                  ),
       ),
       body: Column(
         children: [
@@ -686,7 +693,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       case 0: canProceed = _selectedCategory != null;
       case 1: canProceed = true;
       case 2: canProceed = true;
-      case 3: canProceed = true;
+      case 3: canProceed = _verificationDocs.isNotEmpty;
       case 4: canProceed = true;
     }
 
