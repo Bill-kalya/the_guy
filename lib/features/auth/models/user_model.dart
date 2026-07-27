@@ -8,6 +8,7 @@ class UserModel {
   final double rating;
   final int reviewsCount;
   final bool isVerified;
+  final bool providerRegistered;
   final DateTime createdAt;
   final Map<String, dynamic>? metadata;
 
@@ -21,6 +22,7 @@ class UserModel {
     this.rating = 0.0,
     this.reviewsCount = 0,
     this.isVerified = false,
+    this.providerRegistered = false,
     required this.createdAt,
     this.metadata,
   });
@@ -36,6 +38,7 @@ class UserModel {
       rating: (json['rating'] ?? 0.0).toDouble(),
       reviewsCount: json['reviewsCount'] ?? 0,
       isVerified: json['isVerified'] ?? json['verified'] ?? false,
+      providerRegistered: json['providerRegistered'] ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -54,6 +57,7 @@ class UserModel {
       'rating': rating,
       'reviewsCount': reviewsCount,
       'isVerified': isVerified,
+      'providerRegistered': providerRegistered,
       'createdAt': createdAt.toIso8601String(),
       'metadata': metadata,
     };
@@ -69,6 +73,7 @@ class UserModel {
     double? rating,
     int? reviewsCount,
     bool? isVerified,
+    bool? providerRegistered,
     DateTime? createdAt,
     Map<String, dynamic>? metadata,
   }) {
@@ -82,6 +87,7 @@ class UserModel {
       rating: rating ?? this.rating,
       reviewsCount: reviewsCount ?? this.reviewsCount,
       isVerified: isVerified ?? this.isVerified,
+      providerRegistered: providerRegistered ?? this.providerRegistered,
       createdAt: createdAt ?? this.createdAt,
       metadata: metadata ?? this.metadata,
     );

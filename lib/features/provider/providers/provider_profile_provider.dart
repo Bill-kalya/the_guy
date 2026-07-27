@@ -31,9 +31,11 @@ class ProviderProfileNotifier extends Notifier<ProviderProfileState> {
         state = state.copyWith(profile: profile, isLoading: false);
       }
     } on Exception catch (e) {
-      final isNotFound = e.toString().contains('404') ||
-          e.toString().contains('not found') ||
-          e.toString().contains('Provider profile not found');
+      final errorStr = e.toString();
+      final isNotFound = errorStr.contains('404') ||
+          errorStr.contains('PROVIDER_PROFILE_MISSING') ||
+          errorStr.contains('not completed') ||
+          errorStr.contains('not found');
       state = state.copyWith(
         error: isNotFound ? null : 'Failed to load provider profile',
         profileNotFound: isNotFound,

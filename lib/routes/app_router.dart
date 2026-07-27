@@ -54,6 +54,7 @@ class GoRouterRefreshNotifier extends ChangeNotifier {
       // not on every internal state update (loading, error, etc.)
       if (previous?.isAuthenticated != next.isAuthenticated ||
           previous?.user?.role != next.user?.role ||
+          previous?.user?.providerRegistered != next.user?.providerRegistered ||
           previous?.isImpersonating != next.isImpersonating) {
         notifyListeners();
       }
@@ -95,6 +96,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       final effectiveRole = isImpersonating
           ? (authState.user?.role ?? 'customer')
           : (authState.user?.role ?? 'customer');
+
+      // Providers who haven't completed registration go to register screen
+      if (isAuthenticated && effectiveRole == 'provider' && !isImpersonating) {
+        final providerRegistered = authState.user?.providerRegistered ?? false;
+        if (!providerRegistered && location != '/provider/register') {
+          return '/provider/register';
+        }
+        if (providerRegistered && location == '/provider/register') {
+          return '/provider/home';
+        }
+      }
 
       // Authenticated and on an auth route — redirect to role-appropriate home
       if (isAuthenticated && isAuthRoute) {

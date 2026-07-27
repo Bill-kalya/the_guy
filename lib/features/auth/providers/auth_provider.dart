@@ -68,11 +68,14 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final response = await _apiClient.get(Endpoints.userProfile);
       if (response.statusCode == 200) {
-        final user = UserModel.fromJson(response.data);
+        final userData = response.data;
+        final userMap = userData is Map<String, dynamic> ? userData : <String, dynamic>{};
+        final user = UserModel.fromJson(userMap);
         // Only update if something changed (e.g. profile edit)
         if (state.user?.name != user.name ||
             state.user?.email != user.email ||
-            state.user?.isVerified != user.isVerified) {
+            state.user?.isVerified != user.isVerified ||
+            state.user?.providerRegistered != user.providerRegistered) {
           state = AuthState.authenticated(user);
           await _secureStorage.saveUserData(user.toJson());
         }
@@ -501,6 +504,7 @@ class AuthNotifier extends Notifier<AuthState> {
       email: data['email'],
       role: data['role'],
       isVerified: data['verified'] ?? data['isVerified'] ?? false,
+      providerRegistered: data['providerRegistered'] ?? false,
       createdAt: data['createdAt'] != null
           ? DateTime.parse(data['createdAt'])
           : DateTime.now(),
