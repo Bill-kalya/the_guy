@@ -4,6 +4,7 @@ class NearbyProviderModel {
   final String id;
   final String name;
   final String category;
+  final String? imageUrl;
   final double latitude;
   final double longitude;
   final double distance; // meters
@@ -19,6 +20,7 @@ class NearbyProviderModel {
     required this.id,
     required this.name,
     required this.category,
+    this.imageUrl,
     required this.latitude,
     required this.longitude,
     required this.distance,
@@ -36,6 +38,7 @@ class NearbyProviderModel {
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       category: json['category'] ?? 'Unknown',
+      imageUrl: json['profileImageUrl'],
       latitude: (json['latitude'] ?? 0.0).toDouble(),
       longitude: (json['longitude'] ?? 0.0).toDouble(),
       distance: (json['distance'] ?? 0.0).toDouble(),
@@ -54,6 +57,7 @@ class NearbyProviderModel {
       'id': id,
       'name': name,
       'category': category,
+      'profileImageUrl': imageUrl,
       'latitude': latitude,
       'longitude': longitude,
       'distance': distance,
@@ -86,6 +90,7 @@ class NearbyProviderModel {
     String? id,
     String? name,
     String? category,
+    String? imageUrl,
     double? latitude,
     double? longitude,
     double? distance,
@@ -101,6 +106,7 @@ class NearbyProviderModel {
       id: id ?? this.id,
       name: name ?? this.name,
       category: category ?? this.category,
+      imageUrl: imageUrl ?? this.imageUrl,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       distance: distance ?? this.distance,

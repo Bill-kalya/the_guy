@@ -125,16 +125,21 @@ class NearbyProvidersList extends StatelessWidget {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: AppColors.primaryLight,
-                    child: Text(
-                      provider.name.isNotEmpty
-                          ? provider.name[0].toUpperCase()
-                          : '?',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                    backgroundImage: provider.imageUrl != null && provider.imageUrl!.isNotEmpty
+                        ? NetworkImage(provider.imageUrl!)
+                        : null,
+                    child: provider.imageUrl == null || provider.imageUrl!.isEmpty
+                        ? Text(
+                            provider.name.isNotEmpty
+                                ? provider.name[0].toUpperCase()
+                                : '?',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        : null,
                   ),
                   if (provider.isOnline)
                     Positioned(

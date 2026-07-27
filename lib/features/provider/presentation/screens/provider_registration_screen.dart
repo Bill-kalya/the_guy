@@ -246,6 +246,12 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {
+          if (_profilePhotoUrl != null) {
+            final currentUser = ref.read(authProvider).user;
+            if (currentUser != null) {
+              ref.read(authProvider.notifier).updateUser(currentUser.copyWith(avatar: _profilePhotoUrl));
+            }
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Provider registration successful!')),
           );
