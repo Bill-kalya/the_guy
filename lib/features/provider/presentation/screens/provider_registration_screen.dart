@@ -187,7 +187,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       return;
     }
     if (_verificationDocs.isEmpty) {
-      _showError('Upload at least one verification document');
+      _showError('Upload your National ID');
       return;
     }
     if (_bioController.text.trim().isEmpty) {
@@ -543,59 +543,48 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
   // ── Step 3: Verification Documents ───────────────────
   Widget _buildStepVerification() {
-    final docTypes = [
-      ('National ID', Icons.badge_outlined),
-      ('Business Permit', Icons.description_outlined),
-      ('Professional License', Icons.workspace_premium_outlined),
-      ('KRA PIN', Icons.receipt_outlined),
-    ];
+    final hasNationalId = _verificationDocs.any((d) => d.type == 'National ID');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Verification Documents', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+        Text('Verification Document', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
         const SizedBox(height: 6),
-        Text('Private. Only admins can see these.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+        Text('Private. Only admins can see this.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
         const SizedBox(height: 8),
-        Text('At least one required for approval.', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+        Text('Required for approval.', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
         const SizedBox(height: 24),
-        ...docTypes.map((entry) {
-          final type = entry.$1;
-          final icon = entry.$2;
-          final uploadedDocs = _verificationDocs.where((d) => d.type == type).toList();
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(icon, size: 24, color: AppColors.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(type, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      if (uploadedDocs.isNotEmpty)
-                        Text('${uploadedDocs.length} uploaded', style: TextStyle(fontSize: 12, color: Colors.green.shade600))
-                      else
-                        Text('Not uploaded', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
-                    ],
-                  ),
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: hasNationalId ? Colors.green.shade300 : Colors.grey.shade200),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.badge_outlined, size: 24, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('National ID', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    if (hasNationalId)
+                      Text('Uploaded', style: TextStyle(fontSize: 12, color: Colors.green.shade600))
+                    else
+                      Text('Tap to upload', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+                  ],
                 ),
-                IconButton(
-                  onPressed: () => _pickVerificationDoc(type),
-                  icon: Icon(uploadedDocs.isNotEmpty ? Icons.add_circle_outline : Icons.upload_outlined, color: AppColors.primary),
-                ),
-              ],
-            ),
-          );
-        }),
+              ),
+              IconButton(
+                onPressed: () => _pickVerificationDoc('National ID'),
+                icon: Icon(hasNationalId ? Icons.check_circle_outline : Icons.upload_outlined, color: hasNationalId ? Colors.green.shade600 : AppColors.primary),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
