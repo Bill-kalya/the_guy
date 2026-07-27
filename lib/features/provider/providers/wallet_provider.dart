@@ -6,6 +6,7 @@ import '../../../core/network/endpoints.dart';
 class WalletData {
   final double pendingBalance;
   final double availableBalance;
+  final double reservedBalance;
   final double totalBalance;
   final String currency;
   final List<WalletTransaction> transactions;
@@ -13,6 +14,7 @@ class WalletData {
   WalletData({
     this.pendingBalance = 0,
     this.availableBalance = 0,
+    this.reservedBalance = 0,
     this.totalBalance = 0,
     this.currency = 'KES',
     this.transactions = const [],
@@ -22,6 +24,7 @@ class WalletData {
     return WalletData(
       pendingBalance: (json['pendingBalance'] ?? 0).toDouble(),
       availableBalance: (json['availableBalance'] ?? 0).toDouble(),
+      reservedBalance: (json['reservedBalance'] ?? 0).toDouble(),
       totalBalance: (json['totalBalance'] ?? 0).toDouble(),
       currency: json['currency'] ?? 'KES',
       transactions: (json['transactions'] as List? ?? [])
@@ -86,9 +89,29 @@ class WalletNotifier extends StateNotifier<WalletState> {
   Future<void> fetchWallet() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await _apiClient.get(Endpoints.wallet);
-      if (response.statusCode == 200) {
-        final wallet = WalletData.fromJson(response.data);
+      final walletResponse = await _apiClient.get(Endpoints.wallet);
+      List<WalletTransaction> transactions = [];
+      try {
+        final txResponse = await _apiClient.get('${Endpoints.wallet}/transactions');
+        if (txResponse.statusCode == 200 && txResponse.data['data'] != null) {
+          transactions = (txResponse.data['data'] as List)
+              .map((t) => WalletTransaction.fromJson(t))
+              .toList();
+        }
+      } catch (_) {}
+
+      if (walletResponse.statusCode == 200) {
+        final data = walletResponse.data['data'] ?? walletResponse.data;
+        final walletJson = Map<String, dynamic>.from(data);
+        walletJson['transactions'] = transactions.map((t) => {
+          'id': t.id,
+          'amount': t.amount,
+          'type': t.type,
+          'referenceType': t.referenceType,
+          'description': t.description,
+          'createdAt': t.createdAt.toIso8601String(),
+        }).toList();
+        final wallet = WalletData.fromJson(walletJson);
         state = state.copyWith(isLoading: false, wallet: wallet);
       } else {
         state = state.copyWith(isLoading: false, error: 'Failed to load wallet');

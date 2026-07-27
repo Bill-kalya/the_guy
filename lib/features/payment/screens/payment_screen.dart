@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/payment_provider.dart';
 import '../../../shared/widgets/loading_widget.dart';
 import '../../../core/themes/colors.dart';
+import '../../../core/utils/validators.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -14,6 +15,17 @@ class PaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _PaymentScreenState extends ConsumerState<PaymentScreen> {
+  final _phoneController = TextEditingController();
+  final _phoneFocusNode = FocusNode();
+  String? _phoneError;
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _phoneFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final paymentState = ref.watch(paymentProvider);
@@ -33,11 +45,15 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     children: [
                       _buildPaymentSummary(paymentState.amount),
                       const SizedBox(height: 24),
+                      _buildPhoneInput(),
+                      const SizedBox(height: 16),
                       _buildMpesaSection(),
                       const SizedBox(height: 24),
                       _buildPaymentButton(paymentNotifier),
                       if (paymentState.status == 'pending_verification')
                         _buildPendingVerification(),
+                      if (paymentState.error != null)
+                        _buildErrorBanner(paymentState.error!),
                     ],
                   ),
                 ),
@@ -47,6 +63,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Widget _buildPaymentSummary(double amount) {
+    final displayAmount = amount > 0 ? amount.toStringAsFixed(2) : '0.00';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -57,7 +74,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               children: [
                 const Text('Service Fee', style: TextStyle(fontSize: 16)),
                 Text(
-                  'KES ${amount.toStringAsFixed(2)}',
+                  'KES $displayAmount',
                   style: const TextStyle(fontSize: 16),
                 ),
               ],
@@ -71,7 +88,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'KES ${amount.toStringAsFixed(2)}',
+                  'KES $displayAmount',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -83,6 +100,26 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPhoneInput() {
+    return TextField(
+      controller: _phoneController,
+      focusNode: _phoneFocusNode,
+      keyboardType: TextInputType.phone,
+      decoration: InputDecoration(
+        labelText: 'M-Pesa Phone Number',
+        hintText: '07XXXXXXXX or 2547XXXXXXXX',
+        prefixText: '+254 ',
+        errorText: _phoneError,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (_) {
+        if (_phoneError != null) {
+          setState(() => _phoneError = null);
+        }
+      },
     );
   }
 
@@ -135,7 +172,21 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => notifier.initiateMpesaPayment(widget.jobId),
+        onPressed: () {
+          final phone = _phoneController.text.trim();
+          final validationError = Validators.validatePhoneNumber(phone);
+          if (validationError != null) {
+            setState(() => _phoneError = validationError);
+            _phoneFocusNode.requestFocus();
+            return;
+          }
+          final normalizedPhone = phone.startsWith('+254')
+              ? phone
+              : phone.startsWith('254')
+                  ? '+$phone'
+                  : '+254${phone.substring(1)}';
+          notifier.initiateMpesaPayment(widget.jobId, phoneNumber: normalizedPhone);
+        },
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 50),
           backgroundColor: Colors.green,
@@ -165,10 +216,30 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           ),
           TextButton(
             onPressed: () {
-              // Check payment status
               ref.read(paymentProvider.notifier).checkPaymentStatus();
             },
             child: const Text('Check'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(String message) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade700),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: TextStyle(color: Colors.red.shade700)),
           ),
         ],
       ),

@@ -27,7 +27,8 @@ class EarningsNotifier extends Notifier<EarningsState> {
       final response = await _apiClient.get(Endpoints.providerEarnings);
 
       if (response.statusCode == 200) {
-        final earnings = EarningsModel.fromJson(response.data);
+        final data = response.data['data'] ?? response.data;
+        final earnings = EarningsModel.fromJson(data);
         state = state.copyWith(
           earnings: earnings,
           isLoading: false,

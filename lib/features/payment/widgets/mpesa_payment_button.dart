@@ -147,12 +147,19 @@ class _MpesaPaymentButtonState extends ConsumerState<MpesaPaymentButton> {
       return;
     }
 
+    final rawPhone = _phoneController.text.trim();
+    final normalizedPhone = rawPhone.startsWith('+254')
+        ? rawPhone
+        : rawPhone.startsWith('254')
+            ? '+$rawPhone'
+            : '+254${rawPhone.substring(1)}';
+
     setState(() {
       _showPhoneDialog = false;
     });
 
     final paymentNotifier = ref.read(paymentProvider.notifier);
-    await paymentNotifier.initiateMpesaPayment(widget.jobId);
+    await paymentNotifier.initiateMpesaPayment(widget.jobId, phoneNumber: normalizedPhone);
 
     _phoneController.clear();
   }

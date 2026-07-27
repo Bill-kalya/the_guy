@@ -282,7 +282,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
         return _primaryAction(
           label: 'Complete Job',
           icon: Icons.check_circle,
-          onPressed: () => notifier.updateJobStatus(job.id, 'completed'),
+          onPressed: () => notifier.completeJob(job.id),
           color: Colors.green,
         );
       default:

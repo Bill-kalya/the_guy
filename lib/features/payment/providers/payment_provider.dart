@@ -24,23 +24,29 @@ class PaymentNotifier extends Notifier<PaymentState> {
     return PaymentState.initial();
   }
 
-  Future<void> initiateMpesaPayment(String jobId) async {
+  Future<void> initiateMpesaPayment(String jobId, {String phoneNumber = ''}) async {
     state = state.copyWith(isProcessing: true, error: null);
 
     try {
       final response = await _apiClient.post(
         Endpoints.initiateMpesa,
-        data: {'jobId': jobId},
+        data: {
+          'jobId': jobId,
+          'phoneNumber': phoneNumber,
+          'method': 'MPESA',
+        },
       );
 
       if (response.statusCode == 200) {
+        final data = response.data;
         state = state.copyWith(
           isProcessing: false,
-          checkoutRequestId: response.data['checkoutRequestId'],
+          checkoutRequestId: data['checkoutRequestId'],
+          amount: (data['amount'] ?? 0).toDouble(),
           status: 'pending_verification',
         );
 
-        _startPolling(response.data['checkoutRequestId']);
+        _startPolling(data['checkoutRequestId']);
       }
     } catch (e) {
       ErrorHandler.logError('Payment initiation failed', e);
