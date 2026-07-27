@@ -7,6 +7,7 @@ class AuthInterceptor extends Interceptor {
   final SecureStorage _secureStorage;
   late final Dio _dio;
   bool _isRefreshing = false;
+  bool _sessionExpired = false;
   AuthInterceptor(this._secureStorage) {
     _dio = Dio();
   }
@@ -16,6 +17,18 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    if (_sessionExpired) {
+      return handler.reject(DioException(
+        requestOptions: options,
+        response: Response(
+          requestOptions: options,
+          statusCode: 401,
+          data: {'message': 'Session expired'},
+        ),
+        type: DioExceptionType.badResponse,
+      ));
+    }
+
     final token = await _secureStorage.getAccessToken();
 
     if (token != null) {
@@ -28,6 +41,10 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode != 401) {
+      return handler.next(err);
+    }
+
+    if (_sessionExpired) {
       return handler.next(err);
     }
 
@@ -50,16 +67,22 @@ class AuthInterceptor extends Interceptor {
         }
       }
 
+      _sessionExpired = true;
       await _secureStorage.clearAll();
       return handler.reject(err);
     }
 
-    // Another request is already refreshing — queue this one
+    // Another request is already refreshing — wait for it
     try {
       await Future.doWhile(() async {
         await Future.delayed(const Duration(milliseconds: 100));
         return _isRefreshing;
       });
+
+      if (_sessionExpired) {
+        return handler.next(err);
+      }
+
       final newToken = await _secureStorage.getAccessToken();
       if (newToken != null) {
         final newOptions = err.requestOptions;
@@ -72,6 +95,11 @@ class AuthInterceptor extends Interceptor {
     } catch (_) {}
 
     return handler.next(err);
+  }
+
+  void resetSession() {
+    _sessionExpired = false;
+    _isRefreshing = false;
   }
 
   Future<bool> _refreshToken() async {

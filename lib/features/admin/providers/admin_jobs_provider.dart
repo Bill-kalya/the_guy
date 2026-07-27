@@ -51,11 +51,11 @@ class AdminJobsNotifier extends Notifier<AdminJobsState> {
     await _loadJobs(status: status, search: search);
   }
 
-  dynamic _unwrap(dynamic data) {
+  Map<String, dynamic>? _unwrap(dynamic data) {
     if (data is Map<String, dynamic> && data.containsKey('data')) {
-      return data['data'];
+      return data['data'] as Map<String, dynamic>;
     }
-    return data;
+    return data is Map<String, dynamic> ? data : null;
   }
 
   Map<String, dynamic>? _unwrapPage(dynamic data) {

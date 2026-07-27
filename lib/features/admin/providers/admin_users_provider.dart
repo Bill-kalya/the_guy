@@ -60,11 +60,11 @@ class AdminUsersNotifier extends Notifier<AdminUsersState> {
     await _loadUsers(role: role, search: search);
   }
 
-  dynamic _unwrap(dynamic data) {
+  Map<String, dynamic>? _unwrap(dynamic data) {
     if (data is Map<String, dynamic> && data.containsKey('data')) {
-      return data['data'];
+      return data['data'] as Map<String, dynamic>;
     }
-    return data;
+    return data is Map<String, dynamic> ? data : null;
   }
 
   Map<String, dynamic>? _unwrapPage(dynamic data) {

@@ -506,6 +506,7 @@ class AuthNotifier extends Notifier<AuthState> {
           : DateTime.now(),
     );
     await _secureStorage.saveUserData(user.toJson());
+    _apiClient.resetAuthSession();
     state = AuthState.authenticated(user);
     _connectWebSocketLazy();
   }

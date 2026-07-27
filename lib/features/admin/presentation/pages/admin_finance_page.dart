@@ -48,7 +48,7 @@ class _AdminFinancePageState extends ConsumerState<AdminFinancePage> {
   }
 
   Widget _buildKpiCards(AdminFinanceState state) {
-    final s = state.summary ?? {};
+    final s = (state.summary is Map<String, dynamic>) ? state.summary! : <String, dynamic>{};
     final totalRevenue = s['totalRevenue'] ?? 0.0;
     final totalGMV = s['totalGMV'] ?? 0.0;
     final totalEscrow = s['totalEscrow'] ?? 0.0;
@@ -78,6 +78,7 @@ class _AdminFinancePageState extends ConsumerState<AdminFinancePage> {
     final trend = state.revenueTrend;
     final Map<String, double> gmvByMonth = {};
     for (final entry in trend) {
+      if (entry == null) continue;
       final date = entry['date'] ?? '';
       final gmv = (entry['gmv'] ?? 0.0) as num;
       final monthKey = date.toString().substring(0, 7);
@@ -165,7 +166,7 @@ class _AdminFinancePageState extends ConsumerState<AdminFinancePage> {
               children: [
                 const AdminTableHeader(columns: ['Account', 'Type', 'Amount', 'Reference'], flexes: [3, 2, 2, 3]),
                 const SizedBox(height: 8),
-                ...ledger.take(10).map((entry) => _ledgerRow(entry)),
+                ...ledger.where((e) => e != null).take(10).map((entry) => _ledgerRow(entry)),
               ],
             ),
     );
@@ -192,7 +193,7 @@ class _AdminFinancePageState extends ConsumerState<AdminFinancePage> {
   }
 
   Widget _buildFinancialRisk(AdminFinanceState state) {
-    final s = state.summary ?? {};
+    final s = (state.summary is Map<String, dynamic>) ? state.summary! : <String, dynamic>{};
     final failedPayments = s['failedPayments'] ?? 0;
     final openDisputes = s['openDisputesTotal'] ?? 0;
     final refundExposure = s['refundExposure'] ?? 0.0;
@@ -290,7 +291,7 @@ class _AdminFinancePageState extends ConsumerState<AdminFinancePage> {
       child: payouts.isEmpty
           ? const AdminEmptyState(icon: Icons.send, title: 'No pending payouts', subtitle: 'Payout requests will appear here')
           : Column(
-              children: payouts.take(5).map((p) {
+              children: payouts.where((p) => p != null).take(5).map((p) {
                 final name = p['providerName'] ?? 'Unknown';
                 final amount = p['amount'] ?? 0.0;
                 final method = p['method'] ?? 'UNKNOWN';
@@ -303,7 +304,7 @@ class _AdminFinancePageState extends ConsumerState<AdminFinancePage> {
                         radius: 14,
                         backgroundColor: Colors.blue.withValues(alpha: 0.1),
                         child: Text(
-                          name.toString().split(' ').map((w) => w[0]).take(2).join(),
+                          name.toString().split(' ').where((w) => w.isNotEmpty).map((w) => w[0]).take(2).join(),
                           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue),
                         ),
                       ),
@@ -327,7 +328,7 @@ class _AdminFinancePageState extends ConsumerState<AdminFinancePage> {
   }
 
   Widget _buildSummaryCard(AdminFinanceState state) {
-    final s = state.summary ?? {};
+    final s = (state.summary is Map<String, dynamic>) ? state.summary! : <String, dynamic>{};
     final totalGMV = s['totalGMV'] ?? 0.0;
     final totalRevenue = s['totalRevenue'] ?? 0.0;
     final taxLiability = s['totalTaxLiability'] ?? 0.0;

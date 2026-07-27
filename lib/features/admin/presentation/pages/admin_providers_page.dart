@@ -59,7 +59,7 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
   }
 
   Widget _buildKpiCards(AdminProvidersState state) {
-    final s = state.summary ?? {};
+    final s = (state.summary is Map<String, dynamic>) ? state.summary! : <String, dynamic>{};
     final totalProviders = s['totalProviders'] ?? 0;
     final onlineNow = s['onlineNow'] ?? 0;
     final pendingVerification = s['pendingVerification'] ?? 0;
@@ -234,7 +234,7 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
   }
 
   Widget _buildProviderHealth(AdminProvidersState state) {
-    final s = state.summary ?? {};
+    final s = (state.summary is Map<String, dynamic>) ? state.summary! : <String, dynamic>{};
     final avgRating = (s['avgRating'] ?? 0.0) as num;
 
     return AdminSectionCard(

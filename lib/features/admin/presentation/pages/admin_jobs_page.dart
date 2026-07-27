@@ -59,7 +59,7 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
   }
 
   Widget _buildKpiCards(AdminJobsState state) {
-    final s = state.summary ?? {};
+    final s = (state.summary is Map<String, dynamic>) ? state.summary! : <String, dynamic>{};
     final activeJobs = s['activeJobs'] ?? 0;
     final completedJobs = s['completedJobs'] ?? 0;
     final cancelledJobs = s['cancelledJobs'] ?? 0;
@@ -118,7 +118,7 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
               children: [
                 const AdminTableHeader(columns: ['Job', 'Customer', 'Provider', 'Amount', 'Status'], flexes: [3, 2, 2, 2, 2]),
                 const SizedBox(height: 8),
-                ...content.take(10).map((j) => _jobRow(j)),
+                ...content.where((j) => j != null).take(10).map((j) => _jobRow(j)),
               ],
             ),
     );
@@ -175,7 +175,7 @@ class _AdminJobsPageState extends ConsumerState<AdminJobsPage> {
   }
 
   Widget _buildJobFunnel(AdminJobsState state) {
-    final s = state.summary ?? {};
+    final s = (state.summary is Map<String, dynamic>) ? state.summary! : <String, dynamic>{};
     final total = (s['totalJobs'] ?? 0) as num;
     final completed = (s['completedJobs'] ?? 0) as num;
     final active = (s['activeJobs'] ?? 0) as num;

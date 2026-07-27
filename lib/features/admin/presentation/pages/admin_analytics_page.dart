@@ -174,6 +174,7 @@ class _AdminAnalyticsPageState extends ConsumerState<AdminAnalyticsPage>
     List<double> payoutData = [];
 
     for (final entry in trend) {
+      if (entry == null) continue;
       gmvData.add((entry['gmv'] ?? 0.0).toDouble());
       revenueData.add((entry['revenue'] ?? 0.0).toDouble());
       payoutData.add((entry['payouts'] ?? 0.0).toDouble());

@@ -223,7 +223,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       child: auditLogs.isEmpty
           ? AdminEmptyState(icon: Icons.history, title: 'No recent activity', subtitle: 'Audit logs will appear here')
           : Column(
-              children: auditLogs.take(6).map((log) {
+              children: auditLogs.where((log) => log != null).take(6).map((log) {
                 final actionType = log['actionType'] ?? 'Unknown';
                 final targetType = log['targetType'] ?? '';
                 final createdAt = log['createdAt'] ?? '';

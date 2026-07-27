@@ -62,11 +62,11 @@ class AdminFinanceNotifier extends Notifier<AdminFinanceState> {
     } catch (_) {}
   }
 
-  dynamic _unwrap(dynamic data) {
+  Map<String, dynamic>? _unwrap(dynamic data) {
     if (data is Map<String, dynamic> && data.containsKey('data')) {
-      return data['data'];
+      return data['data'] as Map<String, dynamic>;
     }
-    return data;
+    return data is Map<String, dynamic> ? data : null;
   }
 
   List<dynamic>? _unwrapList(dynamic data) {

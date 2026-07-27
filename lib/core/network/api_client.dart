@@ -15,6 +15,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 class ApiClient {
   final Ref ref;
   late final Dio _dio;
+  late final AuthInterceptor _authInterceptor;
   bool _closed = false;
 
   ApiClient(this.ref) {
@@ -34,8 +35,9 @@ class ApiClient {
     );
 
     (_dio.httpClientAdapter as dynamic);
+    _authInterceptor = AuthInterceptor(ref.read(secureStorageProvider));
     _dio.interceptors.addAll([
-      AuthInterceptor(ref.read(secureStorageProvider)),
+      _authInterceptor,
       RetryInterceptor(),
       ErrorInterceptor(),
       if (!Env.isProduction || Env.enableLogging) LoggingInterceptor(),
@@ -43,6 +45,8 @@ class ApiClient {
 
     ref.onDispose(() => close());
   }
+
+  void resetAuthSession() => _authInterceptor.resetSession();
 
   Dio get dio => _dio;
 

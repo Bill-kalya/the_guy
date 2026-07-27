@@ -69,7 +69,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   }
 
   Widget _buildKpiCards(AdminUsersState state) {
-    final s = state.summary ?? {};
+    final s = (state.summary is Map<String, dynamic>) ? state.summary! : <String, dynamic>{};
     final totalUsers = s['totalUsers'] ?? 0;
     final totalCustomers = s['totalCustomers'] ?? 0;
     final totalProviders = s['totalProviders'] ?? 0;
@@ -160,7 +160,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               children: [
                 const AdminTableHeader(columns: ['User', 'Role', 'Joined'], flexes: [4, 3, 3]),
                 const SizedBox(height: 8),
-                ...users.take(10).map((u) => _userRow(u)),
+                ...users.where((u) => u != null).take(10).map((u) => _userRow(u)),
               ],
             ),
     );
