@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,12 +33,13 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   String? _selectedCategory;
 
   // Step 2 — Profile Photo
-  File? _profilePhoto;
+  Uint8List? _profilePhotoBytes;
+  String? _profilePhotoName;
   String? _profilePhotoUrl;
   String? _profilePhotoPublicId;
 
   // Step 3 — Portfolio Photos
-  final List<File> _portfolioPhotos = [];
+  final List<Uint8List> _portfolioPhotoBytes = [];
   final List<Map<String, String>> _portfolioData = [];
 
   // Step 4 — Verification Documents
@@ -78,16 +79,16 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   }
 
   // ── Image Upload ──────────────────────────────────────
-  Future<Map<String, String>?> _uploadImage(File file, String folder) async {
+  Future<Map<String, String>?> _uploadImage(Uint8List bytes, String filename, String folder) async {
     try {
       final secureStorage = ref.read(secureStorageProvider);
       final token = await secureStorage.getAccessToken();
       final dio = Dio();
 
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
-          file.path,
-          filename: '${folder}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: filename,
         ),
         'folder': folder,
       });
@@ -120,16 +121,21 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
     if (picked != null) {
-      setState(() => _profilePhoto = File(picked.path));
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _profilePhotoBytes = bytes;
+        _profilePhotoName = picked.name;
+      });
     }
   }
 
   Future<void> _pickPortfolioPhoto() async {
-    if (_portfolioPhotos.length >= _maxPortfolioPhotos) return;
+    if (_portfolioPhotoBytes.length >= _maxPortfolioPhotos) return;
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
     if (picked != null) {
-      setState(() => _portfolioPhotos.add(File(picked.path)));
+      final bytes = await picked.readAsBytes();
+      setState(() => _portfolioPhotoBytes.add(bytes));
     }
   }
 
@@ -137,8 +143,9 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, maxWidth: 2048, maxHeight: 2048, imageQuality: 90);
     if (picked != null) {
+      final bytes = await picked.readAsBytes();
       setState(() {
-        _verificationDocs.add(_VerificationDoc(type: type, file: File(picked.path)));
+        _verificationDocs.add(_VerificationDoc(type: type, bytes: bytes, name: picked.name));
       });
     }
   }
@@ -182,7 +189,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       _showError('Select a service category');
       return;
     }
-    if (_portfolioPhotos.length < _minPortfolioPhotos) {
+    if (_portfolioPhotoBytes.length < _minPortfolioPhotos) {
       _showError('Upload at least $_minPortfolioPhotos portfolio photos');
       return;
     }
@@ -203,8 +210,8 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       _profilePhotoPublicId = null;
 
       // Upload profile photo
-      if (_profilePhoto != null) {
-        final result = await _uploadImage(_profilePhoto!, 'profile');
+      if (_profilePhotoBytes != null) {
+        final result = await _uploadImage(_profilePhotoBytes!, _profilePhotoName ?? 'profile.jpg', 'profile');
         if (result != null) {
           _profilePhotoUrl = result['url'];
           _profilePhotoPublicId = result['publicId'];
@@ -212,8 +219,8 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       }
 
       // Upload portfolio photos
-      for (final photo in _portfolioPhotos) {
-        final result = await _uploadImage(photo, 'portfolio');
+      for (var i = 0; i < _portfolioPhotoBytes.length; i++) {
+        final result = await _uploadImage(_portfolioPhotoBytes[i], 'portfolio_${i + 1}.jpg', 'portfolio');
         if (result != null) {
           _portfolioData.add({'imageUrl': result['url']!, 'publicId': result['publicId']!});
         }
@@ -222,7 +229,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       // Upload verification docs
       final verificationData = <Map<String, String>>[];
       for (final doc in _verificationDocs) {
-        final result = await _uploadImage(doc.file, 'documents');
+        final result = await _uploadImage(doc.bytes, doc.name, 'documents');
         if (result != null) {
           verificationData.add({
             'documentType': doc.type,
@@ -440,8 +447,8 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
                 color: Colors.grey.shade100,
                 border: Border.all(color: Colors.grey.shade300, width: 2),
               ),
-              child: _profilePhoto != null
-                  ? ClipOval(child: Image.file(_profilePhoto!, fit: BoxFit.cover))
+              child: _profilePhotoBytes != null
+                  ? ClipOval(child: Image.memory(_profilePhotoBytes!, fit: BoxFit.cover))
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -457,7 +464,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
         Center(
           child: Text('JPG or PNG, max 5 MB', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
         ),
-        if (_profilePhoto != null) ...[
+        if (_profilePhotoBytes != null) ...[
           const SizedBox(height: 16),
           Center(
             child: TextButton.icon(
@@ -487,10 +494,10 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
-          itemCount: _portfolioPhotos.length + 1,
+          itemCount: _portfolioPhotoBytes.length + 1,
           itemBuilder: (context, index) {
-            if (index == _portfolioPhotos.length) {
-              if (_portfolioPhotos.length >= _maxPortfolioPhotos) return const SizedBox();
+            if (index == _portfolioPhotoBytes.length) {
+              if (_portfolioPhotoBytes.length >= _maxPortfolioPhotos) return const SizedBox();
               return GestureDetector(
                 onTap: _pickPortfolioPhoto,
                 child: Container(
@@ -514,13 +521,13 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.file(_portfolioPhotos[index], fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                  child: Image.memory(_portfolioPhotoBytes[index], fit: BoxFit.cover, width: double.infinity, height: double.infinity),
                 ),
                 Positioned(
                   top: 4,
                   right: 4,
                   child: GestureDetector(
-                    onTap: () => setState(() => _portfolioPhotos.removeAt(index)),
+                    onTap: () => setState(() => _portfolioPhotoBytes.removeAt(index)),
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
@@ -532,9 +539,9 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
             );
           },
         ),
-        if (_portfolioPhotos.isNotEmpty && _portfolioPhotos.length < _minPortfolioPhotos) ...[
+        if (_portfolioPhotoBytes.isNotEmpty && _portfolioPhotoBytes.length < _minPortfolioPhotos) ...[
           const SizedBox(height: 12),
-          Text('${_minPortfolioPhotos - _portfolioPhotos.length} more photos needed',
+          Text('${_minPortfolioPhotos - _portfolioPhotoBytes.length} more photos needed',
               style: TextStyle(fontSize: 13, color: Colors.orange.shade700, fontWeight: FontWeight.w500)),
         ],
       ],
@@ -543,7 +550,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
   // ── Step 3: Verification Documents ───────────────────
   Widget _buildStepVerification() {
-    final hasNationalId = _verificationDocs.any((d) => d.type == 'National ID');
+    final nationalIdDoc = _verificationDocs.cast<_VerificationDoc?>().firstWhere((d) => d?.type == 'National ID', orElse: () => null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -554,13 +561,20 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
         const SizedBox(height: 8),
         Text('Required for approval.', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
         const SizedBox(height: 24),
+        if (nationalIdDoc != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.memory(nationalIdDoc.bytes, fit: BoxFit.contain, width: double.infinity, height: 200),
+          ),
+          const SizedBox(height: 12),
+        ],
         Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: hasNationalId ? Colors.green.shade300 : Colors.grey.shade200),
+            border: Border.all(color: nationalIdDoc != null ? Colors.green.shade300 : Colors.grey.shade200),
           ),
           child: Row(
             children: [
@@ -571,7 +585,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('National ID', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    if (hasNationalId)
+                    if (nationalIdDoc != null)
                       Text('Uploaded', style: TextStyle(fontSize: 12, color: Colors.green.shade600))
                     else
                       Text('Tap to upload', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
@@ -580,7 +594,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
               ),
               IconButton(
                 onPressed: () => _pickVerificationDoc('National ID'),
-                icon: Icon(hasNationalId ? Icons.check_circle_outline : Icons.upload_outlined, color: hasNationalId ? Colors.green.shade600 : AppColors.primary),
+                icon: Icon(nationalIdDoc != null ? Icons.edit_outlined : Icons.upload_outlined, color: nationalIdDoc != null ? Colors.green.shade600 : AppColors.primary),
               ),
             ],
           ),
@@ -714,6 +728,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
 class _VerificationDoc {
   final String type;
-  final File file;
-  const _VerificationDoc({required this.type, required this.file});
+  final Uint8List bytes;
+  final String name;
+  const _VerificationDoc({required this.type, required this.bytes, required this.name});
 }
