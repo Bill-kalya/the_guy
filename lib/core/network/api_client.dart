@@ -30,7 +30,7 @@ class ApiClient {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
         },
-        validateStatus: (status) => status != null && status < 500,
+        validateStatus: (status) => status != null && status < 500 && status != 401,
       ),
     );
 

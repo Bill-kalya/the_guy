@@ -48,6 +48,11 @@ class AuthInterceptor extends Interceptor {
       return handler.next(err);
     }
 
+    final path = err.requestOptions.path;
+    if (path.startsWith('/api/auth/')) {
+      return handler.next(err);
+    }
+
     if (!_isRefreshing) {
       _isRefreshing = true;
       final refreshed = await _refreshToken();
