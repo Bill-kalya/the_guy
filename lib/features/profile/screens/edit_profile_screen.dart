@@ -8,7 +8,6 @@ import '../../auth/models/user_model.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/themes/colors.dart';
 import '../../../core/network/endpoints.dart';
-import '../../../core/storage/secure_storage.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -58,9 +57,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       setState(() => _isUploadingAvatar = true);
 
-      final secureStorage = ref.read(secureStorageProvider);
-      final token = await secureStorage.getAccessToken();
-      final dio = Dio();
+      final api = ref.read(apiClientProvider);
+      final dio = api.dio;
 
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
@@ -73,11 +71,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final response = await dio.post(
         '${Endpoints.baseUrl}${Endpoints.fileUpload}',
         data: formData,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
       );
 
       if (response.statusCode == 200) {

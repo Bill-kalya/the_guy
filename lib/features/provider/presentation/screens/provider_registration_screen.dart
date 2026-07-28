@@ -8,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
-import '../../../../core/storage/secure_storage.dart';
 import '../../../../shared/constants/service_categories.dart';
 import '../../../../core/themes/colors.dart';
 
@@ -81,9 +80,8 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   // ── Image Upload ──────────────────────────────────────
   Future<Map<String, String>?> _uploadImage(Uint8List bytes, String filename, String folder) async {
     try {
-      final secureStorage = ref.read(secureStorageProvider);
-      final token = await secureStorage.getAccessToken();
-      final dio = Dio();
+      final api = ref.read(apiClientProvider);
+      final dio = api.dio;
 
       final ext = filename.split('.').last.toLowerCase();
       final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
@@ -100,9 +98,6 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       final response = await dio.post(
         '${Endpoints.baseUrl}${Endpoints.fileUpload}',
         data: formData,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
       );
 
       if (response.statusCode == 200) {
