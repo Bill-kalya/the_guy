@@ -85,10 +85,14 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       final token = await secureStorage.getAccessToken();
       final dio = Dio();
 
+      final ext = filename.split('.').last.toLowerCase();
+      final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
+
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(
           bytes,
           filename: filename,
+          contentType: DioMediaType.parse(mime),
         ),
         'folder': folder,
       });
@@ -96,7 +100,9 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
       final response = await dio.post(
         '${Endpoints.baseUrl}${Endpoints.fileUpload}',
         data: formData,
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
 
       if (response.statusCode == 200) {
