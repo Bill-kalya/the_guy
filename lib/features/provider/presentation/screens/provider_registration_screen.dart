@@ -187,19 +187,19 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   // ── Submit ────────────────────────────────────────────
   Future<void> _submit() async {
     if (_selectedCategory == null) {
-      _showError('Select a service category');
+      _showError('Please select the service you offer');
       return;
     }
     if (_portfolioPhotoBytes.length < _minPortfolioPhotos) {
-      _showError('Upload at least $_minPortfolioPhotos portfolio photos');
+      _showError('Upload at least $_minPortfolioPhotos portfolio photos so customers can see your work');
       return;
     }
     if (_verificationDocs.isEmpty) {
-      _showError('Upload your National ID');
+      _showError('Please upload a photo of your National ID so we can verify your identity');
       return;
     }
     if (_bioController.text.trim().isEmpty) {
-      _showError('Please add a bio');
+      _showError('Tell customers a little about yourself');
       return;
     }
 
@@ -490,7 +490,36 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
         const SizedBox(height: 8),
         Text('$_minPortfolioPhotos minimum, $_maxPortfolioPhotos maximum',
             style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+        // Example photos showing before/during/after
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.blue.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Example: Show the transformation', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.blue.shade800)),
+              const SizedBox(height: 4),
+              Text('Upload photos of your completed work — before, during, and after', style: TextStyle(fontSize: 12, color: Colors.blue.shade600)),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _examplePhoto('assets/images/before.png', 'Before'),
+                  const SizedBox(width: 8),
+                  _examplePhoto('assets/images/during.png', 'During'),
+                  const SizedBox(width: 8),
+                  _examplePhoto('assets/images/after.png', 'After'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -549,6 +578,21 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     );
   }
 
+  Widget _examplePhoto(String asset, String label) {
+    return Expanded(
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(asset, height: 80, width: double.infinity, fit: BoxFit.cover),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        ],
+      ),
+    );
+  }
+
   // ── Step 3: Verification Documents ───────────────────
   Widget _buildStepVerification() {
     final nationalIdDoc = _verificationDocs.cast<_VerificationDoc?>().firstWhere((d) => d?.type == 'National ID', orElse: () => null);
@@ -556,51 +600,118 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Verification Document', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+        Text('Verify Your Identity', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
         const SizedBox(height: 6),
-        Text('Private. Only admins can see this.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
-        const SizedBox(height: 8),
-        Text('Required for approval.', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
-        const SizedBox(height: 24),
-        if (nationalIdDoc != null) ...[
+        Text('We need a clear photo of your National ID to verify you as a real provider.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+        const SizedBox(height: 20),
+        if (nationalIdDoc == null) ...[
+          // Show placeholder example of what a National ID looks like
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              children: [
+                Text('Example: What to upload', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.blue.shade800)),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset('assets/images/n_id.png', height: 160, fit: BoxFit.contain),
+                ),
+                const SizedBox(height: 10),
+                Text('Front of your Kenyan National ID card', style: TextStyle(fontSize: 12, color: Colors.blue.shade700)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Tips for a good photo
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Tips for a clear photo:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800)),
+                const SizedBox(height: 8),
+                _tipRow('Place your ID on a dark, flat surface'),
+                _tipRow('Make sure all text is readable and not cut off'),
+                _tipRow('Avoid glare — no flash needed'),
+                _tipRow('Both the photo and ID number must be visible'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Upload button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _pickVerificationDoc('National ID'),
+              icon: const Icon(Icons.camera_alt, size: 20),
+              label: const Text('Take Photo or Choose from Gallery'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                side: BorderSide(color: AppColors.primary),
+                foregroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ] else ...[
+          // Uploaded — show preview
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.memory(nationalIdDoc.bytes, fit: BoxFit.contain, width: double.infinity, height: 200),
           ),
           const SizedBox(height: 12),
-        ],
-        Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: nationalIdDoc != null ? Colors.green.shade300 : Colors.grey.shade200),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.badge_outlined, size: 24, color: AppColors.primary),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('National ID', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    if (nationalIdDoc != null)
-                      Text('Uploaded', style: TextStyle(fontSize: 12, color: Colors.green.shade600))
-                    else
-                      Text('Tap to upload', style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
-                  ],
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.green.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('National ID uploaded successfully', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.green.shade800)),
                 ),
-              ),
-              IconButton(
-                onPressed: () => _pickVerificationDoc('National ID'),
-                icon: Icon(nationalIdDoc != null ? Icons.edit_outlined : Icons.upload_outlined, color: nationalIdDoc != null ? Colors.green.shade600 : AppColors.primary),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 10),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => _pickVerificationDoc('National ID'),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retake Photo'),
+            ),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _tipRow(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.check, size: 14, color: Colors.green.shade600),
+          const SizedBox(width: 6),
+          Expanded(child: Text(text, style: TextStyle(fontSize: 12, color: Colors.grey.shade700))),
+        ],
+      ),
     );
   }
 
