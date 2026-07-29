@@ -41,12 +41,12 @@ class PaymentNotifier extends Notifier<PaymentState> {
         final data = response.data;
         state = state.copyWith(
           isProcessing: false,
-          checkoutRequestId: data['checkoutRequestId'],
+          paymentId: data['paymentId'],
           amount: (data['amount'] ?? 0).toDouble(),
           status: 'pending_verification',
         );
 
-        _startPolling(data['checkoutRequestId']);
+        _startPolling(data['paymentId']);
       }
     } catch (e) {
       ErrorHandler.logError('Payment initiation failed', e);
@@ -57,13 +57,13 @@ class PaymentNotifier extends Notifier<PaymentState> {
     }
   }
 
-  void _startPolling(String checkoutRequestId) {
+  void _startPolling(String paymentId) {
     _pollTimer?.cancel();
     _pollAttempts = 0;
-    _pollNext(checkoutRequestId);
+    _pollNext(paymentId);
   }
 
-  void _pollNext(String checkoutRequestId) {
+  void _pollNext(String paymentId) {
     if (_disposed) return;
     const maxAttempts = 20;
     if (_pollAttempts >= maxAttempts) {
@@ -81,13 +81,13 @@ class PaymentNotifier extends Notifier<PaymentState> {
 
       try {
         final response = await _apiClient.get(
-          Endpoints.paymentStatus(checkoutRequestId),
+          Endpoints.paymentStatus(paymentId),
         );
 
         if (response.statusCode == 200 && !_disposed) {
           final status = response.data['status'];
 
-          if (status == 'completed') {
+          if (status == 'HELD') {
             state = state.copyWith(
               status: 'completed',
               isProcessing: false,
@@ -96,7 +96,7 @@ class PaymentNotifier extends Notifier<PaymentState> {
             return;
           }
 
-          if (status == 'failed') {
+          if (status == 'FAILED') {
             state = state.copyWith(
               status: 'failed',
               isProcessing: false,
@@ -105,21 +105,21 @@ class PaymentNotifier extends Notifier<PaymentState> {
             return;
           }
 
-          _pollNext(checkoutRequestId);
+          _pollNext(paymentId);
         }
       } catch (e) {
         ErrorHandler.logError('Payment poll error', e);
         if (!_disposed) {
-          _pollNext(checkoutRequestId);
+          _pollNext(paymentId);
         }
       }
     });
   }
 
   Future<void> checkPaymentStatus() async {
-    if (state.checkoutRequestId == null) return;
+    if (state.paymentId == null) return;
     _pollAttempts = 0;
-    _pollNext(state.checkoutRequestId!);
+    _pollNext(state.paymentId!);
   }
 
   void reset() {
@@ -131,7 +131,7 @@ class PaymentNotifier extends Notifier<PaymentState> {
 
 class PaymentState {
   final bool isProcessing;
-  final String? checkoutRequestId;
+  final String? paymentId;
   final String? transactionId;
   final String status;
   final String? error;
@@ -139,7 +139,7 @@ class PaymentState {
 
   PaymentState({
     this.isProcessing = false,
-    this.checkoutRequestId,
+    this.paymentId,
     this.transactionId,
     this.status = 'pending',
     this.error,
@@ -152,7 +152,7 @@ class PaymentState {
 
   PaymentState copyWith({
     bool? isProcessing,
-    String? checkoutRequestId,
+    String? paymentId,
     String? transactionId,
     String? status,
     String? error,
@@ -160,7 +160,7 @@ class PaymentState {
   }) {
     return PaymentState(
       isProcessing: isProcessing ?? this.isProcessing,
-      checkoutRequestId: checkoutRequestId ?? this.checkoutRequestId,
+      paymentId: paymentId ?? this.paymentId,
       transactionId: transactionId ?? this.transactionId,
       status: status ?? this.status,
       error: error ?? this.error,
