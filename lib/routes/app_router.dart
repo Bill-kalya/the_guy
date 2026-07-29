@@ -15,6 +15,7 @@ import '../features/search/screens/search_screen.dart';
 import '../features/jobs/screens/request_service_screen.dart';
 import '../features/jobs/screens/matching_screen.dart';
 import '../features/jobs/screens/active_job_screen.dart';
+import '../features/jobs/screens/quote_response_screen.dart';
 import '../features/chat/screens/chat_screen.dart';
 import '../features/payment/screens/payment_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -33,6 +34,7 @@ import '../features/admin/presentation/pages/trust_safety_center_page.dart';
 
 // Provider routes
 import '../features/provider/presentation/screens/provider_home_screen.dart';
+import '../features/provider/presentation/screens/provider_pricing_screen.dart';
 import '../features/provider/presentation/screens/incoming_job_screen.dart';
 import '../features/provider/presentation/screens/active_jobs_screen.dart';
 import '../features/provider/presentation/screens/earnings_screen.dart';
@@ -151,6 +153,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/payment',
         '/profile',
         '/provider',
+        '/quotes',
         '/wallet',
         '/admin',
       ];
@@ -287,6 +290,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RequestServiceScreen(),
       ),
       GoRoute(
+        name: 'quotes',
+        path: '/quotes/:jobId',
+        builder: (context, state) {
+          final jobId = state.pathParameters['jobId']!;
+          return QuoteResponseScreen(jobId: jobId);
+        },
+      ),
+      GoRoute(
         name: 'matching',
         path: '/matching/:jobId',
         builder: (context, state) {
@@ -381,6 +392,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'incoming-job',
         path: '/provider/incoming-job',
         builder: (context, state) => const IncomingJobScreen(),
+      ),
+      GoRoute(
+        name: 'provider-pricing',
+        path: '/provider/pricing',
+        builder: (context, state) => const ProviderPricingScreen(),
       ),
       GoRoute(
         name: 'wallet',

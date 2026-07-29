@@ -527,6 +527,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         children: [
           _actionRow(Icons.lock_outline, 'Change Password', () => context.push('/change-password')),
           const Divider(height: 1),
+          _actionRow(Icons.sell_outlined, 'Pricing Setup', () => context.push('/provider/pricing')),
+          const Divider(height: 1),
           _actionRow(Icons.location_on_outlined, 'Service Area', () {}),
           const Divider(height: 1),
           _actionRow(Icons.language_outlined, 'Language', () {}),

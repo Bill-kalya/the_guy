@@ -25,6 +25,9 @@ class WebSocketService {
 
   Function(Map<String, dynamic>)? onIncomingJob;
   Function(Map<String, dynamic>)? onJobStatusUpdate;
+  void Function()? onReconnected;
+
+  bool get isConnected => _isConnected;
 
   WebSocketService(this._ref);
 
@@ -41,6 +44,7 @@ class WebSocketService {
           _isConnected = true;
           _reconnectAttempts = 0;
           _resubscribeAll();
+          onReconnected?.call();
         },
         onWebSocketError: (error) {
           _isConnected = false;
@@ -157,10 +161,13 @@ class WebSocketService {
   }
 
   /// Send location update from provider app
-  void sendLocationUpdate(ProviderLocationUpdate update) {
+  void sendLocationUpdate(ProviderLocationUpdate update, {int? sequenceNumber, String? jobId}) {
+    final payload = update.toJson();
+    if (sequenceNumber != null) payload['sequence'] = sequenceNumber;
+    if (jobId != null) payload['jobId'] = jobId;
     _client?.send(
       destination: '/app/location/update',
-      body: jsonEncode(update.toJson()),
+      body: jsonEncode(payload),
     );
   }
 

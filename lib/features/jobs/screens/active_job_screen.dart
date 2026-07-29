@@ -1,10 +1,18 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import '../providers/job_provider.dart';
 import '../models/job_state.dart';
 import '../../../shared/widgets/service_quality_score.dart';
 import '../../../shared/widgets/user_avatar.dart';
+import '../../../shared/models/nearby_provider_model.dart';
+import '../../../core/services/tracking_engine.dart';
+import '../../../core/utils/location_utils.dart';
+import '../../home/widgets/map_widget.dart';
+import '../../home/providers/nearby_providers_provider.dart';
 
 class ActiveJobScreen extends ConsumerStatefulWidget {
   final String jobId;
@@ -16,6 +24,70 @@ class ActiveJobScreen extends ConsumerStatefulWidget {
 }
 
 class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
+  String? _providerId;
+  Duration _currentEta = Duration.zero;
+  Position? _currentPosition;
+  LatLng? _deadReckonPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _initTracking();
+    _getCurrentLocation();
+  }
+
+  Future<void> _initTracking() async {
+    final jobState = ref.read(jobProvider);
+    final providerData = jobState.provider;
+    if (providerData == null) return;
+
+    final pid = providerData['id'] as String?;
+    if (pid == null) return;
+
+    setState(() => _providerId = pid);
+
+    final engine = ref.read(trackingEngineProvider);
+    engine.onLocationReceived = (update) {
+      if (mounted) {
+        setState(() {});
+      }
+    };
+    engine.onEtaUpdated = (eta) {
+      if (mounted) {
+        setState(() => _currentEta = eta);
+      }
+    };
+    engine.onDeadReckoningUpdate = (position, heading) {
+      if (mounted) {
+        setState(() => _deadReckonPosition = position);
+      }
+    };
+    engine.startCustomerTracking(widget.jobId, pid);
+  }
+
+  Future<void> _getCurrentLocation() async {
+    final pos = await LocationUtils.getCurrentLocation();
+    if (mounted && pos != null) {
+      setState(() => _currentPosition = pos);
+    }
+  }
+
+  @override
+  void dispose() {
+    ref.read(trackingEngineProvider).stopTracking();
+    super.dispose();
+  }
+
+  Map<String, ProviderLocationUpdate> _getLiveLocations() {
+    final locations = ref.read(providerLocationsProvider);
+    if (_providerId == null) return {};
+    final filtered = <String, ProviderLocationUpdate>{};
+    if (locations.containsKey(_providerId)) {
+      filtered[_providerId!] = locations[_providerId!]!;
+    }
+    return filtered;
+  }
+
   @override
   Widget build(BuildContext context) {
     final jobState = ref.watch(jobProvider);
@@ -36,6 +108,7 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
       body: Column(
         children: [
           _buildStatusTimeline(jobState.status),
+          if (jobState.isActive) _buildTrackingMap(),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -49,6 +122,97 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
                   _buildActionButtons(jobState.status),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrackingMap() {
+    final engine = ref.read(trackingEngineProvider);
+    final liveLocations = _getLiveLocations();
+
+    return Container(
+      height: 220,
+      margin: const EdgeInsets.all(12),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          MapWidget(
+            position: _currentPosition,
+            liveLocations: liveLocations,
+            selectedProviderId: _providerId,
+            polyline: engine.routePolyline,
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: _buildEtaBadge(),
+          ),
+          if (_deadReckonPosition != null)
+            Positioned(
+              bottom: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.warning_amber_rounded, size: 14, color: Colors.white),
+                    SizedBox(width: 4),
+                    Text(
+                      'Estimating location',
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEtaBadge() {
+    if (_currentEta == Duration.zero) return const SizedBox();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.access_time, size: 16, color: Colors.blue),
+          const SizedBox(width: 4),
+          Text(
+            LocationUtils.formatETA(_currentEta),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
             ),
           ),
         ],
@@ -141,13 +305,17 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
                      showLabel: false,
                    ),
                    const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.directions_car, size: 16),
-                      const SizedBox(width: 4),
-                      Text('${provider['eta']} min away'),
-                    ],
-                  ),
+                   Row(
+                     children: [
+                       const Icon(Icons.directions_car, size: 16),
+                       const SizedBox(width: 4),
+                       Text(
+                         _currentEta > Duration.zero
+                             ? '${LocationUtils.formatETA(_currentEta)} away'
+                             : '${provider['eta']} min away',
+                       ),
+                     ],
+                   ),
                 ],
               ),
             ),

@@ -120,6 +120,21 @@ class Endpoints {
 
   // Platform (public)
   static const String platformStats = '/api/platform/stats';
+
+  // Pricing
+  static const String providerPricing = '/api/provider/pricing';
+  static const String pricingEstimate = '/api/pricing/estimate';
+
+  // Quotes
+  static const String quotes = '/api/quotes';
+  static String quoteById(String quoteId) => '/api/quotes/$quoteId';
+  static String acceptQuote(String quoteId) => '/api/quotes/$quoteId/accept';
+  static String rejectQuote(String quoteId) => '/api/quotes/$quoteId/reject';
+  static String counterQuote(String quoteId) => '/api/quotes/$quoteId/counter';
+  static String acceptCounterQuote(String quoteId) => '/api/quotes/$quoteId/accept-counter';
+  static String quotesByJob(String jobId) => '/api/quotes/job/$jobId';
+  static const String providerQuotes = '/api/quotes/provider';
+  static const String customerQuotes = '/api/quotes/customer';
 }
 
 class EndpointBuilder {
@@ -149,4 +164,10 @@ class EndpointBuilder {
 
   static String adminReinstateProvider(String providerId) =>
       '${Endpoints.adminBase}/trust-safety/providers/$providerId/reinstate';
+
+  static String trackingEta(String jobId) =>
+      '/api/tracking/$jobId/eta';
+
+  static String trackingPolyline(String jobId) =>
+      '/api/tracking/$jobId/polyline';
 }

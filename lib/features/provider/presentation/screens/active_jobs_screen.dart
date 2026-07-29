@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../models/provider_job_model.dart';
 import '../../../../core/themes/colors.dart';
+import '../../../../core/services/tracking_engine.dart';
 
 class ActiveJobsScreen extends ConsumerStatefulWidget {
   const ActiveJobsScreen({super.key});
@@ -12,6 +13,43 @@ class ActiveJobsScreen extends ConsumerStatefulWidget {
 }
 
 class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
+  String? _trackedJobId;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(providerJobProvider, (prev, next) {
+      _handleJobChange(next.activeJob);
+    });
+  }
+
+  void _handleJobChange(ProviderJob? job) {
+    final engine = ref.read(trackingEngineProvider);
+
+    if (job == null) {
+      if (_trackedJobId != null) {
+        engine.stopTracking();
+        _trackedJobId = null;
+      }
+      return;
+    }
+
+    if (job.status == 'completed' || job.status == 'cancelled') {
+      if (_trackedJobId != null) {
+        engine.stopTracking();
+        _trackedJobId = null;
+      }
+      return;
+    }
+
+    if (engine.isTracking && _trackedJobId == job.id) return;
+
+    if (['accepted', 'en_route', 'arrived', 'in_progress'].contains(job.status)) {
+      engine.startProviderTracking(job.id);
+      _trackedJobId = job.id;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final jobState = ref.watch(providerJobProvider);

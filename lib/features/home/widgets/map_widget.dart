@@ -14,12 +14,16 @@ class MapWidget extends StatefulWidget {
   /// Map of live location updates from WebSocket
   final Map<String, ProviderLocationUpdate>? liveLocations;
 
+  /// Optional route polyline to draw on the map
+  final List<LatLng>? polyline;
+
   const MapWidget({
     super.key,
     this.position,
     this.providers,
     this.selectedProviderId,
     this.liveLocations,
+    this.polyline,
   });
 
   @override
@@ -342,6 +346,16 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
           userAgentPackageName: 'com.example.the_guy',
           tileProvider: CancellableNetworkTileProvider(),
         ),
+        if (widget.polyline != null && widget.polyline!.length >= 2)
+          PolylineLayer(
+            polylines: [
+              Polyline(
+                points: widget.polyline!,
+                color: Colors.blue.withValues(alpha: 0.5),
+                strokeWidth: 4,
+              ),
+            ],
+          ),
         if (markers.isNotEmpty)
           MarkerLayer(
             markers: markers,
