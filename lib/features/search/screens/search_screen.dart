@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/search_provider.dart';
 import '../repository/search_repository.dart';
+import '../../home/providers/location_provider.dart';
 import '../../../shared/constants/service_categories.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -86,8 +87,11 @@ class SearchResultsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Use a placeholder for location; callers should provide real location in production
-    final req = SearchRequest(query: query, lat: 0.0, lng: 0.0);
+    final locationState = ref.watch(locationProvider);
+    final pos = locationState.currentPosition;
+    final lat = pos?.latitude ?? 0.0;
+    final lng = pos?.longitude ?? 0.0;
+    final req = SearchRequest(query: query, lat: lat, lng: lng);
     final resultsAsync = ref.watch(searchResultsProvider(req));
 
     return Scaffold(

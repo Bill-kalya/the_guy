@@ -15,7 +15,7 @@ final nearbyProvidersProvider = FutureProvider<List<NearbyProviderModel>>((ref) 
   return await service.getNearbyProviders(
     lat: position.latitude,
     lng: position.longitude,
-    radius: 5000,
+    radius: 20000,
   );
 });
 
@@ -31,7 +31,7 @@ final nearbyProvidersByCategoryProvider = FutureProvider.family<List<NearbyProvi
   return await service.getNearbyProviders(
     lat: position.latitude,
     lng: position.longitude,
-    radius: 5000,
+    radius: 20000,
     category: category,
   );
 });
