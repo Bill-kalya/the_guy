@@ -44,21 +44,30 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
                 padding: EdgeInsets.only(right: 8),
                 child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
               ),
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: availabilityState.isOnline ? Colors.green.shade50 : Colors.grey.shade100,
+            Tooltip(
+              message: availabilityState.isOnline ? 'Tap to go offline' : 'Tap to go online',
+              child: InkWell(
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: availabilityState.isOnline ? Colors.green.shade200 : Colors.grey.shade300),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(width: 7, height: 7, decoration: BoxDecoration(color: availabilityState.isOnline ? Colors.green : Colors.grey, shape: BoxShape.circle)),
-                  const SizedBox(width: 5),
-                  Text(availabilityState.isOnline ? 'Online' : 'Offline', style: TextStyle(color: availabilityState.isOnline ? Colors.green.shade700 : Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 12)),
-                ],
+                onTap: availabilityState.isLoading
+                    ? null
+                    : () => ref.read(availabilityProvider.notifier).toggleAvailability(),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: availabilityState.isOnline ? Colors.green.shade50 : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: availabilityState.isOnline ? Colors.green.shade200 : Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(width: 7, height: 7, decoration: BoxDecoration(color: availabilityState.isOnline ? Colors.green : Colors.grey, shape: BoxShape.circle)),
+                      const SizedBox(width: 5),
+                      Text(availabilityState.isOnline ? 'Online' : 'Offline', style: TextStyle(color: availabilityState.isOnline ? Colors.green.shade700 : Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 12)),
+                    ],
+                  ),
+                ),
               ),
             ),
             IconButton(

@@ -5,6 +5,7 @@ import '../widgets/availability_toggle.dart';
 import '../widgets/incoming_job_card.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../providers/dashboard_summary_provider.dart';
+import '../../providers/availability_provider.dart';
 import '../../../../core/themes/colors.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -179,6 +180,9 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
   }
 
   Widget _buildTopBar() {
+    final availabilityState = ref.watch(availabilityProvider);
+    final isOnline = availabilityState.isOnline;
+
     return Container(
       height: 64,
       decoration: BoxDecoration(
@@ -191,16 +195,29 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
           children: [
             const Text('Provider Dashboard', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
             const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.green.shade200)),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-                  const SizedBox(width: 6),
-                  Text('Online', style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w600, fontSize: 13)),
-                ],
+            Tooltip(
+              message: isOnline ? 'Tap to go offline' : 'Tap to go online',
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: availabilityState.isLoading
+                    ? null
+                    : () => ref.read(availabilityProvider.notifier).toggleAvailability(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isOnline ? Colors.green.shade50 : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: isOnline ? Colors.green.shade200 : Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(width: 8, height: 8, decoration: BoxDecoration(color: isOnline ? Colors.green : Colors.grey, shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                      Text(isOnline ? 'Online' : 'Offline', style: TextStyle(color: isOnline ? Colors.green.shade700 : Colors.grey.shade600, fontWeight: FontWeight.w600, fontSize: 13)),
+                    ],
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 16),
