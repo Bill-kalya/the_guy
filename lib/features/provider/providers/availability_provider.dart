@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
-import '../../../core/storage/secure_storage.dart';
 
 final availabilityProvider =
     NotifierProvider<AvailabilityNotifier, AvailabilityState>(
@@ -10,20 +9,28 @@ final availabilityProvider =
 
 class AvailabilityNotifier extends Notifier<AvailabilityState> {
   late final ApiClient _apiClient;
-  late final SecureStorage _secureStorage;
 
   @override
   AvailabilityState build() {
     _apiClient = ref.watch(apiClientProvider);
-    _secureStorage = ref.watch(secureStorageProvider);
     _loadInitialStatus();
     return AvailabilityState.initial();
   }
 
   void _loadInitialStatus() async {
-    // Load saved status or default to online
-    await _secureStorage.getUserRole();
-    state = state.copyWith(isOnline: true); // Default online
+    try {
+      final response = await _apiClient.get(Endpoints.providerMe);
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final profileData = data is Map<String, dynamic> && data.containsKey('data')
+            ? data['data'] as Map<String, dynamic>
+            : data as Map<String, dynamic>;
+        final isOnline = profileData['isOnline'] ?? true;
+        state = state.copyWith(isOnline: isOnline);
+      }
+    } catch (e) {
+      // Keep default online if profile can't be fetched
+    }
   }
 
   Future<void> toggleAvailability() async {

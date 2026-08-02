@@ -45,12 +45,26 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const AdminPageHeader(title: 'Service Providers', subtitle: 'Manage provider registrations and verification'),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Expanded(
+                        child: AdminPageHeader(title: 'Service Providers', subtitle: 'Manage provider registrations and verification'),
+                      ),
+                      IconButton(
+                        tooltip: 'Refresh',
+                        onPressed: state.isLoading
+                            ? null
+                            : () => ref.read(adminProvidersProvider.notifier).loadAll(),
+                        icon: state.isLoading
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.refresh),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 24),
                   _buildKpiCards(state),
                   const SizedBox(height: 24),
-                  _buildSearchAndFilters(),
-                  const SizedBox(height: 20),
                   _buildMainContent(state),
                 ],
               ),
@@ -108,7 +122,26 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
     final providersPage = state.providers ?? {};
     final content = providersPage['content'] as List<dynamic>? ?? [];
 
-    return LayoutBuilder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (state.error != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDECEC),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE05C5C)),
+            ),
+            child: Text(
+              'Failed to load: ${state.error}',
+              style: const TextStyle(color: Color(0xFFB03A3A), fontSize: 13),
+            ),
+          ),
+        _buildSearchAndFilters(),
+        const SizedBox(height: 20),
+        LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 900) {
           return Row(
@@ -128,6 +161,8 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
           ],
         );
       },
+      ),
+      ],
     );
   }
 

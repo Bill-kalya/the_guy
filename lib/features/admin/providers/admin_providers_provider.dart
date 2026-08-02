@@ -33,7 +33,9 @@ class AdminProvidersNotifier extends Notifier<AdminProvidersState> {
       final res = await _api.get(Endpoints.adminProvidersSummary);
       final data = _unwrap(res.data);
       if (data != null) state = state.copyWith(summary: data);
-    } catch (_) {}
+    } catch (e) {
+      state = state.copyWith(error: 'Summary: ${e.toString()}');
+    }
   }
 
   Future<void> _loadProviders({String? status, String? search, int page = 0}) async {
@@ -44,11 +46,15 @@ class AdminProvidersNotifier extends Notifier<AdminProvidersState> {
       final res = await _api.get(Endpoints.adminProviders, params: params);
       final data = _unwrapPage(res.data);
       if (data != null) state = state.copyWith(providers: data);
-    } catch (_) {}
+    } catch (e) {
+      state = state.copyWith(error: 'Providers: ${e.toString()}');
+    }
   }
 
   Future<void> refreshWithFilters({String? status, String? search}) async {
+    state = state.copyWith(isLoading: true, error: null);
     await _loadProviders(status: status, search: search);
+    state = state.copyWith(isLoading: false);
   }
 
   Map<String, dynamic>? _unwrap(dynamic data) {
