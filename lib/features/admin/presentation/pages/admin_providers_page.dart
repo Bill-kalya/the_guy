@@ -187,8 +187,12 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
     final rating = (p['ratingAvg'] ?? 0.0) as num;
     final jobsCompleted = p['jobsCompleted'] ?? 0;
     final isOnline = p['isOnline'] ?? false;
-    final status = isOnline ? 'ACTIVE' : 'OFFLINE';
-    final statusColor = isOnline ? AppColors.success : Colors.grey;
+    final providerStatus = (p['providerStatus'] ?? 'ACTIVE').toString().toUpperCase();
+    final (statusLabel, statusColor) = switch (providerStatus) {
+      'SUSPENDED' => ('Suspended', AppColors.error),
+      'BANNED' => ('Banned', Colors.grey),
+      _ => ('Active', AppColors.success),
+    };
     final initials = name.toString().split(' ').map((w) => w[0]).take(2).join();
 
     return Padding(
@@ -208,7 +212,26 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name.toString(), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFF1A1A2E))),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(name.toString(), overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFF1A1A2E))),
+                        ),
+                        const SizedBox(width: 6),
+                        Tooltip(
+                          message: isOnline ? 'Online — visible to customers' : 'Offline — hidden from customers',
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: isOnline ? AppColors.success : Colors.grey.shade400,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     Text(p['email'] ?? '', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                   ],
                 ),
@@ -226,7 +249,7 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
                 : Text('-', style: TextStyle(color: Colors.grey.shade400)),
           ),
           Expanded(flex: 2, child: Text('$jobsCompleted', style: TextStyle(fontSize: 13, color: Colors.grey.shade600))),
-          Expanded(flex: 2, child: AdminStatusBadge(label: status, color: statusColor)),
+          Expanded(flex: 2, child: AdminStatusBadge(label: statusLabel, color: statusColor)),
           _buildProviderActionMenu(p),
         ],
       ),
