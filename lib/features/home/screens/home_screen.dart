@@ -189,26 +189,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           left: 0,
           right: 0,
           bottom: 0,
-          child: DraggableScrollableSheet(
-            controller: _sheetController,
-            initialChildSize: 0.34,
-            minChildSize: 0.14,
-            maxChildSize: 0.6,
-            snap: true,
-            snapSizes: const [0.14, 0.34, 0.6],
-            builder: (context, scrollController) => ProviderBrowseSheet(
-              scrollController: scrollController,
-              categories: ServiceCategories.popular,
-              selectedCategory: _selectedCategory,
-              providers: filteredProviders,
-              onCategorySelected: (category) {
-                setState(() {
-                  _selectedCategory = category;
-                  _selectedProviderId = null;
-                });
-              },
-              onProviderTap: _onProviderCardTap,
-              onRequestService: _openProviderDetail,
+          child: SizedBox(
+            // Bound the height: DraggableScrollableSheet needs bounded
+            // constraints, and a bare Positioned without top/height gives none.
+            height: MediaQuery.sizeOf(context).height,
+            child: DraggableScrollableSheet(
+              controller: _sheetController,
+              initialChildSize: 0.34,
+              minChildSize: 0.14,
+              maxChildSize: 0.6,
+              snap: true,
+              snapSizes: const [0.14, 0.34, 0.6],
+              builder: (context, scrollController) => ProviderBrowseSheet(
+                scrollController: scrollController,
+                categories: ServiceCategories.popular,
+                selectedCategory: _selectedCategory,
+                providers: filteredProviders,
+                onCategorySelected: (category) {
+                  setState(() {
+                    _selectedCategory = category;
+                    _selectedProviderId = null;
+                  });
+                },
+                onProviderTap: _onProviderCardTap,
+                onRequestService: _openProviderDetail,
+              ),
             ),
           ),
         ),
