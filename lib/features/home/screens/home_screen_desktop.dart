@@ -22,6 +22,9 @@ class HomeScreenDesktop extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
+  final _topNavSearchController = TextEditingController();
+  final _heroSearchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +32,19 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       _getLocation();
       _connectWebSocket();
     });
+  }
+
+  @override
+  void dispose() {
+    _topNavSearchController.dispose();
+    _heroSearchController.dispose();
+    super.dispose();
+  }
+
+  void _goToSearch(String q) {
+    final query = q.trim();
+    if (query.isEmpty) return;
+    context.push('/search?q=${Uri.encodeComponent(query)}');
   }
 
   void _getLocation() async {
@@ -142,6 +158,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   width: 240,
                   height: 40,
                   child: TextField(
+                    controller: _topNavSearchController,
                     style: const TextStyle(color: Colors.black),
                     decoration: InputDecoration(
                       hintText: 'Search services...',
@@ -159,6 +176,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       filled: true,
                       fillColor: Colors.white,
                     ),
+                    onSubmitted: _goToSearch,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -374,6 +392,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                               Expanded(
                                 flex: 3,
                                 child: TextField(
+                                  controller: _heroSearchController,
                                   style: const TextStyle(color: Colors.black),
                                   decoration: InputDecoration(
                                     hintText: 'What service do you need?',
@@ -387,6 +406,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                                       vertical: 16,
                                     ),
                                   ),
+                                  onSubmitted: _goToSearch,
                                 ),
                               ),
                               Container(
@@ -531,7 +551,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       avatar: Icon(icon, color: Colors.white, size: 16),
       label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 13)),
       backgroundColor: Colors.white.withValues(alpha: 0.15),
-      onPressed: () => context.push('/search'),
+      onPressed: () => context.push('/search?q=${Uri.encodeComponent(label)}'),
     );
   }
 

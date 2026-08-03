@@ -85,12 +85,15 @@ class SearchResultsScreen extends ConsumerWidget {
   final String query;
   const SearchResultsScreen({super.key, required this.query});
 
+  static const double _nairobiLat = -1.286389;
+  static const double _nairobiLng = 36.817223;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locationState = ref.watch(locationProvider);
     final pos = locationState.currentPosition;
-    final lat = pos?.latitude ?? 0.0;
-    final lng = pos?.longitude ?? 0.0;
+    final lat = pos?.latitude ?? _nairobiLat;
+    final lng = pos?.longitude ?? _nairobiLng;
     final req = SearchRequest(query: query, lat: lat, lng: lng);
     final resultsAsync = ref.watch(searchResultsProvider(req));
 

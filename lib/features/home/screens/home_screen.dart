@@ -23,6 +23,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
+  final _heroSearchController = TextEditingController();
 
   @override
   void initState() {
@@ -31,6 +32,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _getLocation();
       _connectWebSocket();
     });
+  }
+
+  @override
+  void dispose() {
+    _heroSearchController.dispose();
+    super.dispose();
+  }
+
+  void _goToSearch(String q) {
+    final query = q.trim();
+    if (query.isEmpty) return;
+    context.push('/search?q=${Uri.encodeComponent(query)}');
   }
 
   void _getLocation() async {
@@ -300,6 +313,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: TextField(
+                            controller: _heroSearchController,
                             style: const TextStyle(color: Colors.black),
                             decoration: InputDecoration(
                               hintText: 'Search for plumbing, cleaning, tutoring...',
@@ -313,6 +327,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 borderSide: BorderSide.none,
                               ),
                             ),
+                            onSubmitted: _goToSearch,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -371,7 +386,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         avatar: Icon(icon, color: Colors.white, size: 18),
         label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
         backgroundColor: Colors.white.withValues(alpha: 0.15),
-        onPressed: () {},
+        onPressed: () => context.push('/search?q=${Uri.encodeComponent(label)}'),
       ),
     );
   }

@@ -233,7 +233,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: 'search',
         path: '/search',
-        builder: (context, state) => const SearchScreen(),
+        builder: (context, state) {
+          final q = state.uri.queryParameters['q'] ?? '';
+          if (q.trim().isNotEmpty) {
+            return SearchResultsScreen(query: q.trim());
+          }
+          return const SearchScreen();
+        },
       ),
 
       // Auth routes
