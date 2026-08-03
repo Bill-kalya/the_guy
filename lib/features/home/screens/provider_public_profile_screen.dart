@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../core/themes/colors.dart';
+import '../../jobs/screens/request_service_screen.dart';
 
 class ProviderPublicProfileScreen extends StatelessWidget {
   final NearbyProviderModel provider;
@@ -128,7 +129,14 @@ class ProviderPublicProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: FilledButton.icon(
             onPressed: () {
-              context.push('/request-service', extra: provider.category);
+              context.push(
+                '/request-service',
+                extra: RequestServiceArgs(
+                  category: provider.category,
+                  providerId: provider.id,
+                  providerName: provider.name,
+                ),
+              );
             },
             icon: const Icon(Icons.bolt),
             label: const Text('Request Service'),

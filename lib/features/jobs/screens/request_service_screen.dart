@@ -8,10 +8,24 @@ import '../../../core/network/endpoints.dart';
 import '../../../shared/constants/service_categories.dart';
 import '../../home/providers/location_provider.dart';
 
-class RequestServiceScreen extends ConsumerStatefulWidget {
-  final String? initialCategory;
+/// Optional context for the request form: preselect a category and/or target a
+/// specific provider (direct request instead of broadcast matching).
+class RequestServiceArgs {
+  final String? category;
+  final String? providerId;
+  final String? providerName;
 
-  const RequestServiceScreen({super.key, this.initialCategory});
+  const RequestServiceArgs({
+    this.category,
+    this.providerId,
+    this.providerName,
+  });
+}
+
+class RequestServiceScreen extends ConsumerStatefulWidget {
+  final RequestServiceArgs? args;
+
+  const RequestServiceScreen({super.key, this.args});
 
   @override
   ConsumerState<RequestServiceScreen> createState() =>
@@ -31,8 +45,8 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialCategory != null) {
-      _selectedCategory = widget.initialCategory;
+    if (widget.args?.category != null) {
+      _selectedCategory = widget.args!.category;
       _estimatePrice();
     }
   }
@@ -54,6 +68,10 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (widget.args?.providerName != null) ...[
+                _buildTargetBanner(widget.args!.providerName!),
+                const SizedBox(height: 16),
+              ],
               _buildCategoryDropdown(),
               const SizedBox(height: 16),
               _buildUrgencySelector(),
@@ -66,6 +84,29 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTargetBanner(String providerName) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.person_pin_circle, color: Colors.green.shade700),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Requesting $providerName directly',
+              style: TextStyle(color: Colors.green.shade800),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -201,22 +242,27 @@ class _RequestServiceScreenState extends ConsumerState<RequestServiceScreen> {
 
     try {
       final apiClient = ref.read(apiClientProvider);
+      final requestBody = <String, dynamic>{
+        'category': _selectedCategory,
+        'description': _descriptionController.text,
+        'urgency': _urgency,
+        'budgetMin': (_estimatedPrice - 1000).clamp(0, double.infinity),
+        'budgetMax': _estimatedPrice + 1000,
+        'location': {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+        },
+      };
+      if (widget.args?.providerId != null) {
+        requestBody['providerId'] = widget.args!.providerId;
+      }
+
       final response = await apiClient.post(
         Endpoints.requestJob,
-        data: {
-          'category': _selectedCategory,
-          'description': _descriptionController.text,
-          'urgency': _urgency,
-          'budgetMin': (_estimatedPrice - 1000).clamp(0, double.infinity),
-          'budgetMax': _estimatedPrice + 1000,
-          'location': {
-            'latitude': position.latitude,
-            'longitude': position.longitude,
-          },
-        },
+        data: requestBody,
       );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final id = _extractJobId(response.data);
         if (mounted && id != null) {
           context.pushReplacement('/matching/$id');

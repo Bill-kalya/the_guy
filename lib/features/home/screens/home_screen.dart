@@ -7,6 +7,7 @@ import '../providers/location_provider.dart';
 import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../admin/presentation/widgets/admin_mode_banner.dart';
+import '../../jobs/screens/request_service_screen.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../core/themes/colors.dart';
@@ -255,7 +256,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       provider,
       onRequestService: () {
         _requireAuthThen(context, () {
-          context.push('/request-service', extra: provider.category);
+          context.push(
+            '/request-service',
+            extra: RequestServiceArgs(
+              category: provider.category,
+              providerId: provider.id,
+              providerName: provider.name,
+            ),
+          );
         });
       },
     );

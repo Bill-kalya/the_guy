@@ -295,8 +295,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: 'request-service',
         path: '/request-service',
-        builder: (context, state) =>
-            RequestServiceScreen(initialCategory: state.extra as String?),
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is RequestServiceArgs) {
+            return RequestServiceScreen(args: extra);
+          }
+          // Backwards compatible with a bare category string.
+          return RequestServiceScreen(
+            args: RequestServiceArgs(category: extra as String?),
+          );
+        },
       ),
       GoRoute(
         name: 'provider-public-profile',
