@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,6 +11,7 @@ import '../features/auth/presentation/screens/verify_reset_otp_screen.dart' as v
 import '../features/auth/presentation/screens/reset_password_screen.dart';
 import '../features/auth/presentation/screens/change_password_screen.dart';
 import '../features/home/screens/home_screen.dart';
+import '../features/home/screens/provider_public_profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/jobs/screens/request_service_screen.dart';
 import '../features/jobs/screens/matching_screen.dart';
@@ -20,6 +21,7 @@ import '../features/chat/screens/chat_screen.dart';
 import '../features/payment/screens/payment_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
+import '../shared/models/nearby_provider_model.dart';
 
 // Admin routes
 import '../features/admin/presentation/pages/admin_home_page.dart';
@@ -293,7 +295,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: 'request-service',
         path: '/request-service',
-        builder: (context, state) => const RequestServiceScreen(),
+        builder: (context, state) =>
+            RequestServiceScreen(initialCategory: state.extra as String?),
+      ),
+      GoRoute(
+        name: 'provider-public-profile',
+        path: '/provider/:providerId',
+        builder: (context, state) {
+          final provider = state.extra as NearbyProviderModel?;
+          if (provider != null) {
+            return ProviderPublicProfileScreen(provider: provider);
+          }
+          return const Scaffold(body: Center(child: Text('Provider not found')));
+        },
       ),
       GoRoute(
         name: 'quotes',

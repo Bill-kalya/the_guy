@@ -17,6 +17,9 @@ class MapWidget extends StatefulWidget {
   /// Optional route polyline to draw on the map
   final List<LatLng>? polyline;
 
+  /// Called when a provider marker is tapped
+  final ValueChanged<NearbyProviderModel>? onProviderTap;
+
   const MapWidget({
     super.key,
     this.position,
@@ -24,6 +27,7 @@ class MapWidget extends StatefulWidget {
     this.selectedProviderId,
     this.liveLocations,
     this.polyline,
+    this.onProviderTap,
   });
 
   @override
@@ -123,48 +127,51 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
         point: position,
         width: isSelected ? 48 : 40,
         height: isSelected ? 48 : 40,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: isSelected ? 44 : 36,
-              height: isSelected ? 44 : 36,
-              decoration: BoxDecoration(
-                color: baseColor,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white,
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.handyman,
-                color: Colors.white,
-                size: isSelected ? 22 : 18,
-              ),
-            ),
-            if (isSelected)
+        child: GestureDetector(
+          onTap: () => _handleProviderTap(providerId),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Container(
-                margin: const EdgeInsets.only(top: 2),
-                width: 8,
-                height: 8,
+                width: isSelected ? 44 : 36,
+                height: isSelected ? 44 : 36,
                 decoration: BoxDecoration(
-                  color: Colors.orange,
+                  color: baseColor,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Colors.white,
-                    width: 1,
+                    width: 2,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.handyman,
+                  color: Colors.white,
+                  size: isSelected ? 22 : 18,
                 ),
               ),
-          ],
+              if (isSelected)
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 1,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       );
     });
@@ -213,50 +220,70 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
       point: position,
       width: isSelected ? 48 : 40,
       height: isSelected ? 48 : 40,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: isSelected ? 44 : 36,
-            height: isSelected ? 44 : 36,
-            decoration: BoxDecoration(
-              color: baseColor,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white,
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.handyman,
-              color: Colors.white,
-              size: isSelected ? 22 : 18,
-            ),
-          ),
-          if (isSelected)
+      child: GestureDetector(
+        onTap: () => _handleProviderTap(providerId),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Container(
-              margin: const EdgeInsets.only(top: 2),
-              width: 8,
-              height: 8,
+              width: isSelected ? 44 : 36,
+              height: isSelected ? 44 : 36,
               decoration: BoxDecoration(
-                color: Colors.orange,
+                color: baseColor,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: Colors.white,
-                  width: 1,
+                  width: 2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.handyman,
+                color: Colors.white,
+                size: isSelected ? 22 : 18,
               ),
             ),
-        ],
+            if (isSelected)
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 1,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
+  }
+
+  void _handleProviderTap(String providerId) {
+    final onTap = widget.onProviderTap;
+    if (onTap == null || widget.providers == null) return;
+
+    NearbyProviderModel? provider;
+    for (final p in widget.providers!) {
+      if (p.id == providerId) {
+        provider = p;
+        break;
+      }
+    }
+
+    if (provider != null) {
+      onTap(provider);
+    }
   }
 
   List<Marker> _buildMarkers() {

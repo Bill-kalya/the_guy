@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/map_widget.dart';
-import '../widgets/nearby_providers_list.dart';
+import '../widgets/provider_detail_sheet.dart';
 import '../providers/location_provider.dart';
 import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -23,7 +23,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
-  final _heroSearchController = TextEditingController();
 
   @override
   void initState() {
@@ -32,18 +31,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _getLocation();
       _connectWebSocket();
     });
-  }
-
-  @override
-  void dispose() {
-    _heroSearchController.dispose();
-    super.dispose();
-  }
-
-  void _goToSearch(String q) {
-    final query = q.trim();
-    if (query.isEmpty) return;
-    context.push('/search?q=${Uri.encodeComponent(query)}');
   }
 
   void _getLocation() async {
@@ -108,26 +95,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (locationState.error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.location_off, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(locationState.error!),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _getLocation, child: const Text('Retry')),
-          ],
-        ),
-      );
-    }
-
     return IndexedStack(
       index: _currentIndex,
       children: [
-        // Home tab - Marketplace landing
-        _buildMarketplaceHome(locationState, isAuthenticated, nearbyProvidersAsync, liveLocations),
+        // Home tab - map-first marketplace
+        _buildMapHome(locationState, nearbyProvidersAsync, liveLocations),
         // Services tab
         _buildServicesTab(),
         // Profile tab
@@ -142,306 +114,150 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildMarketplaceHome(
+  Widget _buildMapHome(
     LocationState locationState,
-    bool isAuthenticated,
     AsyncValue<List<NearbyProviderModel>> nearbyProvidersAsync,
     Map<String, ProviderLocationUpdate> liveLocations,
   ) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Hero section with search
-          _buildHeroSection(),
-          // Urgent help banner
-          _buildUrgentHelpBanner(),
-          // What service do you need?
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Text(
-              'What service do you need?',
-              style: TextStyle(fontSize: 5, fontWeight: FontWeight.bold),
-            ),
-          ),
+    final position = locationState.currentPosition;
+    final providers = nearbyProvidersAsync.valueOrNull;
 
-          // Nearby providers with map and live tracking
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Text(
-                      'Nearby Providers',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  // Map with provider markers
-                  SizedBox(
-                    height: 200,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: MapWidget(
-                        position: locationState.currentPosition,
-                        providers: nearbyProvidersAsync.valueOrNull,
-                        liveLocations: liveLocations,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Nearby providers list
-                  nearbyProvidersAsync.when(
-                    data: (providers) {
-                      // Subscribe to live locations for nearby providers
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (providers.isNotEmpty) {
-                          final wsService = ref.read(webSocketServiceProvider);
-                          wsService.subscribeToNearbyProviders(
-                            providers.map((p) => p.id).toList(),
-                          );
-                        }
-                      });
+    // Subscribe to live locations once nearby providers load
+    if (providers != null && providers.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final wsService = ref.read(webSocketServiceProvider);
+        wsService.subscribeToNearbyProviders(providers.map((p) => p.id).toList());
+      });
+    }
 
-                      return SizedBox(
-                        height: 400,
-                        child: NearbyProvidersList(
-                          position: locationState.currentPosition,
-                          providers: providers,
-                          isLoading: false,
-                        ),
-                      );
-                    },
-                    loading: () => SizedBox(
-                      height: 200,
-                      child: NearbyProvidersList(
-                        position: locationState.currentPosition,
-                        isLoading: true,
-                      ),
-                    ),
-                    error: (error, stack) => SizedBox(
-                      height: 200,
-                      child: NearbyProvidersList(
-                        position: locationState.currentPosition,
-                        error: error.toString(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Become a Provider CTA
-          _buildBecomeProviderSection(isAuthenticated),
-          const SizedBox(height: 80),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroSection() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: AppColors.primaryGradient.colors.toList(),
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(48),
-          bottomRight: Radius.circular(48),
-        ),
-      ),
-      child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final titleSize = constraints.maxWidth < 600 ? 32.0 : 48.0;
-                        return Text(
-                          'The Guy',
-                          style: TextStyle(
-                            fontSize: titleSize,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1.2,
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    const Text(
-                      'Connect with verified professionals for home, business, and personal services anywhere in Kenya.',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white70,
-                        height: 1.4,
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Text(
-                      'Fast • Trusted • Nearby',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: TextField(
-                            controller: _heroSearchController,
-                            style: const TextStyle(color: Colors.black),
-                            decoration: InputDecoration(
-                              hintText: 'Search for plumbing, cleaning, tutoring...',
-                              hintStyle: TextStyle(color: Colors.grey.shade500),
-                              prefixIcon: const Icon(Icons.search),
-                              suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            onSubmitted: _goToSearch,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Category icons as horizontal scrollable list below search
-                        SizedBox(
-                          height: 72,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: ServiceCategories.popular.map((cat) {
-                              return _buildSearchCategoryChip(cat.icon, cat.name);
-                            }).toList(),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: _getGuyButton(),
-                    ),
-                  ],
-                ),
+    return Stack(
+      children: [
+        // Full-screen map with provider markers
+        Positioned.fill(
+          child: MapWidget(
+            position: position,
+            providers: providers,
+            liveLocations: liveLocations,
+            onProviderTap: _onProviderTap,
           ),
         ),
-      ),
-    );
-  }
 
-  Widget _getGuyButton() {
-    return ElevatedButton.icon(
-      onPressed: () {
-        _requireAuthThen(context, () {
-          context.push('/request-service');
-        });
-      },
-      icon: const Icon(Icons.person_search),
-      label: const Text('Get a Guy'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primary,
-        elevation: 3,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchCategoryChip(IconData icon, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ActionChip(
-        avatar: Icon(icon, color: Colors.white, size: 18),
-        label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
-        backgroundColor: Colors.white.withValues(alpha: 0.15),
-        onPressed: () => context.push('/search?q=${Uri.encodeComponent(label)}'),
-      ),
-    );
-  }
-
-
-  Widget _buildBecomeProviderSection(bool isAuthenticated) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.green.shade600, Colors.green.shade400],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
+        // Top overlay: search bar + location prompt
+        SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Become a Provider',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: _buildMapSearchBar(),
+              ),
+              if (position == null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _buildLocationPrompt(),
+                ),
+            ],
+          ),
+        ),
+
+        // Bottom overlay: home service category chips
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Colors.black.withValues(alpha: 0.55), Colors.transparent],
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: ServiceCategories.popular.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, i) {
+                    final cat = ServiceCategories.popular[i];
+                    return ActionChip(
+                      avatar: Icon(cat.icon, size: 16),
+                      label: Text(cat.name),
+                      onPressed: () =>
+                          context.push('/search?q=${Uri.encodeComponent(cat.name)}'),
+                    );
+                  },
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Earn money on your own schedule. Join thousands of providers on The Guy.',
-                style: TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  _requireAuthThen(context, () {
-                    context.push('/provider/register');
-                  });
-                },
-                icon: const Icon(Icons.arrow_forward),
-                label: const Text('Get Started'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.green.shade700,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMapSearchBar() {
+    return Material(
+      color: Colors.white,
+      elevation: 3,
+      borderRadius: BorderRadius.circular(28),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(28),
+        onTap: () => context.push('/search'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(Icons.search, color: Colors.grey.shade600),
+              const SizedBox(width: 10),
+              Text(
+                'Search for plumbing, cleaning, tutoring...',
+                style: TextStyle(color: Colors.grey.shade600),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLocationPrompt() {
+    return Material(
+      color: Colors.white,
+      elevation: 2,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Row(
+          children: [
+            const Icon(Icons.location_off, color: Colors.orange, size: 20),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Enable location to see nearby providers',
+                style: TextStyle(fontSize: 13),
+              ),
+            ),
+            TextButton(onPressed: _getLocation, child: const Text('Enable')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onProviderTap(NearbyProviderModel provider) {
+    showProviderDetailSheet(
+      context,
+      provider,
+      onRequestService: () {
+        _requireAuthThen(context, () {
+          context.push('/request-service', extra: provider.category);
+        });
+      },
     );
   }
 
@@ -478,56 +294,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUrgentHelpBanner() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.amber.shade100, Colors.orange.shade50],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.amber.withValues(alpha: 0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-            border: Border.all(
-              color: Colors.amber.shade300,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.flash_on,
-                color: Colors.orange.shade800,
-                size: 32,
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Need help urgently? Get matched with nearby professionals instantly.',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

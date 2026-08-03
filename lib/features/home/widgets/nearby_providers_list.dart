@@ -113,7 +113,7 @@ class NearbyProvidersList extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          context.push('/provider/${provider.id}');
+          context.push('/provider/${provider.id}', extra: provider);
         },
         child: Padding(
           padding: const EdgeInsets.all(12),
