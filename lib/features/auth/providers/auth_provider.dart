@@ -92,7 +92,9 @@ class AuthNotifier extends Notifier<AuthState> {
   void _connectWebSocketLazy() {
     Future.delayed(const Duration(seconds: 2), () {
       if (state.isAuthenticated) {
-        ref.read(webSocketServiceProvider).connect();
+        final ws = ref.read(webSocketServiceProvider);
+        ws.connect();
+        ws.subscribeToCustomerJobs();
       }
     });
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import '../providers/job_provider.dart';
 import '../models/job_state.dart';
@@ -16,21 +17,36 @@ class MatchingScreen extends ConsumerStatefulWidget {
 }
 
 class _MatchingScreenState extends ConsumerState<MatchingScreen> {
+  bool _cancelledDialogShown = false;
+
   @override
   void initState() {
     super.initState();
+    ref.read(jobProvider.notifier).startMatching(widget.jobId);
     _listenForMatch();
   }
 
   void _listenForMatch() {
     Future.delayed(const Duration(seconds: 30), () {
+      if (!mounted) return;
       if (ref.read(jobProvider).status == JobStatus.matching) {
         _showNoProvidersFound();
       }
     });
   }
 
+  void _maybeShowCancelledDialog() {
+    if (_cancelledDialogShown) return;
+    _cancelledDialogShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _showNoProvidersFound();
+    });
+  }
+
   void _showNoProvidersFound() {
+    if (_cancelledDialogShown) return;
+    _cancelledDialogShown = true;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -42,8 +58,8 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to home
+              context.pop();
+              context.pop(); // Go back to home
             },
             child: const Text('OK'),
           ),
@@ -56,9 +72,17 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
   Widget build(BuildContext context) {
     final jobState = ref.watch(jobProvider);
 
+    if (jobState.status == JobStatus.cancelled) {
+      _maybeShowCancelledDialog();
+    }
+
+    final showMatched = (jobState.status == JobStatus.matched ||
+            jobState.status == JobStatus.accepted) &&
+        jobState.provider != null;
+
     return Scaffold(
       body: Center(
-        child: jobState.status == JobStatus.matched && jobState.provider != null
+        child: showMatched
             ? _buildMatchedScreen(jobState.provider!)
             : _buildMatchingScreen(),
       ),
@@ -92,6 +116,14 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
   }
 
   Widget _buildMatchedScreen(Map<String, dynamic> provider) {
+    final name = provider['name'] ?? 'Provider';
+    final rating = (provider['rating'] ?? 0).toDouble();
+    final serviceQualityScore =
+        (provider['serviceQualityScore'] ?? rating * 20).toDouble();
+    final reviews = (provider['reviews'] ?? 0).toInt();
+    final distance = (provider['distance'] ?? 0).toDouble();
+    final price = (provider['price'] ?? 0).toDouble();
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -112,40 +144,38 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                 children: [
                   UserAvatar(
                     imageUrl: provider['avatar'],
-                    name: provider['name'] ?? '',
+                    name: name,
                     radius: 40,
                     backgroundColor: Colors.grey.shade200,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    provider['name'],
+                    name,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                   const SizedBox(height: 8),
-                   Row(
-                     mainAxisAlignment: MainAxisAlignment.center,
-                     children: [
-                       ServiceQualityScore(
-                         score: (provider['serviceQualityScore'] ?? provider['rating'] * 20).toDouble(),
-                         size: 40,
-                         showLabel: false,
-                       ),
-                       const SizedBox(width: 12),
-                       Text(
-                         '${provider['reviews']} reviews',
-                       ),
-                     ],
-                   ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ServiceQualityScore(
+                        score: serviceQualityScore,
+                        size: 40,
+                        showLabel: false,
+                      ),
+                      const SizedBox(width: 12),
+                      Text('$reviews reviews'),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.location_on, size: 16),
                       const SizedBox(width: 4),
-                      Text('${provider['distance']} km away'),
+                      Text('${distance.toStringAsFixed(1)} km away'),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -156,7 +186,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      'KES ${provider['price']}',
+                      'KES ${price.toStringAsFixed(0)}',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -171,11 +201,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () {
-              Navigator.pushReplacementNamed(
-                context,
-                '/active-job',
-                arguments: widget.jobId,
-              );
+              context.pushReplacement('/active-job/${widget.jobId}');
             },
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),

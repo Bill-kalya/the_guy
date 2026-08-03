@@ -43,6 +43,16 @@ class JobNotifier extends Notifier<JobState> {
     );
   }
 
+  /// Sets the current job into the matching state (called when the request
+  /// screen navigates to the matching screen).
+  void startMatching(String jobId) {
+    state = JobState.matching(jobId);
+  }
+
+  void markCancelled() {
+    state = state.copyWith(status: JobStatus.cancelled);
+  }
+
   void providerAccepted(Map<String, dynamic> provider) {
     state = state.copyWith(status: JobStatus.accepted, provider: provider);
   }

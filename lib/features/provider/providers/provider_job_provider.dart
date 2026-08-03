@@ -19,6 +19,7 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
     _apiClient = ref.watch(apiClientProvider);
     _webSocket = ref.watch(webSocketServiceProvider);
     _listenForIncomingJobs();
+    _webSocket.subscribeToProviderJobs();
     return ProviderJobState.initial();
   }
 

@@ -138,6 +138,18 @@ class WebSocketService {
     });
   }
 
+  /// Subscribe to the customer's job notification queue (JOB_ACCEPTED etc.)
+  void subscribeToCustomerJobs() {
+    _ref.read(secureStorageProvider).getUserId().then((userId) {
+      if (userId == null) return;
+      final destination = '/queue/customer/$userId';
+      _subscriptions.add(destination);
+      if (_isConnected) {
+        _performSubscribe(destination);
+      }
+    });
+  }
+
   /// Subscribe to live location updates for a specific provider
   void subscribeToProviderLocation(String providerId) {
     final destination = '/topic/provider/$providerId/location';
@@ -196,8 +208,17 @@ class WebSocketService {
         case 'JOB_MATCHED':
           _ref.read(jobProvider.notifier).updateJobStatus(data['job']);
           break;
+        case 'JOB_ACCEPTED':
         case 'PROVIDER_ACCEPTED':
-          _ref.read(jobProvider.notifier).providerAccepted(data['provider']);
+          _ref.read(jobProvider.notifier).providerAccepted(
+            data['provider'] is Map<String, dynamic>
+                ? data['provider'] as Map<String, dynamic>
+                : const {},
+          );
+          break;
+        case 'NO_PROVIDER_ACCEPTED':
+        case 'NO_PROVIDERS_AVAILABLE':
+          _ref.read(jobProvider.notifier).markCancelled();
           break;
         case 'JOB_STATUS_UPDATE':
           _ref.read(jobProvider.notifier).updateStatus(data['status']);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../models/provider_job_model.dart';
@@ -42,7 +43,7 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
           content: Text('Job automatically declined after 30 seconds'),
         ),
       );
-      Navigator.pop(context);
+      context.pop();
     }
   }
 
@@ -170,7 +171,7 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
           child: ElevatedButton(
             onPressed: () async {
               await ref.read(providerJobProvider.notifier).declineJob(job.id);
-              if (mounted) Navigator.pop(context);
+              if (mounted) context.pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -194,7 +195,7 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
                   .read(providerJobProvider.notifier)
                   .acceptJob(job.id);
               if (accepted && mounted) {
-                Navigator.pushReplacementNamed(context, '/provider/active-job');
+                context.pushReplacement('/provider/active-job');
               }
             },
             style: ElevatedButton.styleFrom(
@@ -216,7 +217,8 @@ class _IncomingJobScreenState extends ConsumerState<IncomingJobScreen> {
   }
 
   String _formatTime(String timestamp) {
-    final date = DateTime.parse(timestamp);
+    final date = DateTime.tryParse(timestamp);
+    if (date == null) return '';
     final now = DateTime.now();
     final difference = now.difference(date);
 
