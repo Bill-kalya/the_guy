@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 import '../widgets/map_widget.dart';
 import '../widgets/provider_detail_sheet.dart';
+import '../widgets/provider_browse_sheet.dart';
 import '../providers/location_provider.dart';
 import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -24,6 +26,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
+  String? _selectedCategory;
+  String? _selectedProviderId;
+  final GlobalKey<MapWidgetState> _mapKey = GlobalKey<MapWidgetState>();
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
 
   @override
   void initState() {
@@ -36,6 +43,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _getLocation() async {
     await ref.read(locationProvider.notifier).getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    _sheetController.dispose();
+    super.dispose();
   }
 
   void _connectWebSocket() async {
@@ -131,15 +144,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
 
+    final filteredProviders = _selectedCategory == null
+        ? (providers ?? const <NearbyProviderModel>[])
+        : (providers ?? const <NearbyProviderModel>[])
+            .where((p) => p.category == _selectedCategory)
+            .toList();
+
     return Stack(
       children: [
         // Full-screen map with provider markers
         Positioned.fill(
           child: MapWidget(
+            key: _mapKey,
             position: position,
             providers: providers,
             liveLocations: liveLocations,
+            selectedProviderId: _selectedProviderId,
             onProviderTap: _onProviderTap,
+            onNearMe: _refreshNearby,
+            nearMeAlignment: Alignment.topRight,
           ),
         ),
 
@@ -161,43 +184,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
 
-        // Bottom overlay: home service category chips
+        // Bottom overlay: collapsible browse sheet (category + provider cards)
         Positioned(
           left: 0,
           right: 0,
           bottom: 0,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black.withValues(alpha: 0.55), Colors.transparent],
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                height: 44,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: ServiceCategories.popular.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, i) {
-                    final cat = ServiceCategories.popular[i];
-                    return ActionChip(
-                      avatar: Icon(cat.icon, size: 16),
-                      label: Text(cat.name),
-                      onPressed: () =>
-                          context.push('/search?q=${Uri.encodeComponent(cat.name)}'),
-                    );
-                  },
-                ),
-              ),
+          child: DraggableScrollableSheet(
+            controller: _sheetController,
+            initialChildSize: 0.34,
+            minChildSize: 0.14,
+            maxChildSize: 0.6,
+            snap: true,
+            snapSizes: const [0.14, 0.34, 0.6],
+            builder: (context, scrollController) => ProviderBrowseSheet(
+              scrollController: scrollController,
+              categories: ServiceCategories.popular,
+              selectedCategory: _selectedCategory,
+              providers: filteredProviders,
+              onCategorySelected: (category) {
+                setState(() {
+                  _selectedCategory = category;
+                  _selectedProviderId = null;
+                });
+              },
+              onProviderTap: _onProviderCardTap,
+              onRequestService: _openProviderDetail,
             ),
           ),
         ),
       ],
+    );
+  }
+
+  void _refreshNearby() {
+    _getLocation();
+    ref.invalidate(nearbyProvidersProvider);
+  }
+
+  void _onProviderCardTap(NearbyProviderModel provider) {
+    setState(() => _selectedProviderId = provider.id);
+    _mapKey.currentState?.moveTo(
+      LatLng(provider.latitude, provider.longitude),
+      16.0,
+    );
+  }
+
+  void _openProviderDetail(NearbyProviderModel provider) {
+    showProviderDetailSheet(
+      context,
+      provider,
+      onRequestService: () {
+        _requireAuthThen(context, () {
+          context.push(
+            '/request-service',
+            extra: RequestServiceArgs(
+              category: provider.category,
+              providerId: provider.id,
+              providerName: provider.name,
+            ),
+          );
+        });
+      },
     );
   }
 
@@ -251,6 +298,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _onProviderTap(NearbyProviderModel provider) {
+    setState(() => _selectedProviderId = provider.id);
     showProviderDetailSheet(
       context,
       provider,

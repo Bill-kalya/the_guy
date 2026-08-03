@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/map_widget.dart';
+import '../widgets/provider_detail_sheet.dart';
 import '../widgets/nearby_providers_list.dart';
 import '../providers/location_provider.dart';
 import '../providers/nearby_providers_provider.dart';
@@ -14,6 +15,7 @@ import '../../../shared/constants/service_categories.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../widgets/download_app_section.dart';
 import '../providers/platform_stats_provider.dart';
+import '../../jobs/screens/request_service_screen.dart';
 class HomeScreenDesktop extends ConsumerStatefulWidget {
   const HomeScreenDesktop({super.key});
 
@@ -63,6 +65,30 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     } else {
       context.push('/login', extra: {'redirectAfterLogin': true});
     }
+  }
+
+  void _openProviderDetail(NearbyProviderModel provider) {
+    showProviderDetailSheet(
+      context,
+      provider,
+      onRequestService: () {
+        _requireAuthThen(context, () {
+          context.push(
+            '/request-service',
+            extra: RequestServiceArgs(
+              category: provider.category,
+              providerId: provider.id,
+              providerName: provider.name,
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  void _refreshNearby() {
+    _getLocation();
+    ref.invalidate(nearbyProvidersProvider);
   }
 
   @override
@@ -920,6 +946,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                           position: locationState.currentPosition,
                           providers: nearbyProvidersAsync.valueOrNull,
                           liveLocations: liveLocations,
+                          onProviderTap: _openProviderDetail,
+                          onNearMe: _refreshNearby,
                         ),
                       ),
                     ),

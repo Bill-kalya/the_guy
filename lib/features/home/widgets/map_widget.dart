@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
@@ -5,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../shared/models/nearby_provider_model.dart';
+import 'map_clustering.dart';
 
 class MapWidget extends StatefulWidget {
   final Position? position;
@@ -20,6 +22,12 @@ class MapWidget extends StatefulWidget {
   /// Called when a provider marker is tapped
   final ValueChanged<NearbyProviderModel>? onProviderTap;
 
+  /// Called when the user taps the "near me" button (to refresh providers)
+  final VoidCallback? onNearMe;
+
+  /// Placement of the "near me" button overlay
+  final Alignment nearMeAlignment;
+
   const MapWidget({
     super.key,
     this.position,
@@ -28,13 +36,15 @@ class MapWidget extends StatefulWidget {
     this.liveLocations,
     this.polyline,
     this.onProviderTap,
+    this.onNearMe,
+    this.nearMeAlignment = Alignment.bottomRight,
   });
 
   @override
-  State<MapWidget> createState() => _MapWidgetState();
+  State<MapWidget> createState() => MapWidgetState();
 }
 
-class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
+class MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
   static const LatLng _nairobi = LatLng(-1.286389, 36.817223);
 
@@ -45,6 +55,46 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
 
   // Latest heading per provider so the direction arrow survives position animation
   final Map<String, double> _markerHeadings = {};
+
+  double _currentZoom = 12.0;
+  StreamSubscription<MapEvent>? _mapEventSub;
+
+  /// Centers the map on [point] at [zoom]. Used by callers (e.g. a browse
+  /// sheet) to focus a tapped provider.
+  void moveTo(LatLng point, double zoom) {
+    _mapController.move(point, zoom);
+    _currentZoom = zoom;
+    setState(() {});
+  }
+
+  double get _zoom {
+    try {
+      return _mapController.camera.zoom;
+    } catch (_) {
+      return _currentZoom;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _currentZoom = widget.position != null ? 15.0 : 12.0;
+    _mapEventSub = _mapController.mapEventStream.listen(_onMapEvent);
+  }
+
+  void _onMapEvent(MapEvent event) {
+    if (event is MapEventMoveEnd || event is MapEventFlingAnimation) {
+      try {
+        final zoom = _mapController.camera.zoom;
+        if ((zoom - _currentZoom).abs() > 0.05) {
+          _currentZoom = zoom;
+          if (mounted) setState(() {});
+        }
+      } catch (_) {
+        // Camera not attached yet; ignore.
+      }
+    }
+  }
 
   @override
   void didUpdateWidget(MapWidget oldWidget) {
@@ -202,9 +252,9 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
     );
   }
 
-  /// Selected/assigned providers render a profile-photo marker with a green
+  /// Selected/assigned providers render a profile-photo marker with a
   /// status ring and a direction arrow; browsing markers render a service
-  /// category icon inside a category-colored circle.
+  /// category icon inside an availability-colored circle.
   Widget _markerChild({
     required NearbyProviderModel? model,
     required String providerId,
@@ -220,6 +270,9 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
   Widget _selectedMarkerChild(NearbyProviderModel? model, double? heading) {
     final imageUrl = model?.imageUrl;
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+    final ringColor = model == null || !model.isOnline
+        ? Colors.grey
+        : Colors.green;
 
     final circle = Container(
       width: 48,
@@ -228,7 +281,7 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
         color: Colors.white,
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.green,
+          color: ringColor,
           width: 3,
         ),
         boxShadow: [
@@ -275,8 +328,14 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
     );
   }
 
+  /// Availability color: green when online, gray when offline.
+  Color _availabilityColor(NearbyProviderModel? model) {
+    if (model == null || !model.isOnline) return Colors.grey;
+    return Colors.green;
+  }
+
   Widget _categoryMarkerChild(NearbyProviderModel? model) {
-    final color = _categoryColor(model?.category);
+    final color = _availabilityColor(model);
 
     return Container(
       width: 36,
@@ -304,6 +363,100 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
     );
   }
 
+  Marker _buildClusterMarker(ProviderCluster cluster) {
+    final category = cluster.dominantCategory;
+    final color =
+        category == null ? Colors.blue : _categoryColor(category);
+
+    return Marker(
+      point: cluster.center,
+      width: 56,
+      height: 56,
+      child: GestureDetector(
+        onTap: () => _zoomIntoCluster(cluster.center),
+        child: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(_categoryIcon(category), color: Colors.white, size: 14),
+              Text(
+                '${cluster.count}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _zoomIntoCluster(LatLng center) {
+    final targetZoom = (_currentZoom + 2.0).clamp(3.0, 18.0);
+    _mapController.move(center, targetZoom);
+    _currentZoom = targetZoom;
+    setState(() {});
+  }
+
+  Marker _buildSingleProviderMarker(ProviderPoint point) {
+    // Reuse the animated marker so live providers keep gliding smoothly.
+    if (point.isLive && _animatedMarkers.containsKey(point.providerId)) {
+      return _animatedMarkers[point.providerId]!;
+    }
+    return _providerMarker(
+      providerId: point.providerId,
+      position: point.position,
+    );
+  }
+
+  List<ProviderPoint> _buildProviderPoints() {
+    final points = <ProviderPoint>[];
+    final handled = <String>{};
+
+    if (widget.liveLocations != null) {
+      widget.liveLocations!.forEach((providerId, update) {
+        points.add(ProviderPoint(
+          providerId: providerId,
+          provider: _providerModelFor(providerId),
+          position: LatLng(update.latitude, update.longitude),
+          isLive: true,
+        ));
+        handled.add(providerId);
+      });
+    }
+
+    if (widget.providers != null) {
+      for (final provider in widget.providers!) {
+        if (handled.contains(provider.id)) continue;
+        points.add(ProviderPoint(
+          providerId: provider.id,
+          provider: provider,
+          position: LatLng(provider.latitude, provider.longitude),
+        ));
+      }
+    }
+
+    return points;
+  }
+
   List<Marker> _buildMarkers() {
     final markers = <Marker>[];
 
@@ -312,42 +465,17 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
       markers.add(_userMarker());
     }
 
-    // Add provider markers from live locations (WebSocket updates)
-    if (widget.liveLocations != null) {
-      for (final entry in widget.liveLocations!.entries) {
-        final providerId = entry.key;
-        final update = entry.value;
+    // Cluster nearby providers into count bubbles at overview zoom, or render
+    // them individually as the user zooms in.
+    final points = _buildProviderPoints();
+    if (points.isEmpty) return markers;
 
-        // If marker already animated, reuse it
-        if (_animatedMarkers.containsKey(providerId)) {
-          markers.add(_animatedMarkers[providerId]!);
-          continue;
-        }
-
-        markers.add(
-          _providerMarker(
-            providerId: providerId,
-            position: LatLng(update.latitude, update.longitude),
-          ),
-        );
-      }
-    }
-
-    // Add provider markers from nearby providers list (REST API data)
-    if (widget.providers != null) {
-      for (final provider in widget.providers!) {
-        // Skip if we already have a live location for this provider
-        if (widget.liveLocations != null &&
-            widget.liveLocations!.containsKey(provider.id)) {
-          continue;
-        }
-
-        markers.add(
-          _providerMarker(
-            providerId: provider.id,
-            position: LatLng(provider.latitude, provider.longitude),
-          ),
-        );
+    final clusters = clusterProviders(points, _zoom);
+    for (final cluster in clusters) {
+      if (cluster.count == 1) {
+        markers.add(_buildSingleProviderMarker(cluster.points.first));
+      } else {
+        markers.add(_buildClusterMarker(cluster));
       }
     }
 
@@ -372,6 +500,27 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
     if (provider != null) {
       onTap(provider);
     }
+  }
+
+  Widget _nearMeButton() {
+    return FloatingActionButton.small(
+      heroTag: null,
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.blue,
+      onPressed: () {
+        if (widget.position != null) {
+          _mapController.move(
+            LatLng(widget.position!.latitude, widget.position!.longitude),
+            15.0,
+          );
+          _currentZoom = 15.0;
+        }
+        widget.onNearMe?.call();
+        setState(() {});
+      },
+      tooltip: 'Go to my location',
+      child: const Icon(Icons.my_location),
+    );
   }
 
   IconData _categoryIcon(String? category) {
@@ -456,6 +605,7 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _mapEventSub?.cancel();
     for (final controller in _animationControllers.values) {
       controller.dispose();
     }
@@ -474,9 +624,10 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
       zoom = 15.0;
     }
 
+    _currentZoom = _zoom;
     final markers = _buildMarkers();
 
-    return FlutterMap(
+    final map = FlutterMap(
       mapController: _mapController,
       options: MapOptions(
         initialCenter: center,
@@ -505,6 +656,23 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
           MarkerLayer(
             markers: markers,
           ),
+      ],
+    );
+
+    if (widget.position == null) return map;
+
+    final nearMe = _nearMeButton();
+    final atTop = widget.nearMeAlignment.y < 0;
+
+    return Stack(
+      children: [
+        map,
+        Positioned(
+          right: 12,
+          top: atTop ? 76 : null,
+          bottom: atTop ? null : 12,
+          child: nearMe,
+        ),
       ],
     );
   }
