@@ -105,7 +105,12 @@ class SearchResultsScreen extends ConsumerWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.all(12.0),
-                child: Text('${res.totalResults} providers near you', style: const TextStyle(color: Colors.grey)),
+                child: Text(
+                  res.totalResults == 0
+                      ? 'No $query services available near you at the moment'
+                      : '${res.totalResults} providers near you',
+                  style: const TextStyle(color: Colors.grey),
+                ),
               ),
               Expanded(
                 child: ListView.separated(
