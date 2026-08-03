@@ -56,9 +56,33 @@ class JobNotifier extends Notifier<JobState> {
     );
   }
 
-  Future<void> completeJob() async {
+  void setAwaitingConfirmation(Map<String, dynamic> jobData) {
+    state = state.copyWith(
+      status: JobStatus.awaitingConfirmation,
+      jobDetails: jobData,
+    );
+  }
+
+  Future<void> confirmCompletion() async {
     if (state.jobId == null) return;
-    await _apiClient.post(EndpointBuilder.completeJob(state.jobId!));
-    state = state.copyWith(status: JobStatus.completed);
+    try {
+      await _apiClient.post(EndpointBuilder.confirmCompletion(state.jobId!));
+      state = state.copyWith(status: JobStatus.completed);
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to confirm completion');
+    }
+  }
+
+  Future<void> rejectCompletion(String reason) async {
+    if (state.jobId == null) return;
+    try {
+      await _apiClient.post(
+        EndpointBuilder.rejectCompletion(state.jobId!),
+        data: {'reason': reason},
+      );
+      state = state.copyWith(status: JobStatus.cancelled);
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to reject completion');
+    }
   }
 }

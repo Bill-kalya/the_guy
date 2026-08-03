@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../providers/provider_job_provider.dart';
 import '../../models/provider_job_model.dart';
 import '../../../../core/themes/colors.dart';
 import '../../../../core/services/tracking_engine.dart';
+import '../../../../core/utils/location_utils.dart';
 
 class ActiveJobsScreen extends ConsumerStatefulWidget {
   const ActiveJobsScreen({super.key});
@@ -34,7 +38,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
       return;
     }
 
-    if (job.status == 'completed' || job.status == 'cancelled') {
+    if (job.status == 'completed' || job.status == 'cancelled' || job.status == 'awaiting_confirmation') {
       if (_trackedJobId != null) {
         engine.stopTracking();
         _trackedJobId = null;
@@ -93,6 +97,10 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
           const SizedBox(height: 20),
           _buildCustomerNotes(job),
           const SizedBox(height: 20),
+          if (job.status == 'awaiting_confirmation') ...[
+            _buildCompletionEvidence(job),
+            const SizedBox(height: 20),
+          ],
           _buildActionButtons(job),
         ],
       ),
@@ -294,6 +302,63 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
     );
   }
 
+  Widget _buildCompletionEvidence(ProviderJob job) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.green.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Completion Evidence Submitted',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          if (job.completionNotes != null && job.completionNotes!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              job.completionNotes!,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+            ),
+          ],
+          if (job.completionPhotos != null && job.completionPhotos!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 80,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: job.completionPhotos!.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, i) => ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    job.completionPhotos![i],
+                    width: 80, height: 80, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 80, height: 80,
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.broken_image),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionButtons(ProviderJob job) {
     final notifier = ref.read(providerJobProvider.notifier);
 
@@ -320,12 +385,206 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
         return _primaryAction(
           label: 'Complete Job',
           icon: Icons.check_circle,
-          onPressed: () => notifier.completeJob(job.id),
+          onPressed: () => _showCompletionDialog(job),
           color: Colors.green,
         );
+      case 'awaiting_confirmation':
+        return _buildAwaitingConfirmationCard(job);
       default:
         return const SizedBox();
     }
+  }
+
+  Widget _buildAwaitingConfirmationCard(ProviderJob job) {
+    final deadline = job.confirmationDeadline ?? '';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.hourglass_top, size: 40, color: Colors.orange.shade400),
+          const SizedBox(height: 8),
+          const Text(
+            'Waiting for Customer Confirmation',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'The customer has 72 hours to confirm. You will be notified once they respond.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+          if (deadline.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Auto-confirms after: $deadline',
+              style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showCompletionDialog(ProviderJob job) async {
+    final notesController = TextEditingController();
+    final pickedFiles = <File>[];
+    final uploadedUrls = <String>[];
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 20, right: 20, top: 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Complete Job',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: notesController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Completion Notes (optional)',
+                      hintText: 'Describe what was done...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final picker = ImagePicker();
+                          final image = await picker.pickImage(source: ImageSource.camera);
+                          if (image != null) {
+                            setDialogState(() => pickedFiles.add(File(image.path)));
+                          }
+                        },
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Camera'),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final picker = ImagePicker();
+                          final images = await picker.pickMultiImage();
+                          for (final img in images) {
+                            setDialogState(() => pickedFiles.add(File(img.path)));
+                          }
+                        },
+                        icon: const Icon(Icons.photo_library),
+                        label: const Text('Gallery'),
+                      ),
+                    ],
+                  ),
+                  if (pickedFiles.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 80,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: pickedFiles.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (_, i) {
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  pickedFiles[i],
+                                  width: 80, height: 80, fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 0, right: 0,
+                                child: GestureDetector(
+                                  onTap: () => setDialogState(() => pickedFiles.removeAt(i)),
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, size: 16, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        final notifier = ref.read(providerJobProvider.notifier);
+
+                        Position? pos;
+                        try {
+                          pos = await LocationUtils.getCurrentLocation();
+                        } catch (_) {}
+
+                        notifier.completeJob(
+                          job.id,
+                          completionNotes: notesController.text.isNotEmpty
+                              ? notesController.text : null,
+                          completionPhotos: uploadedUrls.isNotEmpty
+                              ? uploadedUrls : null,
+                          latitude: pos?.latitude,
+                          longitude: pos?.longitude,
+                        );
+                      },
+                      icon: const Icon(Icons.check_circle),
+                      label: const Text('Submit Completion'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _primaryAction({
@@ -396,6 +655,7 @@ class _ActiveJobsScreenState extends ConsumerState<ActiveJobsScreen> {
       case 'en_route': return 'Driving';
       case 'arrived': return 'Arrived';
       case 'in_progress': return 'Working';
+      case 'awaiting_confirmation': return 'Awaiting Confirmation';
       case 'completed': return 'Completed';
       default: return status;
     }

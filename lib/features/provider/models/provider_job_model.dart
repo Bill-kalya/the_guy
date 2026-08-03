@@ -15,6 +15,11 @@ class ProviderJob {
   final double? dropoffLat;
   final double? dropoffLng;
   final bool hasResponded;
+  final String? completionNotes;
+  final List<String>? completionPhotos;
+  final double? completionLatitude;
+  final double? completionLongitude;
+  final String? confirmationDeadline;
 
   ProviderJob({
     required this.id,
@@ -33,6 +38,11 @@ class ProviderJob {
     this.dropoffLat,
     this.dropoffLng,
     this.hasResponded = false,
+    this.completionNotes,
+    this.completionPhotos,
+    this.completionLatitude,
+    this.completionLongitude,
+    this.confirmationDeadline,
   });
 
   factory ProviderJob.fromJson(Map<String, dynamic> json) {
@@ -53,6 +63,13 @@ class ProviderJob {
       dropoffLat: json['dropoffLat']?.toDouble(),
       dropoffLng: json['dropoffLng']?.toDouble(),
       hasResponded: json['hasResponded'] ?? false,
+      completionNotes: json['completionNotes'],
+      completionPhotos: json['completionPhotos'] != null
+          ? List<String>.from(json['completionPhotos'])
+          : null,
+      completionLatitude: json['completionLatitude']?.toDouble(),
+      completionLongitude: json['completionLongitude']?.toDouble(),
+      confirmationDeadline: json['confirmationDeadline'],
     );
   }
 
@@ -74,6 +91,11 @@ class ProviderJob {
       'dropoffLat': dropoffLat,
       'dropoffLng': dropoffLng,
       'hasResponded': hasResponded,
+      'completionNotes': completionNotes,
+      'completionPhotos': completionPhotos,
+      'completionLatitude': completionLatitude,
+      'completionLongitude': completionLongitude,
+      'confirmationDeadline': confirmationDeadline,
     };
   }
 
@@ -94,6 +116,11 @@ class ProviderJob {
     double? dropoffLat,
     double? dropoffLng,
     bool? hasResponded,
+    String? completionNotes,
+    List<String>? completionPhotos,
+    double? completionLatitude,
+    double? completionLongitude,
+    String? confirmationDeadline,
   }) {
     return ProviderJob(
       id: id ?? this.id,
@@ -112,6 +139,11 @@ class ProviderJob {
       dropoffLat: dropoffLat ?? this.dropoffLat,
       dropoffLng: dropoffLng ?? this.dropoffLng,
       hasResponded: hasResponded ?? this.hasResponded,
+      completionNotes: completionNotes ?? this.completionNotes,
+      completionPhotos: completionPhotos ?? this.completionPhotos,
+      completionLatitude: completionLatitude ?? this.completionLatitude,
+      completionLongitude: completionLongitude ?? this.completionLongitude,
+      confirmationDeadline: confirmationDeadline ?? this.confirmationDeadline,
     );
   }
 }

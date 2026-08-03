@@ -7,6 +7,7 @@ enum JobStatus {
   enRoute,
   arrived,
   inProgress,
+  awaitingConfirmation,
   completed,
   cancelled,
   error,
@@ -64,6 +65,7 @@ class JobState {
     JobStatus.arrived,
     JobStatus.inProgress,
   ].contains(status);
+  bool get isAwaitingConfirmation => status == JobStatus.awaitingConfirmation;
   bool get isCompleted => status == JobStatus.completed;
   bool get hasError => status == JobStatus.error;
 }

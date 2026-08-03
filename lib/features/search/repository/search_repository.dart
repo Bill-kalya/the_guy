@@ -32,6 +32,20 @@ class SearchRequest {
         'page': page,
         'size': size,
       };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SearchRequest &&
+          other.query == query &&
+          other.lat == lat &&
+          other.lng == lng &&
+          other.radius == radius &&
+          other.page == page &&
+          other.size == size;
+
+  @override
+  int get hashCode => Object.hash(query, lat, lng, radius, page, size);
 }
 
 class SearchResult {

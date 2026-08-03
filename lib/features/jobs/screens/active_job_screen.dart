@@ -225,6 +225,7 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
       JobStatus.accepted,
       JobStatus.enRoute,
       JobStatus.inProgress,
+      JobStatus.awaitingConfirmation,
       JobStatus.completed,
     ];
     final currentIndex = steps.indexOf(status);
@@ -342,20 +343,167 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
           child: const Text('Proceed to Payment'),
         );
 
-      case JobStatus.inProgress:
-        return OutlinedButton(
-          onPressed: () {
-            // Mark as completed
-            ref.read(jobProvider.notifier).completeJob();
-          },
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-          ),
-          child: const Text('Mark as Completed'),
-        );
+      case JobStatus.awaitingConfirmation:
+        return _buildCompletionReview();
 
       default:
         return const SizedBox();
+    }
+  }
+
+  Widget _buildCompletionReview() {
+    final jobData = ref.watch(jobProvider).jobDetails;
+    final notes = jobData?['completionNotes'] as String?;
+    final photos = jobData?['completionPhotos'] as List<dynamic>?;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.green.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green.shade600),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Provider has marked this job as complete',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              if (notes != null && notes.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  notes,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                ),
+              ],
+              if (photos != null && photos.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 80,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: photos.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) => ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        photos[i],
+                        width: 80, height: 80, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 80, height: 80,
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.broken_image),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  ref.read(jobProvider.notifier).confirmCompletion();
+                },
+                icon: const Icon(Icons.thumb_up),
+                label: const Text('Confirm & Release Payment'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _showRejectDialog(),
+                icon: const Icon(Icons.thumb_down, color: Colors.red),
+                label: const Text('Not Satisfied — Open Dispute',
+                  style: TextStyle(color: Colors.red)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.red),
+                  minimumSize: const Size(0, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showRejectDialog() async {
+    final reasonController = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reject Completion'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Please explain why you are rejecting the completion. This will open a dispute.',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Reason',
+                hintText: 'Describe the issue...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (reasonController.text.trim().isNotEmpty) {
+                Navigator.pop(ctx, reasonController.text.trim());
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Submit Dispute', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      ref.read(jobProvider.notifier).rejectCompletion(result);
     }
   }
 
@@ -367,6 +515,8 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
         return Icons.directions_car;
       case JobStatus.inProgress:
         return Icons.build;
+      case JobStatus.awaitingConfirmation:
+        return Icons.hourglass_top;
       case JobStatus.completed:
         return Icons.check;
       default:
@@ -382,6 +532,8 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
         return 'En Route';
       case JobStatus.inProgress:
         return 'In Progress';
+      case JobStatus.awaitingConfirmation:
+        return 'Review';
       case JobStatus.completed:
         return 'Completed';
       default:

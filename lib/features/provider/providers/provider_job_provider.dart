@@ -93,13 +93,30 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
     }
   }
 
-  Future<void> completeJob(String jobId) async {
+  Future<void> completeJob(String jobId, {
+    String? completionNotes,
+    List<String>? completionPhotos,
+    double? latitude,
+    double? longitude,
+  }) async {
     try {
-      final response = await _apiClient.post(EndpointBuilder.completeJob(jobId));
+      final data = <String, dynamic>{};
+      if (completionNotes != null) data['completionNotes'] = completionNotes;
+      if (completionPhotos != null) data['completionPhotos'] = completionPhotos;
+      if (latitude != null) data['latitude'] = latitude;
+      if (longitude != null) data['longitude'] = longitude;
+
+      final response = await _apiClient.post(
+        EndpointBuilder.completeJob(jobId),
+        data: data,
+      );
 
       if (response.statusCode == 200) {
-        final updatedJob = ProviderJob.fromJson(response.data);
-        state = state.copyWith(activeJob: updatedJob);
+        final result = response.data;
+        if (result is Map<String, dynamic> && result.containsKey('data')) {
+          final updatedJob = ProviderJob.fromJson(result['data']);
+          state = state.copyWith(activeJob: updatedJob);
+        }
       }
     } catch (e) {
       ErrorHandler.logError('Error completing job', e);

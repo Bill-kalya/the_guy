@@ -147,6 +147,12 @@ class EndpointBuilder {
   static String completeJob(String jobId) =>
       '/api/jobs/$jobId/complete';
 
+  static String confirmCompletion(String jobId) =>
+      '/api/jobs/$jobId/confirm-completion';
+
+  static String rejectCompletion(String jobId) =>
+      '/api/jobs/$jobId/reject-completion';
+
   static String updateJobStatus(String jobId) =>
       '/api/jobs/$jobId/status';
 

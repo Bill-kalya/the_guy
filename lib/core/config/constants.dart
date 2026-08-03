@@ -22,6 +22,7 @@ class AppConstants {
   static const String jobStatusAccepted = 'accepted';
   static const String jobStatusEnRoute = 'en_route';
   static const String jobStatusInProgress = 'in_progress';
+  static const String jobStatusAwaitingConfirmation = 'awaiting_confirmation';
   static const String jobStatusCompleted = 'completed';
   static const String jobStatusCancelled = 'cancelled';
 
