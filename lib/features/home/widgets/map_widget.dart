@@ -43,6 +43,9 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
   final Map<String, LatLng> _previousPositions = {};
   final Map<String, Marker> _animatedMarkers = {};
 
+  // Latest heading per provider so the direction arrow survives position animation
+  final Map<String, double> _markerHeadings = {};
+
   @override
   void didUpdateWidget(MapWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -119,58 +122,25 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
     LatLng position,
     double? heading,
   ) {
-    final isSelected = providerId == widget.selectedProviderId;
-    final baseColor = isSelected ? Colors.orange : Colors.blue;
+    if (heading != null) {
+      _markerHeadings[providerId] = heading;
+    }
+
+    final model = _providerModelFor(providerId);
+    final selected = providerId == widget.selectedProviderId;
 
     setState(() {
       _animatedMarkers[providerId] = Marker(
         point: position,
-        width: isSelected ? 48 : 40,
-        height: isSelected ? 48 : 40,
+        width: selected ? 52 : 40,
+        height: selected ? 72 : 40,
         child: GestureDetector(
           onTap: () => _handleProviderTap(providerId),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: isSelected ? 44 : 36,
-                height: isSelected ? 44 : 36,
-                decoration: BoxDecoration(
-                  color: baseColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.handyman,
-                  color: Colors.white,
-                  size: isSelected ? 22 : 18,
-                ),
-              ),
-              if (isSelected)
-                Container(
-                  margin: const EdgeInsets.only(top: 2),
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 1,
-                    ),
-                  ),
-                ),
-            ],
+          child: _markerChild(
+            model: model,
+            providerId: providerId,
+            selected: selected,
+            heading: _markerHeadings[providerId],
           ),
         ),
       );
@@ -213,77 +183,125 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
     required String providerId,
     required LatLng position,
   }) {
-    final isSelected = providerId == widget.selectedProviderId;
-    final baseColor = isSelected ? Colors.orange : Colors.blue;
+    final model = _providerModelFor(providerId);
+    final selected = providerId == widget.selectedProviderId;
 
     return Marker(
       point: position,
-      width: isSelected ? 48 : 40,
-      height: isSelected ? 48 : 40,
+      width: selected ? 52 : 40,
+      height: selected ? 72 : 40,
       child: GestureDetector(
         onTap: () => _handleProviderTap(providerId),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: isSelected ? 44 : 36,
-              height: isSelected ? 44 : 36,
-              decoration: BoxDecoration(
-                color: baseColor,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white,
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.handyman,
-                color: Colors.white,
-                size: isSelected ? 22 : 18,
-              ),
-            ),
-            if (isSelected)
-              Container(
-                margin: const EdgeInsets.only(top: 2),
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 1,
-                  ),
-                ),
-              ),
-          ],
+        child: _markerChild(
+          model: model,
+          providerId: providerId,
+          selected: selected,
+          heading: _markerHeadings[providerId],
         ),
       ),
     );
   }
 
-  void _handleProviderTap(String providerId) {
-    final onTap = widget.onProviderTap;
-    if (onTap == null || widget.providers == null) return;
+  /// Selected/assigned providers render a profile-photo marker with a green
+  /// status ring and a direction arrow; browsing markers render a service
+  /// category icon inside a category-colored circle.
+  Widget _markerChild({
+    required NearbyProviderModel? model,
+    required String providerId,
+    required bool selected,
+    required double? heading,
+  }) {
+    if (selected) {
+      return _selectedMarkerChild(model, heading);
+    }
+    return _categoryMarkerChild(model);
+  }
 
-    NearbyProviderModel? provider;
-    for (final p in widget.providers!) {
-      if (p.id == providerId) {
-        provider = p;
-        break;
-      }
+  Widget _selectedMarkerChild(NearbyProviderModel? model, double? heading) {
+    final imageUrl = model?.imageUrl;
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
+
+    final circle = Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.green,
+          width: 3,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        image: hasImage
+            ? DecorationImage(
+                image: NetworkImage(imageUrl),
+                fit: BoxFit.cover,
+              )
+            : null,
+      ),
+      child: hasImage
+          ? null
+          : Icon(
+              _categoryIcon(model?.category),
+              color: _categoryColor(model?.category),
+              size: 26,
+            ),
+    );
+
+    if (heading == null) {
+      return circle;
     }
 
-    if (provider != null) {
-      onTap(provider);
-    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Transform.rotate(
+          angle: heading * pi / 180,
+          child: const Icon(
+            Icons.navigation,
+            color: Colors.green,
+            size: 18,
+          ),
+        ),
+        const SizedBox(height: 2),
+        circle,
+      ],
+    );
+  }
+
+  Widget _categoryMarkerChild(NearbyProviderModel? model) {
+    final color = _categoryColor(model?.category);
+
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white,
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Icon(
+        _categoryIcon(model?.category),
+        color: Colors.white,
+        size: 20,
+      ),
+    );
   }
 
   List<Marker> _buildMarkers() {
@@ -334,6 +352,106 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
     }
 
     return markers;
+  }
+
+  NearbyProviderModel? _providerModelFor(String providerId) {
+    if (widget.providers == null) return null;
+    for (final provider in widget.providers!) {
+      if (provider.id == providerId) {
+        return provider;
+      }
+    }
+    return null;
+  }
+
+  void _handleProviderTap(String providerId) {
+    final onTap = widget.onProviderTap;
+    if (onTap == null) return;
+
+    final provider = _providerModelFor(providerId);
+    if (provider != null) {
+      onTap(provider);
+    }
+  }
+
+  IconData _categoryIcon(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'plumbing':
+        return Icons.plumbing;
+      case 'electrical':
+        return Icons.electrical_services;
+      case 'carpenter':
+        return Icons.handyman;
+      case 'mason':
+        return Icons.construction;
+      case 'painting':
+        return Icons.format_paint;
+      case 'moving':
+        return Icons.local_shipping;
+      case 'gardening':
+      case 'lawn & compound maintenance':
+      case 'hedge & fence trimming':
+      case 'tree services':
+        return Icons.local_florist;
+      case 'irrigation & borehole services':
+        return Icons.water_drop;
+      case 'appliance repair':
+        return Icons.home_repair_service;
+      case 'tutoring':
+        return Icons.school;
+      case 'pet care':
+        return Icons.pets;
+      case 'health':
+        return Icons.medical_services;
+      case 'cleaning':
+      case 'mama fua':
+      case 'commercial cleaning':
+      case 'carpet & sofa cleaning':
+      case 'pressure washing':
+        return Icons.cleaning_services;
+      default:
+        return Icons.handyman;
+    }
+  }
+
+  Color _categoryColor(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'plumbing':
+        return Colors.blue;
+      case 'electrical':
+        return Colors.amber.shade700;
+      case 'carpenter':
+        return Colors.orange.shade800;
+      case 'mason':
+        return Colors.brown;
+      case 'painting':
+        return Colors.pink;
+      case 'moving':
+        return Colors.deepOrange;
+      case 'gardening':
+      case 'lawn & compound maintenance':
+      case 'hedge & fence trimming':
+      case 'tree services':
+        return Colors.green;
+      case 'irrigation & borehole services':
+        return Colors.teal;
+      case 'appliance repair':
+        return Colors.blueGrey;
+      case 'tutoring':
+        return Colors.indigo;
+      case 'pet care':
+        return Colors.pink.shade300;
+      case 'health':
+        return Colors.red;
+      case 'cleaning':
+      case 'mama fua':
+      case 'commercial cleaning':
+      case 'carpet & sofa cleaning':
+      case 'pressure washing':
+        return Colors.lightBlue.shade600;
+      default:
+        return Colors.blue;
+    }
   }
 
   @override
@@ -391,4 +509,3 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
     );
   }
 }
-
