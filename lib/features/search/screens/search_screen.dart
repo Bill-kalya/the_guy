@@ -4,6 +4,7 @@ import '../providers/search_provider.dart';
 import '../repository/search_repository.dart';
 import '../../home/providers/location_provider.dart';
 import '../../../shared/constants/service_categories.dart';
+import '../../../shared/constants/kenya_towns.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -81,24 +82,42 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget _chip(String label) => ActionChip(label: Text(label), onPressed: () => _onSubmit(label));
 }
 
-class SearchResultsScreen extends ConsumerWidget {
+class SearchResultsScreen extends ConsumerStatefulWidget {
   final String query;
   const SearchResultsScreen({super.key, required this.query});
 
-  static const double _nairobiLat = -1.286389;
-  static const double _nairobiLng = 36.817223;
+  @override
+  ConsumerState<SearchResultsScreen> createState() => _SearchResultsScreenState();
+}
+
+class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
+  KenyaTown? _selectedTown;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
     final pos = locationState.currentPosition;
-    final lat = pos?.latitude ?? _nairobiLat;
-    final lng = pos?.longitude ?? _nairobiLng;
-    final req = SearchRequest(query: query, lat: lat, lng: lng);
+
+    final double? lat = pos?.latitude ?? _selectedTown?.latitude;
+    final double? lng = pos?.longitude ?? _selectedTown?.longitude;
+    final String locationLabel = _selectedTown?.name ?? 'your current location';
+
+    if (lat == null || lng == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.query)),
+        body: _LocationPicker(
+          isLoading: locationState.isLoading,
+          onUseGps: () => ref.read(locationProvider.notifier).getCurrentLocation(),
+          onSelectTown: (town) => setState(() => _selectedTown = town),
+        ),
+      );
+    }
+
+    final req = SearchRequest(query: widget.query, lat: lat, lng: lng);
     final resultsAsync = ref.watch(searchResultsProvider(req));
 
     return Scaffold(
-      appBar: AppBar(title: Text(query)),
+      appBar: AppBar(title: Text(widget.query)),
       body: resultsAsync.when(
         data: (res) {
           return Column(
@@ -107,8 +126,8 @@ class SearchResultsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(12.0),
                 child: Text(
                   res.totalResults == 0
-                      ? 'No $query services available near you at the moment'
-                      : '${res.totalResults} providers near you',
+                      ? 'No ${widget.query} services available near $locationLabel'
+                      : '${res.totalResults} providers near $locationLabel',
                   style: const TextStyle(color: Colors.grey),
                 ),
               ),
@@ -125,6 +144,68 @@ class SearchResultsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
+    );
+  }
+}
+
+class _LocationPicker extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onUseGps;
+  final ValueChanged<KenyaTown> onSelectTown;
+
+  const _LocationPicker({
+    required this.isLoading,
+    required this.onUseGps,
+    required this.onSelectTown,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 24),
+        const Icon(Icons.location_off, size: 48, color: Colors.grey),
+        const SizedBox(height: 8),
+        const Text('We could not get your location',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        const Text('Enable GPS or select a town to find providers near you',
+            style: TextStyle(color: Colors.grey)),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: OutlinedButton.icon(
+            onPressed: isLoading ? null : onUseGps,
+            icon: isLoading
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.gps_fixed),
+            label: const Text('Use my location'),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Text('Or choose your town', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.builder(
+            itemCount: kenyaTowns.length,
+            itemBuilder: (context, i) {
+              final town = kenyaTowns[i];
+              return ListTile(
+                leading: const Icon(Icons.location_city, color: Colors.grey),
+                title: Text(town.name),
+                subtitle: Text(town.county),
+                onTap: () => onSelectTown(town),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
