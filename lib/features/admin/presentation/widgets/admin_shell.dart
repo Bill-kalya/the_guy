@@ -6,7 +6,7 @@ import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AdminShell extends StatefulWidget {
+class AdminShell extends ConsumerStatefulWidget {
   final Widget body;
   final String currentRoute;
 
@@ -17,14 +17,37 @@ class AdminShell extends StatefulWidget {
   });
 
   @override
-  State<AdminShell> createState() => _AdminShellState();
+  ConsumerState<AdminShell> createState() => _AdminShellState();
 }
 
-class _AdminShellState extends State<AdminShell> {
+class _AdminShellState extends ConsumerState<AdminShell> {
   late String _currentRoute;
   bool _searchOpen = false;
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
+
+  Future<void> _handleLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Log out?'),
+        content: const Text('You will be returned to the sign-in screen.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Log out'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(authProvider.notifier).logout();
+    if (mounted) context.go('/');
+  }
 
   @override
   void initState() {
@@ -306,16 +329,16 @@ class _AdminShellState extends State<AdminShell> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: InkWell(
-              onTap: () => context.go('/'),
+              onTap: _handleLogout,
               borderRadius: BorderRadius.circular(8),
               child: Row(
                 children: [
-                  Icon(Icons.logout, size: 18, color: Colors.grey.shade400),
+                  Icon(Icons.logout, size: 18, color: Colors.red.shade300),
                   const SizedBox(width: 8),
                   Text(
-                    'Back to App',
+                    'Logout',
                     style: TextStyle(
-                      color: Colors.grey.shade400,
+                      color: Colors.red.shade200,
                       fontSize: 13,
                     ),
                   ),
@@ -450,6 +473,18 @@ class _AdminShellState extends State<AdminShell> {
             ),
             _drawerItem('analytics', 'Analytics', Icons.analytics_rounded, '/admin/analytics'),
             _drawerItem('settings', 'Settings', Icons.settings_rounded, '/admin/settings'),
+            const Divider(color: Colors.white12),
+            ListTile(
+              leading: Icon(Icons.logout, color: Colors.red.shade300),
+              title: Text(
+                'Logout',
+                style: TextStyle(color: Colors.red.shade200, fontWeight: FontWeight.w600),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _handleLogout();
+              },
+            ),
           ],
         ),
       ),
