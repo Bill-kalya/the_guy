@@ -6,9 +6,11 @@ class Env {
     defaultValue: 'https://api.theguy.co.ke',
   );
 
+  // WebSocket (SockJS): the library requires an http(s) base URL and derives
+  // the wss transport from it. Do NOT use a wss:// scheme here.
   static const String wsUrl = String.fromEnvironment(
     'WS_URL',
-    defaultValue: 'wss://api.theguy.co.ke',
+    defaultValue: 'https://api.theguy.co.ke',
   );
 
 
