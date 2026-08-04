@@ -85,7 +85,7 @@ class LocationUtils {
     return true;
   }
 
-  // Get current location
+  // Get current location (with a timeout so GPS hangs can't block the app)
   static Future<Position?> getCurrentLocation() async {
     final hasPermission = await checkLocationPermission();
     if (!hasPermission) return null;
@@ -93,7 +93,7 @@ class LocationUtils {
     try {
       return await Geolocator.getCurrentPosition(
         locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
-      );
+      ).timeout(const Duration(seconds: 12));
     } catch (e) {
       return null;
     }

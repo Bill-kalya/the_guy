@@ -31,6 +31,8 @@ class LocationNotifier extends Notifier<LocationState> {
           altitudeAccuracy: 0,
           headingAccuracy: 0,
         ),
+        // Cached position is only a warm-start hint; don't query the API with it.
+        isFresh: false,
       );
     }
 
@@ -46,6 +48,7 @@ class LocationNotifier extends Notifier<LocationState> {
       _sharedPrefs.setLastLocation(position.latitude, position.longitude);
       state = state.copyWith(
         currentPosition: position,
+        isFresh: true,
         isLoading: false,
         error: null,
       );
@@ -58,7 +61,7 @@ class LocationNotifier extends Notifier<LocationState> {
   }
 
   void updateLocation(Position position) {
-    state = state.copyWith(currentPosition: position);
+    state = state.copyWith(currentPosition: position, isFresh: true);
   }
 }
 
@@ -66,8 +69,14 @@ class LocationState {
   final Position? currentPosition;
   final bool isLoading;
   final String? error;
+  final bool isFresh;
 
-  LocationState({this.currentPosition, this.isLoading = false, this.error});
+  LocationState({
+    this.currentPosition,
+    this.isLoading = false,
+    this.error,
+    this.isFresh = false,
+  });
 
   factory LocationState.initial() {
     return LocationState();
@@ -77,11 +86,13 @@ class LocationState {
     Position? currentPosition,
     bool? isLoading,
     String? error,
+    bool? isFresh,
   }) {
     return LocationState(
       currentPosition: currentPosition ?? this.currentPosition,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
+      isFresh: isFresh ?? this.isFresh,
     );
   }
 }

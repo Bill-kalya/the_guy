@@ -5,10 +5,13 @@ import '../endpoints.dart';
 
 class AuthInterceptor extends Interceptor {
   final SecureStorage _secureStorage;
+  final Future<void> Function()? onSessionRefreshed;
+  final Future<void> Function()? onSessionExpired;
   late final Dio _dio;
   bool _isRefreshing = false;
   bool _sessionExpired = false;
-  AuthInterceptor(this._secureStorage) {
+  AuthInterceptor(this._secureStorage,
+      {this.onSessionRefreshed, this.onSessionExpired}) {
     _dio = Dio(BaseOptions(
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
@@ -44,7 +47,8 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode != 401) {
+    final status = err.response?.statusCode;
+    if (status != 401 && status != 403) {
       return handler.next(err);
     }
 
@@ -69,6 +73,7 @@ class AuthInterceptor extends Interceptor {
 
         try {
           final response = await _dio.fetch(newOptions);
+          await onSessionRefreshed?.call();
           return handler.resolve(response);
         } catch (e) {
           ErrorHandler.logError('Retry after token refresh failed', e);
@@ -79,6 +84,7 @@ class AuthInterceptor extends Interceptor {
       _sessionExpired = true;
       _isRefreshing = false;
       await _secureStorage.clearAll();
+      await onSessionExpired?.call();
       return handler.reject(err);
     }
 

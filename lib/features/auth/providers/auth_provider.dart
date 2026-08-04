@@ -537,6 +537,13 @@ class AuthNotifier extends Notifier<AuthState> {
     state = AuthState.unauthenticated();
   }
 
+  /// Called by the auth interceptor when a mid-session token refresh fails.
+  /// Clears persisted auth and flips state so the router redirects to sign-in.
+  Future<void> handleSessionExpired() async {
+    await _secureStorage.clearAll();
+    state = AuthState.unauthenticated();
+  }
+
   // ──────────────────────────────────────────
   // Check persisted auth status (public, for manual refresh)
   // ──────────────────────────────────────────

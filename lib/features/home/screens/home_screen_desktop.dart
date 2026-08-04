@@ -986,7 +986,12 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         height: 480,
                         child: NearbyProvidersList(
                           position: locationState.currentPosition,
-                          error: error.toString(),
+                          // While waiting for a fresh GPS fix, show loading
+                          // instead of an error flash.
+                          isLoading: error.toString().contains('Waiting for GPS fix'),
+                          error: error.toString().contains('Waiting for GPS fix')
+                              ? null
+                              : error.toString(),
                         ),
                       ),
                     ),

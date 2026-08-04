@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../storage/secure_storage.dart';
@@ -22,6 +23,7 @@ class WebSocketService {
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
   Timer? _reconnectTimer;
+  bool _manualDisconnect = false;
 
   Function(Map<String, dynamic>)? onIncomingJob;
   Function(Map<String, dynamic>)? onJobStatusUpdate;
@@ -32,8 +34,14 @@ class WebSocketService {
   WebSocketService(this._ref);
 
   Future<void> connect() async {
+    // A live client already exists (connected or in-flight): don't duplicate.
+    if (_client != null) return;
+
     final token = await _ref.read(secureStorageProvider).getAccessToken();
     if (token == null) return;
+
+    _manualDisconnect = false;
+    debugPrint('[WS] connecting to ${Endpoints.wsUrl}/ws');
 
     _client = StompClient(
       config: StompConfig.sockJS(
@@ -44,23 +52,44 @@ class WebSocketService {
           _isConnected = true;
           _reconnectAttempts = 0;
           _resubscribeAll();
+          debugPrint('[WS] connected');
           onReconnected?.call();
         },
         onWebSocketError: (error) {
           _isConnected = false;
+          _client = null;
+          debugPrint('[WS] transport error: $error');
           _scheduleReconnect();
         },
         onStompError: (frame) {
           _isConnected = false;
+          _client = null;
+          debugPrint('[WS] STOMP error: ${frame.body}');
           _scheduleReconnect();
         },
         onDisconnect: (frame) {
           _isConnected = false;
+          _client = null;
+          debugPrint('[WS] disconnected (manual=$_manualDisconnect)');
+          if (!_manualDisconnect) _scheduleReconnect();
         },
       ),
     );
 
     _client?.activate();
+  }
+
+  /// Drop the current socket (if any) and reconnect with a fresh access token.
+  /// Used when the auth interceptor rotates the token mid-session.
+  Future<void> reconnectWithNewToken() async {
+    _reconnectTimer?.cancel();
+    _reconnectAttempts = 0;
+    _manualDisconnect = true;
+    _client?.deactivate();
+    _client = null;
+    _isConnected = false;
+    _manualDisconnect = false;
+    await connect();
   }
 
   void _scheduleReconnect() {
@@ -256,7 +285,11 @@ class WebSocketService {
     _reconnectTimer?.cancel();
     _subscriptions.clear();
     _reconnectAttempts = 0;
+    _manualDisconnect = true;
     _client?.deactivate();
+    _client = null;
     _isConnected = false;
+    _manualDisconnect = false;
+    debugPrint('[WS] disconnected (manual)');
   }
 }

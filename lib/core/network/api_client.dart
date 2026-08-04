@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/env.dart';
 import '../storage/secure_storage.dart';
+import '../../features/auth/providers/auth_provider.dart';
+import 'websocket_service.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
@@ -29,12 +31,21 @@ class ApiClient {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
         },
-        validateStatus: (status) => status != null && status < 500 && status != 401,
+        validateStatus: (status) =>
+            status != null && status >= 200 && status < 500 && status != 401 && status != 403,
       ),
     );
 
     (_dio.httpClientAdapter as dynamic);
-    _authInterceptor = AuthInterceptor(ref.read(secureStorageProvider));
+    _authInterceptor = AuthInterceptor(
+      ref.read(secureStorageProvider),
+      onSessionRefreshed: () async {
+        await ref.read(webSocketServiceProvider).reconnectWithNewToken();
+      },
+      onSessionExpired: () async {
+        await ref.read(authProvider.notifier).handleSessionExpired();
+      },
+    );
     _dio.interceptors.addAll([
       _authInterceptor,
       RetryInterceptor(),

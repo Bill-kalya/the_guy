@@ -10,6 +10,10 @@ final nearbyProvidersProvider = FutureProvider<List<NearbyProviderModel>>((ref) 
   if (position == null) {
     throw Exception('Location not available');
   }
+  // Only query with a real (fresh) GPS fix, not a cached/placeholder coordinate.
+  if (!locationState.isFresh) {
+    throw Exception('Waiting for GPS fix...');
+  }
 
   final service = ref.watch(locationApiServiceProvider);
   return await service.getNearbyProviders(
@@ -25,6 +29,9 @@ final nearbyProvidersByCategoryProvider = FutureProvider.family<List<NearbyProvi
   final position = locationState.currentPosition;
   if (position == null) {
     throw Exception('Location not available');
+  }
+  if (!locationState.isFresh) {
+    throw Exception('Waiting for GPS fix...');
   }
 
   final service = ref.watch(locationApiServiceProvider);

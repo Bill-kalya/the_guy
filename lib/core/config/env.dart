@@ -8,7 +8,7 @@ class Env {
 
   static const String wsUrl = String.fromEnvironment(
     'WS_URL',
-    defaultValue: 'wss://the-guy-backend-production.up.railway.app',
+    defaultValue: 'wss://api.theguy.co.ke',
   );
 
 
