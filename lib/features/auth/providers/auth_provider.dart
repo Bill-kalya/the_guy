@@ -64,7 +64,17 @@ class AuthNotifier extends Notifier<AuthState> {
     _validateInBackground();
   }
 
-  Future<void> _validateInBackground() async {
+  Future<void>? _validationInFlight;
+
+  Future<void> _validateInBackground() {
+    // Collapse concurrent calls (provider build + app-init checkAuthStatus)
+    // into a single profile request.
+    return _validationInFlight ??= _doValidateInBackground().whenComplete(() {
+      _validationInFlight = null;
+    });
+  }
+
+  Future<void> _doValidateInBackground() async {
     try {
       final response = await _apiClient.get(Endpoints.userProfile);
       if (response.statusCode == 200) {
