@@ -6,7 +6,9 @@ import 'core/config/env.dart';
 import 'core/storage/shared_prefs.dart';
 
 void main() async {
-  debugPrint('BUILD: 2026-07-17-001');
+  final _now = DateTime.now();
+  debugPrint(
+      'BUILD: ${_now.year}-${_now.month.toString().padLeft(2, '0')}-${_now.day.toString().padLeft(2, '0')}-001');
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Env.isDevelopment) {
