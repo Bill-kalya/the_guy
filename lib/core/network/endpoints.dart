@@ -19,6 +19,8 @@ class Endpoints {
   static const String adminProvidersSummary = '$adminBase/providers/summary';
   static const String adminProviders = '$adminBase/providers';
   static String adminProviderDetail(String providerId) => '$adminBase/providers/$providerId';
+  static const String adminProvidersImport = '$adminBase/providers/import';
+  static String adminProviderClaimCode(String providerId) => '$adminBase/providers/$providerId/claim-code';
 
   // Admin Finance
   static const String adminFinanceSummary = '$adminBase/finance/summary';

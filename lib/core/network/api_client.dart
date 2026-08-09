@@ -70,6 +70,11 @@ class ApiClient {
     return await _dio.post(path, data: data);
   }
 
+  Future<Response> postMultipart(String path, FormData formData) async {
+    _checkClosed();
+    return await _dio.post(path, data: formData);
+  }
+
   Future<Response> patch(String path, {dynamic data}) async {
     _checkClosed();
     return await _dio.patch(path, data: data);

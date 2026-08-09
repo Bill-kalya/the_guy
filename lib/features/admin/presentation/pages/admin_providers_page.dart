@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/admin_shell.dart';
@@ -50,6 +51,18 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
                     children: [
                       const Expanded(
                         child: AdminPageHeader(title: 'Service Providers', subtitle: 'Manage provider registrations and verification'),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: OutlinedButton.icon(
+                          onPressed: _showImportDialog,
+                          icon: const Icon(Icons.upload_file, size: 18),
+                          label: const Text('Import CSV'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+                          ),
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Refresh',
@@ -174,7 +187,7 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
           ? const AdminEmptyState(icon: Icons.people, title: 'No providers found', subtitle: 'Provider data will appear here')
           : Column(
               children: [
-                const AdminTableHeader(columns: ['Provider', 'Rating', 'Jobs', 'Status'], flexes: [4, 2, 2, 2]),
+                const AdminTableHeader(columns: ['Provider', 'Rating', 'Jobs', 'Status', 'Claim'], flexes: [4, 2, 2, 2, 3]),
                 const SizedBox(height: 8),
                 ...providers.map((p) => _providerRow(p)),
               ],
@@ -250,9 +263,206 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
           ),
           Expanded(flex: 2, child: Text('$jobsCompleted', style: TextStyle(fontSize: 13, color: Colors.grey.shade600))),
           Expanded(flex: 2, child: AdminStatusBadge(label: statusLabel, color: statusColor)),
+          Expanded(flex: 3, child: _buildClaimCell(p)),
           _buildProviderActionMenu(p),
         ],
       ),
+    );
+  }
+
+  Widget _buildClaimCell(dynamic p) {
+    final claimed = p['accountClaimed'] == true;
+    final code = (p['claimCode'] ?? '').toString();
+    final expiresAt = p['claimCodeExpiresAt'];
+
+    if (claimed) {
+      return AdminStatusBadge(label: 'Claimed', color: AppColors.success);
+    }
+
+    if (code.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            code,
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.4,
+              color: AppColors.primary,
+            ),
+          ),
+          if (expiresAt != null)
+            Text('expires ${expiresAt.toString().replaceAll('T', ' ').split('.').first}',
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _SmallAction(icon: Icons.copy, tooltip: 'Copy claim code', onTap: () => _copyClaimCode(code)),
+              const SizedBox(width: 4),
+              _SmallAction(icon: Icons.refresh, tooltip: 'Regenerate claim code', onTap: () => _regenerateClaimCode(p)),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return _SmallAction(icon: Icons.add_link, label: 'Generate', tooltip: 'Generate claim code', onTap: () => _regenerateClaimCode(p));
+  }
+
+  Future<void> _copyClaimCode(String code) async {
+    if (code.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: code));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Claim code $code copied to clipboard'), duration: const Duration(seconds: 2)),
+    );
+  }
+
+  Future<void> _regenerateClaimCode(dynamic p) async {
+    final providerId = (p['id'] ?? '').toString();
+    final name = p['fullName'] ?? 'provider';
+    if (providerId.isEmpty) return;
+
+    try {
+      final data = await ref.read(adminProvidersProvider.notifier).regenerateClaimCode(providerId);
+      final code = (data['claimCode'] ?? '').toString();
+      if (!mounted) return;
+      await _copyClaimCode(code);
+      await ref.read(adminProvidersProvider.notifier).loadAll();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to generate code for $name: $e')),
+      );
+    }
+  }
+
+  Future<void> _showImportDialog() async {
+    final controller = TextEditingController();
+    final csv = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Import Providers (CSV)'),
+        content: SizedBox(
+          width: 540,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Columns: name, phone, category, county, lat, lng. Only name and phone are required; county is used to estimate location.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 12,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                decoration: const InputDecoration(
+                  hintText: 'name,phone,category,county,lat,lng\nJohn Kamau,0712345678,Plumbing,Nairobi\nAnn Wanjiku,0722000111,Electrician,Kisumu',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.all(10),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (csv == null || csv.trim().isEmpty) return;
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result = await ref.read(adminProvidersProvider.notifier).importProviders(csv);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+
+      final imported = result['imported'] ?? 0;
+      final total = result['totalRows'] ?? csv.trim().split('\n').length;
+      final skipped = result['skippedDuplicatePhone'] ?? 0;
+      final invalid = (result['invalidRows'] as List<dynamic>? ?? []).cast<String>();
+
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Import Complete'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _resultLine('Total rows', '$total'),
+              const SizedBox(height: 6),
+              _resultLine('Imported', '$imported', color: AppColors.success),
+              const SizedBox(height: 6),
+              _resultLine('Skipped (duplicate phone)', '$skipped', color: AppColors.warning),
+              if (invalid.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text('Issues:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 4),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 140),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: invalid
+                          .map((e) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                child: Text(e, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+      if (mounted) await ref.read(adminProvidersProvider.notifier).loadAll();
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Import failed: $e')),
+      );
+    }
+  }
+
+  Widget _resultLine(String label, String value, {Color? color}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color ?? const Color(0xFF1A1A2E))),
+      ],
     );
   }
 
@@ -351,5 +561,42 @@ class _ProviderMenuAction extends StatelessWidget {
       const SizedBox(width: 10),
       Text(label, style: TextStyle(fontSize: 13, color: color, fontWeight: isHighlight ? FontWeight.w600 : FontWeight.normal)),
     ]);
+  }
+}
+
+class _SmallAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final String? label;
+  final VoidCallback onTap;
+
+  const _SmallAction({required this.icon, required this.tooltip, required this.onTap, this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: label != null ? 8 : 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AppColors.primary),
+              if (label != null) ...[
+                const SizedBox(width: 4),
+                Text(label!, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

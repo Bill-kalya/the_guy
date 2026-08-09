@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
@@ -55,6 +56,34 @@ class AdminProvidersNotifier extends Notifier<AdminProvidersState> {
     state = state.copyWith(isLoading: true, error: null);
     await _loadProviders(status: status, search: search);
     state = state.copyWith(isLoading: false);
+  }
+
+  Future<Map<String, dynamic>> importProviders(String csvContent) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromString(
+        csvContent,
+        filename: 'providers.csv',
+      ),
+    });
+    final res = await _api.postMultipart(Endpoints.adminProvidersImport, formData);
+    final data = res.data;
+    if (data is Map<String, dynamic>) {
+      final inner = data['data'];
+      if (inner is Map<String, dynamic>) return inner;
+      return data;
+    }
+    return {'imported': 0};
+  }
+
+  Future<Map<String, dynamic>> regenerateClaimCode(String providerId) async {
+    final res = await _api.post(Endpoints.adminProviderClaimCode(providerId));
+    final data = res.data;
+    if (data is Map<String, dynamic>) {
+      final inner = data['data'];
+      if (inner is Map<String, dynamic>) return inner;
+      return data;
+    }
+    return const {};
   }
 
   Map<String, dynamic>? _unwrap(dynamic data) {
