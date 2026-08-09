@@ -20,6 +20,7 @@ class ProviderJob {
   final double? completionLatitude;
   final double? completionLongitude;
   final String? confirmationDeadline;
+  final String urgency;
 
   ProviderJob({
     required this.id,
@@ -43,6 +44,7 @@ class ProviderJob {
     this.completionLatitude,
     this.completionLongitude,
     this.confirmationDeadline,
+    this.urgency = 'SCHEDULED',
   });
 
   factory ProviderJob.fromJson(Map<String, dynamic> json) {
@@ -70,6 +72,7 @@ class ProviderJob {
       completionLatitude: json['completionLatitude']?.toDouble(),
       completionLongitude: json['completionLongitude']?.toDouble(),
       confirmationDeadline: json['confirmationDeadline'],
+      urgency: json['urgency'] ?? 'SCHEDULED',
     );
   }
 
@@ -96,6 +99,7 @@ class ProviderJob {
       'completionLatitude': completionLatitude,
       'completionLongitude': completionLongitude,
       'confirmationDeadline': confirmationDeadline,
+      'urgency': urgency,
     };
   }
 
@@ -121,6 +125,7 @@ class ProviderJob {
     double? completionLatitude,
     double? completionLongitude,
     String? confirmationDeadline,
+    String? urgency,
   }) {
     return ProviderJob(
       id: id ?? this.id,
@@ -144,6 +149,7 @@ class ProviderJob {
       completionLatitude: completionLatitude ?? this.completionLatitude,
       completionLongitude: completionLongitude ?? this.completionLongitude,
       confirmationDeadline: confirmationDeadline ?? this.confirmationDeadline,
+      urgency: urgency ?? this.urgency,
     );
   }
 }

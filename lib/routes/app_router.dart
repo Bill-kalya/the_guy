@@ -36,6 +36,7 @@ import '../features/admin/presentation/pages/trust_safety_center_page.dart';
 
 // Provider routes
 import '../features/provider/presentation/screens/provider_home_screen.dart';
+import '../features/provider/presentation/screens/provider_jobs_map_screen.dart';
 import '../features/provider/presentation/screens/provider_pricing_screen.dart';
 import '../features/provider/presentation/screens/incoming_job_screen.dart';
 import '../features/provider/presentation/screens/active_jobs_screen.dart';
@@ -427,9 +428,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProviderPricingScreen(),
       ),
       GoRoute(
-        name: 'wallet',
+        name: 'provider-wallet',
         path: '/provider/wallet',
         builder: (context, state) => const WalletScreen(),
+      ),
+      GoRoute(
+        name: 'provider-jobs-map',
+        path: '/provider/jobs-map',
+        builder: (context, state) => const ProviderJobsMapScreen(),
       ),
     ],
   );

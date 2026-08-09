@@ -40,14 +40,20 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
     };
   }
 
-  Future<bool> acceptJob(String jobId) async {
+  Future<bool> acceptJob(String jobId, {ProviderJob? job}) async {
     state = state.copyWith(isLoading: true);
 
     try {
       final response = await _apiClient.post(EndpointBuilder.acceptJob(jobId));
 
       if (response.statusCode == 200) {
-        final acceptedJob = ProviderJob.fromJson(response.data);
+        // The backend confirms with a generic success envelope; build the
+        // active job from the passed-in (map) job or the incoming broadcast.
+        final source = job ?? state.incomingJob;
+        final acceptedJob = source?.copyWith(
+          status: 'accepted',
+          hasResponded: true,
+        );
         state = state.copyWith(
           activeJob: acceptedJob,
           incomingJob: null,
@@ -63,7 +69,7 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
     return false;
   }
 
-  Future<void> declineJob(String jobId) async {
+  Future<bool> declineJob(String jobId) async {
     state = state.copyWith(isLoading: true);
 
     try {
@@ -73,8 +79,10 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
         hasIncomingJob: false,
         isLoading: false,
       );
+      return true;
     } catch (e) {
       state = state.copyWith(error: 'Failed to decline job', isLoading: false);
+      return false;
     }
   }
 

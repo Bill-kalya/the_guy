@@ -122,6 +122,8 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
                           ],
                           const SizedBox(height: 16),
                           _buildKpiGrid(dashboardState),
+                          const SizedBox(height: 16),
+                          _buildJobDiscoveryCard(),
                           const SizedBox(height: 20),
                           _buildIncomingJobsSection(jobState),
                           const SizedBox(height: 20),
@@ -344,6 +346,61 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
           const SizedBox(height: 2),
           Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
         ],
+      ),
+    );
+  }
+
+  Widget _buildJobDiscoveryCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.push('/provider/jobs-map'),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.85)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.map_outlined, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Find Jobs Nearby',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Explore open service requests on the map and accept instantly',
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.white),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
