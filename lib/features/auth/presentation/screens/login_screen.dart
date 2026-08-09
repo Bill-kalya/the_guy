@@ -73,14 +73,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: AppColors.primaryLight,
-            shape: BoxShape.circle,
+        ClipOval(
+          child: Image.asset(
+            'assets/icons/icon (2).png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
           ),
-          child: const Icon(Icons.handyman, size: 40, color: Colors.blue),
         ),
         const SizedBox(height: 24),
         const Text(

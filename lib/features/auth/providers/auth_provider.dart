@@ -551,6 +551,9 @@ class AuthNotifier extends Notifier<AuthState> {
   /// Clears persisted auth and flips state so the router redirects to sign-in.
   Future<void> handleSessionExpired() async {
     await _secureStorage.clearAll();
+    // Stop the reconnect loop: with a dead session any socket attempt would
+    // 401 and retry forever (stomp's internal 5s reconnect).
+    await ref.read(webSocketServiceProvider).disconnect();
     state = AuthState.unauthenticated();
   }
 

@@ -66,6 +66,13 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+# Vendored patch of geolocator_web: guards the geolocation Completer/StreamController
+# so a browser double-firing success+error callbacks can't throw
+# StateError('Future already completed') and crash the web app.
+dependency_overrides:
+  geolocator_web:
+    path: third_party/geolocator_web
+
 flutter:
   uses-material-design: true
   

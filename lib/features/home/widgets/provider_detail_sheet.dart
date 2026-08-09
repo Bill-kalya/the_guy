@@ -153,7 +153,7 @@ class ProviderDetailSheet extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      context.push('/provider/${provider.id}');
+                      context.push('/provider/${provider.id}', extra: provider);
                     },
                     icon: const Icon(Icons.person_outline),
                     label: const Text('View Profile'),

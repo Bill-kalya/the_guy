@@ -24,6 +24,7 @@ class WebSocketService {
   static const int _maxReconnectAttempts = 5;
   Timer? _reconnectTimer;
   bool _manualDisconnect = false;
+  bool _stopped = false;
 
   Function(Map<String, dynamic>)? onIncomingJob;
   Function(Map<String, dynamic>)? onJobStatusUpdate;
@@ -34,11 +35,17 @@ class WebSocketService {
   WebSocketService(this._ref);
 
   Future<void> connect() async {
+    // A fresh (user-initiated) connection is always allowed.
+    _stopped = false;
     // A live client already exists (connected or in-flight): don't duplicate.
     if (_client != null) return;
 
     final token = await _ref.read(secureStorageProvider).getAccessToken();
     if (token == null) return;
+
+    // Re-check after the await: two racing connect() calls could both have
+    // passed the guard above and are about to create duplicate clients.
+    if (_client != null) return;
 
     _manualDisconnect = false;
     debugPrint('[WS] connecting to ${Endpoints.wsUrl}/ws');
@@ -56,27 +63,33 @@ class WebSocketService {
           onReconnected?.call();
         },
         onWebSocketError: (error) {
-          _isConnected = false;
-          _client = null;
           debugPrint('[WS] transport error: $error');
+          _discardClient();
           _scheduleReconnect();
         },
         onStompError: (frame) {
-          _isConnected = false;
-          _client = null;
           debugPrint('[WS] STOMP error: ${frame.body}');
+          _discardClient();
           _scheduleReconnect();
         },
         onDisconnect: (frame) {
-          _isConnected = false;
-          _client = null;
           debugPrint('[WS] disconnected (manual=$_manualDisconnect)');
+          _discardClient();
           if (!_manualDisconnect) _scheduleReconnect();
         },
       ),
     );
 
     _client?.activate();
+  }
+
+  /// Drops the current client, deactivating it so its internal reconnect
+  /// loop can't keep running after we release the reference.
+  void _discardClient() {
+    final old = _client;
+    _client = null;
+    _isConnected = false;
+    old?.deactivate();
   }
 
   /// Drop the current socket (if any) and reconnect with a fresh access token.
@@ -93,6 +106,8 @@ class WebSocketService {
   }
 
   void _scheduleReconnect() {
+    // Never keep retrying a dead session (e.g. expired JWT).
+    if (_stopped) return;
     if (_reconnectAttempts >= _maxReconnectAttempts) return;
     _reconnectTimer?.cancel();
     final delay = Duration(seconds: _getBackoffDelay());
@@ -282,6 +297,7 @@ class WebSocketService {
   }
 
   Future<void> disconnect() async {
+    _stopped = true;
     _reconnectTimer?.cancel();
     _subscriptions.clear();
     _reconnectAttempts = 0;

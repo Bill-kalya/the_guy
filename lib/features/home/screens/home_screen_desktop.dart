@@ -50,6 +50,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   void _getLocation() async {
+    // The landing page is public; don't prompt anonymous visitors for GPS,
+    // and don't fire geolocation while a dead session is being torn down.
+    if (!ref.read(authProvider).isAuthenticated) return;
     await ref.read(locationProvider.notifier).getCurrentLocation();
   }
 
