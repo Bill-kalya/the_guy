@@ -30,7 +30,7 @@ class ProviderBrowseSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: AppColors.primaryGradient,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
@@ -48,7 +48,7 @@ class ProviderBrowseSheet extends StatelessWidget {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: Colors.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -56,7 +56,7 @@ class ProviderBrowseSheet extends StatelessWidget {
           _buildCategoryChips(),
           const SizedBox(height: 8),
           _buildHeader(),
-          const Divider(height: 1),
+          Divider(height: 1, color: Colors.white.withValues(alpha: 0.3)),
           Expanded(
             child: providers.isEmpty
                 ? _buildEmptyState()
@@ -107,13 +107,17 @@ class ProviderBrowseSheet extends StatelessWidget {
         label: Text(label),
         selected: selected,
         showCheckmark: false,
-        selectedColor: AppColors.primary,
+        backgroundColor: Colors.white,
+        selectedColor: Colors.white,
         labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.black87,
+          color: AppColors.primary,
           fontSize: 13,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
         ),
-        side: BorderSide(color: Colors.grey.shade300),
+        side: BorderSide(
+          color: selected ? Colors.white : Colors.white.withValues(alpha: 0.7),
+          width: selected ? 1.5 : 1,
+        ),
         onSelected: (_) => onCategorySelected(value),
       ),
     );
@@ -131,17 +135,24 @@ class ProviderBrowseSheet extends StatelessWidget {
                 ? Icons.grid_view_rounded
                 : Icons.handyman_outlined,
             size: 18,
-            color: AppColors.primary,
+            color: Colors.white,
           ),
           const SizedBox(width: 8),
           Text(
             title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const Spacer(),
           Text(
             '$count ${count == 1 ? 'provider' : 'providers'}',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
           ),
         ],
       ),
@@ -155,11 +166,15 @@ class ProviderBrowseSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.search_off, size: 36, color: Colors.grey.shade400),
+            Icon(Icons.search_off,
+                size: 36, color: Colors.white.withValues(alpha: 0.6)),
             const SizedBox(height: 8),
             Text(
               'No providers found in this category',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontSize: 13,
+              ),
             ),
           ],
         ),

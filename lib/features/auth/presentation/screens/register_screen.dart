@@ -173,14 +173,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: AppColors.primaryLight,
-            shape: BoxShape.circle,
+        ClipOval(
+          child: Image.asset(
+            'assets/icons/icon (2).png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.cover,
           ),
-          child: const Icon(Icons.person_add, size: 40, color: AppColors.primary),
         ),
         const SizedBox(height: 16),
         const Text(
