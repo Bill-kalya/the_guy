@@ -99,6 +99,18 @@ class LocationUtils {
     }
   }
 
+  // Continuous accurate position updates. The one-shot above can return a
+  // coarse/network fix; listening on the stream lets the map converge on the
+  // true location as GPS refines it and as the user moves.
+  static Stream<Position> getPositionStream() {
+    return Geolocator.getPositionStream(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 2,
+      ),
+    );
+  }
+
   // Get location address from coordinates
   static Future<String?> getAddressFromLatLng(double lat, double lng) async {
     try {

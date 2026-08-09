@@ -59,6 +59,12 @@ class MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
   double _currentZoom = 12.0;
   StreamSubscription<MapEvent>? _mapEventSub;
 
+  // Last location the map was (re)centered on, plus whether we've centered
+  // at all yet. Prevents re-centering on every tiny GPS jitter.
+  LatLng? _lastCentered;
+  bool _centeredOnce = false;
+  final Distance _distance = const Distance();
+
   /// Centers the map on [point] at [zoom]. Used by callers (e.g. a browse
   /// sheet) to focus a tapped provider.
   void moveTo(LatLng point, double zoom) {
@@ -100,9 +106,19 @@ class MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
   void didUpdateWidget(MapWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Animate map to new position
-    if (widget.position != null && oldWidget.position != widget.position) {
-      _animateToLocation(widget.position!);
+    // Animate map to new position. Only re-center when the fix actually
+    // moved by a meaningful distance, so GPS jitter doesn't fight the user
+    // panning the map.
+    final pos = widget.position;
+    if (pos != null) {
+      final target = LatLng(pos.latitude, pos.longitude);
+      final movedMeaningfully = _lastCentered == null ||
+          _distance(_lastCentered!, target).abs() > 8;
+      if (!_centeredOnce || movedMeaningfully) {
+        _animateToLocation(pos);
+        _lastCentered = target;
+        _centeredOnce = true;
+      }
     }
 
     // Update provider markers when live locations change
