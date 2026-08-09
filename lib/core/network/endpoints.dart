@@ -80,7 +80,6 @@ class Endpoints {
 
   // Providers
   static const String nearbyProviders = '/api/providers/nearby';
-  static const String providerDetails = '/api/providers';
   static const String providerRegister = '/api/providers/register';
   static const String providerMe = '/api/providers/me';
   static const String providerMeCompletion = '/api/providers/me/completion';
@@ -91,7 +90,6 @@ class Endpoints {
   static const String providerMeWallet = '/api/providers/me/wallet';
   static const String providerMeDashboard = '/api/providers/me/dashboard';
   static const String providerEarnings = '/api/providers/earnings';
-  static const String updateAvailability = '/api/providers/availability';
 
   // Wallet & Payouts
   static const String wallet = '/api/wallet';
@@ -125,7 +123,6 @@ class Endpoints {
 
   // Pricing
   static const String providerPricing = '/api/provider/pricing';
-  static const String pricingEstimate = '/api/pricing/estimate';
 
   // Quotes
   static const String quotes = '/api/quotes';
