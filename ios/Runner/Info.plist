@@ -8,6 +8,29 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>The Guy</string>
+	<!-- TODO: Replace with your real Google Cloud iOS OAuth client's reversed ID.
+	     Format: com.googleusercontent.apps.<CLIENT_ID> (the iOS client ID is
+	     <CLIENT_ID>.apps.googleusercontent.com — strip ".apps.googleusercontent.com"
+	     and reverse the rest). Without this, google_sign_in fails on iOS. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>Google OAuth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.YOUR_REVERSED_IOS_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>The Guy uses your camera to capture profile and service images.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>The Guy uses your location to find nearby services and provide directions to your selected provider or customer.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>The Guy needs access to your photos so you can upload profile and service images.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
