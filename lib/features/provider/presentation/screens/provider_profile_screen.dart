@@ -57,10 +57,14 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     const SizedBox(height: 20),
                     _buildProfileCompletion(user, providerProfileState.completion),
                     const SizedBox(height: 20),
-                    _buildAboutMe(user),
+                    _buildAboutMe(providerProfile),
                     const SizedBox(height: 20),
                     _buildServiceCard(providerProfile),
                     const SizedBox(height: 20),
+                    if (providerProfile != null) ...[
+                      _buildVerificationCard(providerProfile),
+                      const SizedBox(height: 20),
+                    ],
                     if (providerProfile != null && providerProfile.portfolioImages.isNotEmpty) ...[
                       _buildPortfolioCard(providerProfile),
                       const SizedBox(height: 20),
@@ -277,10 +281,17 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   }
 
   // ── About Me ────────────────────────────────────────────
-  Widget _buildAboutMe(UserModel user) {
-    final bio = user.metadata?['bio'] as String?;
+  Widget _buildAboutMe(ProviderProfileModel? profile) {
+    final bio = profile?.bio?.trim().isNotEmpty == true
+        ? profile!.bio!
+        : profile?.bio;
     return _card(
       title: 'About Me',
+      trailing: IconButton(
+        icon: Icon(Icons.edit_outlined, size: 20, color: AppColors.primary),
+        onPressed: () => _editBio(profile),
+        tooltip: 'Edit About Me',
+      ),
       child: Text(
         bio ?? 'No bio added yet. Tell customers about your experience and specialties to build trust.',
         style: TextStyle(
@@ -290,6 +301,40 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _editBio(ProviderProfileModel? profile) async {
+    final controller = TextEditingController(text: profile?.bio ?? '');
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit About Me'),
+        content: TextField(
+          controller: controller,
+          maxLines: 5,
+          maxLength: 500,
+          decoration: const InputDecoration(
+            hintText: 'Tell customers about your experience and specialties',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (saved == true && controller.text.trim().isNotEmpty) {
+      final ok = await ref.read(providerProfileProvider.notifier).updateBio(controller.text.trim());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ok ? 'About Me updated' : 'Failed to update About Me')),
+        );
+      }
+    }
   }
 
   // ── Service Category ───────────────────────────────────
@@ -352,6 +397,131 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     }
   }
 
+  // ── Identity Verification ───────────────────────────────
+  Widget _buildVerificationCard(ProviderProfileModel profile) {
+    final docs = profile.verificationDocuments;
+    final hasPending = docs.any((d) => d.isPending);
+    final hasRejected = docs.any((d) => d.isRejected);
+    final approvedCount = docs.where((d) => d.isApproved).length;
+
+    Widget statusBanner;
+    if (approvedCount > 0 && !hasPending && !hasRejected) {
+      statusBanner = _verificationBanner(Icons.verified_user, 'Documents verified', Colors.green.shade600, Colors.green.shade50);
+    } else if (hasRejected) {
+      statusBanner = _verificationBanner(Icons.error_outline, 'Some documents need attention', Colors.red.shade600, Colors.red.shade50);
+    } else if (hasPending) {
+      statusBanner = _verificationBanner(Icons.hourglass_top, 'Documents under review', Colors.orange.shade700, Colors.orange.shade50);
+    } else {
+      statusBanner = _verificationBanner(Icons.verified_user, 'Identity verification', Colors.blue.shade700, Colors.blue.shade50);
+    }
+
+    return _card(
+      title: 'Identity Verification',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          statusBanner,
+          if (docs.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ...docs.map(
+              (d) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey.shade100,
+                      ),
+                      child: Image.network(
+                        d.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => Icon(Icons.badge_outlined, color: Colors.grey.shade400),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(d.typeLabel,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E))),
+                          if (d.isRejected && d.rejectionReason != null)
+                            Text('Reason: ${d.rejectionReason}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 12, color: Colors.red.shade600)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _statusChip(d),
+                  ],
+                ),
+              ),
+            ),
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'No documents submitted yet. Add your ID to get verified.',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _verificationBanner(IconData icon, String text, Color color, Color bg) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color))),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusChip(VerificationDocumentModel d) {
+    Color color;
+    Color bg;
+    IconData icon;
+    if (d.isApproved) {
+      color = Colors.green.shade700;
+      bg = Colors.green.shade50;
+      icon = Icons.check_circle;
+    } else if (d.isRejected) {
+      color = Colors.red.shade600;
+      bg = Colors.red.shade50;
+      icon = Icons.cancel_outlined;
+    } else {
+      color = Colors.orange.shade700;
+      bg = Colors.orange.shade50;
+      icon = Icons.hourglass_top;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(d.statusLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+        ],
+      ),
+    );
+  }
+
   // ── Portfolio ─────────────────────────────────────────
   Widget _buildPortfolioCard(ProviderProfileModel profile) {
     return _card(
@@ -395,7 +565,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           const Divider(height: 24),
           _infoRow(Icons.phone_outlined, 'Phone', user.phone.isNotEmpty ? user.phone : 'Not provided'),
           const Divider(height: 24),
-          _infoRow(Icons.location_on_outlined, 'Location', 'Not set'),
+          _infoRow(Icons.location_on_outlined, 'Location', 'Follows your current location'),
           const Divider(height: 24),
           _infoRow(Icons.calendar_today_outlined, 'Member since', _formatDate(user.createdAt)),
         ],
@@ -529,7 +699,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           const Divider(height: 1),
           _actionRow(Icons.sell_outlined, 'Pricing Setup', () => context.push('/provider/pricing')),
           const Divider(height: 1),
-          _actionRow(Icons.location_on_outlined, 'Service Area', () {}),
+          _actionRow(Icons.location_on_outlined, 'Service Area', () => _showServiceAreaInfo()),
           const Divider(height: 1),
           _actionRow(Icons.language_outlined, 'Language', () {}),
         ],
@@ -577,7 +747,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   }
 
   // ── Shared widgets ──────────────────────────────────────
-  Widget _card({required String title, required Widget child}) {
+  Widget _card({required String title, required Widget child, Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -591,11 +761,32 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+            Row(
+              children: [
+                Expanded(child: Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade600))),
+                ?trailing,
+              ],
+            ),
             const SizedBox(height: 16),
             child,
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _showServiceAreaInfo() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Service Area'),
+        content: const Text(
+          'Your service area follows your current location. When you are online, customers near you can find you wherever you go — no need to set a fixed town. Your rating and reputation travel with you.',
+          style: TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Got it')),
+        ],
       ),
     );
   }

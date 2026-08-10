@@ -64,6 +64,22 @@ class ProviderProfileNotifier extends Notifier<ProviderProfileState> {
     await fetchProfile();
     await fetchCompletion();
   }
+
+  Future<bool> updateBio(String bio) async {
+    try {
+      final response = await _apiClient.put(
+        Endpoints.providerMe,
+        data: {'bio': bio},
+      );
+      if (response.statusCode == 200) {
+        await refreshProfile();
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
 }
 
 class ProviderProfileState {
