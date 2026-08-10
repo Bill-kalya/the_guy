@@ -308,17 +308,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        name: 'provider-public-profile',
-        path: '/provider/:providerId',
-        builder: (context, state) {
-          final provider = state.extra as NearbyProviderModel?;
-          if (provider != null) {
-            return ProviderPublicProfileScreen(provider: provider);
-          }
-          return const Scaffold(body: Center(child: Text('Provider not found')));
-        },
-      ),
-      GoRoute(
         name: 'quotes',
         path: '/quotes/:jobId',
         builder: (context, state) {
@@ -436,6 +425,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'provider-jobs-map',
         path: '/provider/jobs-map',
         builder: (context, state) => const ProviderJobsMapScreen(),
+      ),
+
+      // Must be declared after the static /provider/* routes: GoRouter matches
+      // in declaration order, so this dynamic segment would otherwise shadow
+      // /provider/home, /provider/register, etc.
+      GoRoute(
+        name: 'provider-public-profile',
+        path: '/provider/:providerId',
+        builder: (context, state) {
+          final provider = state.extra as NearbyProviderModel?;
+          if (provider != null) {
+            return ProviderPublicProfileScreen(provider: provider);
+          }
+          return const Scaffold(body: Center(child: Text('Provider not found')));
+        },
       ),
     ],
   );
