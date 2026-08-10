@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/constants/service_categories.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../shared/widgets/provider_badge.dart';
 import '../../../core/themes/colors.dart';
 
 /// Collapsible browse panel: category chips, a count header, and a scrollable
@@ -291,13 +292,22 @@ class _ProviderCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      'From KES ${provider.priceEstimate.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            provider.priceLabel,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        ProviderBadgeChip(badge: provider.badge),
+                      ],
                     ),
                   ],
                 ),

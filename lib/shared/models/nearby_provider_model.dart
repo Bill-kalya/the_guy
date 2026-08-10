@@ -9,7 +9,12 @@ class NearbyProviderModel {
   final double longitude;
   final double distance; // meters
   final double? serviceQualityScore; // 0-100
+  final String? badge; // Bronze / Silver / Gold / Platinum
   final double priceEstimate;
+  final double? minPrice;
+  final double? maxPrice;
+  final double? callOutFee;
+  final double? searchScore;
   final bool isOnline;
   final String verificationLevel;
   final double rating;
@@ -25,7 +30,12 @@ class NearbyProviderModel {
     required this.longitude,
     required this.distance,
     this.serviceQualityScore,
+    this.badge,
     required this.priceEstimate,
+    this.minPrice,
+    this.maxPrice,
+    this.callOutFee,
+    this.searchScore,
     required this.isOnline,
     required this.verificationLevel,
     required this.rating,
@@ -36,14 +46,19 @@ class NearbyProviderModel {
   factory NearbyProviderModel.fromJson(Map<String, dynamic> json) {
     return NearbyProviderModel(
       id: json['id'] ?? '',
-      name: json['name'] ?? '',
+      name: json['name'] ?? json['businessName'] ?? '',
       category: json['category'] ?? 'Unknown',
       imageUrl: json['profileImageUrl'],
       latitude: (json['latitude'] ?? 0.0).toDouble(),
       longitude: (json['longitude'] ?? 0.0).toDouble(),
       distance: (json['distance'] ?? 0.0).toDouble(),
       serviceQualityScore: json['serviceQualityScore']?.toDouble(),
+      badge: json['badge'],
       priceEstimate: (json['priceEstimate'] ?? 0.0).toDouble(),
+      minPrice: json['minPrice']?.toDouble(),
+      maxPrice: json['maxPrice']?.toDouble(),
+      callOutFee: json['callOutFee']?.toDouble(),
+      searchScore: json['searchScore']?.toDouble(),
       isOnline: json['isOnline'] ?? false,
       verificationLevel: json['verificationLevel'] ?? 'NONE',
       rating: (json['rating'] ?? 0.0).toDouble(),
@@ -62,13 +77,25 @@ class NearbyProviderModel {
       'longitude': longitude,
       'distance': distance,
       'serviceQualityScore': serviceQualityScore,
+      'badge': badge,
       'priceEstimate': priceEstimate,
+      'minPrice': minPrice,
+      'maxPrice': maxPrice,
+      'callOutFee': callOutFee,
+      'searchScore': searchScore,
       'isOnline': isOnline,
       'verificationLevel': verificationLevel,
       'rating': rating,
       'jobsCompleted': jobsCompleted,
       'etaMinutes': etaMinutes,
     };
+  }
+
+  /// "KES 300 - 2,500" when both bounds exist, "From KES X" for a minimum
+  /// only, falling back to the legacy single price estimate.
+  String get priceLabel {
+    final range = priceRangeLabel(minPrice, maxPrice);
+    return range.isNotEmpty ? range : 'From KES ${priceEstimate.round()}';
   }
 
   /// Distance from this provider to another coordinate (meters)
@@ -95,7 +122,12 @@ class NearbyProviderModel {
     double? longitude,
     double? distance,
     double? serviceQualityScore,
+    String? badge,
     double? priceEstimate,
+    double? minPrice,
+    double? maxPrice,
+    double? callOutFee,
+    double? searchScore,
     bool? isOnline,
     String? verificationLevel,
     double? rating,
@@ -111,7 +143,12 @@ class NearbyProviderModel {
       longitude: longitude ?? this.longitude,
       distance: distance ?? this.distance,
       serviceQualityScore: serviceQualityScore ?? this.serviceQualityScore,
+      badge: badge ?? this.badge,
       priceEstimate: priceEstimate ?? this.priceEstimate,
+      minPrice: minPrice ?? this.minPrice,
+      maxPrice: maxPrice ?? this.maxPrice,
+      callOutFee: callOutFee ?? this.callOutFee,
+      searchScore: searchScore ?? this.searchScore,
       isOnline: isOnline ?? this.isOnline,
       verificationLevel: verificationLevel ?? this.verificationLevel,
       rating: rating ?? this.rating,
@@ -119,6 +156,21 @@ class NearbyProviderModel {
       etaMinutes: etaMinutes ?? this.etaMinutes,
     );
   }
+}
+
+/// "KES 300 - 2,500" when both bounds exist, "From KES 300" for a minimum
+/// only, otherwise an empty string.
+String priceRangeLabel(double? minPrice, double? maxPrice) {
+  if (minPrice != null && minPrice > 0 && maxPrice != null && maxPrice > 0) {
+    return 'KES ${minPrice.round()} - ${maxPrice.round()}';
+  }
+  if (minPrice != null && minPrice > 0) {
+    return 'From KES ${minPrice.round()}';
+  }
+  if (maxPrice != null && maxPrice > 0) {
+    return 'Up to KES ${maxPrice.round()}';
+  }
+  return '';
 }
 
 /// Live provider location update received via WebSocket

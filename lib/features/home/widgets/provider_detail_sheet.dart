@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../shared/widgets/provider_badge.dart';
 import '../../../core/themes/colors.dart';
 
 Future<void> showProviderDetailSheet(
@@ -139,10 +140,13 @@ class ProviderDetailSheet extends StatelessWidget {
                 children: [
                   const Icon(Icons.payments_outlined, color: AppColors.primary),
                   const SizedBox(width: 8),
-                  Text(
-                    'From KES ${provider.priceEstimate.toStringAsFixed(0)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  Expanded(
+                    child: Text(
+                      provider.priceLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
                   ),
+                  ProviderBadgeChip(badge: provider.badge),
                 ],
               ),
             ),

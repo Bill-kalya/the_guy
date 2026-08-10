@@ -8,6 +8,7 @@ import '../../home/providers/nearby_providers_provider.dart';
 import '../../../shared/constants/service_categories.dart';
 import '../../../shared/constants/kenya_towns.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../shared/widgets/provider_badge.dart';
 import '../../../core/themes/colors.dart';
 import '../../jobs/screens/request_service_screen.dart';
 
@@ -473,13 +474,20 @@ class _ServiceCard extends StatelessWidget {
                           _badge(Icons.verified, Colors.green, 'Verified'),
                       ],
                     ),
-                    Text(
-                      'From KES ${provider.priceEstimate.round()}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            provider.priceLabel,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        ProviderBadgeChip(badge: provider.badge),
+                      ],
                     ),
                   ],
                 ),
@@ -588,7 +596,7 @@ class _ServiceDetailSheet extends ConsumerWidget {
             const SizedBox(height: 8),
             _detailRow(Icons.location_on, 'Distance', _distanceLabel(provider.distance)),
             const SizedBox(height: 8),
-            _detailRow(Icons.attach_money, 'Budget', 'From KES ${provider.priceEstimate.round()}'),
+            _detailRow(Icons.attach_money, 'Budget', provider.priceLabel),
             const SizedBox(height: 8),
             _detailRow(Icons.work_history, 'Experience', '${provider.jobsCompleted} jobs completed'),
             const SizedBox(height: 20),
@@ -773,21 +781,32 @@ class _LocationPicker extends StatelessWidget {
 }
 
 class _ProviderCard extends StatelessWidget {
-  final dynamic provider;
+  final NearbyProviderModel provider;
   const _ProviderCard({required this.provider});
 
   @override
   Widget build(BuildContext context) {
-    // Expect NearbyProviderModel
-    final name = provider.name ?? 'Provider';
+    final name = provider.name.isEmpty ? 'Provider' : provider.name;
     final sqs = provider.serviceQualityScore ?? 0.0;
-    final distance = provider.distance?.toStringAsFixed(0) ?? '0';
-    final eta = provider.etaMinutes ?? 0;
-    final verified = (provider.verificationLevel ?? 'NONE') != 'NONE';
+    final distance = provider.distance.toStringAsFixed(0);
+    final eta = provider.etaMinutes;
+    final verified = provider.verificationLevel != 'NONE';
 
     return ListTile(
-      title: Text(name),
-      subtitle: Text('\u2B50 ${sqs.toStringAsFixed(0)}% SQS • \u{1F4CD} ${distance}m • ETA $eta min'),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(name, overflow: TextOverflow.ellipsis),
+          ),
+          if (provider.badge != null) ...[
+            const SizedBox(width: 6),
+            ProviderBadgeChip(badge: provider.badge),
+          ],
+        ],
+      ),
+      subtitle: Text(
+        '\u2B50 ${sqs.toStringAsFixed(0)}% SQS \u2022 ${provider.priceLabel} \u2022 \u{1F4CD} ${distance}m \u2022 ETA $eta min',
+      ),
       trailing: verified ? const Icon(Icons.verified, color: Colors.green) : null,
       onTap: () {},
     );

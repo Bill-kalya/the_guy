@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../shared/widgets/provider_badge.dart';
 import '../../../core/themes/colors.dart';
 
 
@@ -235,13 +236,21 @@ class NearbyProvidersList extends StatelessWidget {
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
                         ),
+                        if (provider.badge != null) ...[
+                          const SizedBox(width: 6),
+                          ProviderBadgeChip(badge: provider.badge),
+                        ],
                         const Spacer(),
-                        Text(
-                          'KSH ${provider.priceEstimate.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: Colors.green.shade700,
+                        Flexible(
+                          child: Text(
+                            provider.priceLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.green.shade700,
+                            ),
                           ),
                         ),
                       ],

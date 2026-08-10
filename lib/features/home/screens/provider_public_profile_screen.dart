@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/models/nearby_provider_model.dart';
+import '../../../shared/widgets/provider_badge.dart';
 import '../../../core/themes/colors.dart';
 import '../../jobs/screens/request_service_screen.dart';
 
@@ -88,6 +89,10 @@ class ProviderPublicProfileScreen extends StatelessWidget {
                           style: const TextStyle(color: Colors.white, fontSize: 13),
                         ),
                       ),
+                      if (provider.badge != null) ...[
+                        const SizedBox(height: 8),
+                        ProviderBadgeChip(badge: provider.badge),
+                      ],
                     ],
                   ),
                 ),
@@ -116,8 +121,8 @@ class ProviderPublicProfileScreen extends StatelessWidget {
                   _infoRow(Icons.analytics_outlined, 'Service Quality',
                       '${(provider.serviceQualityScore ?? 0).toStringAsFixed(0)}%'),
                   const Divider(height: 24),
-                  _infoRow(Icons.payments_outlined, 'Starting price',
-                      'KES ${provider.priceEstimate.toStringAsFixed(0)}'),
+                  _infoRow(Icons.payments_outlined, 'Price range',
+                      provider.priceLabel),
                 ],
               ),
             ),
