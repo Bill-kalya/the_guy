@@ -80,7 +80,12 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
             ),
           ],
         ),
-        body: Stack(
+        body: Column(
+          children: [
+            if (availabilityState.notice != null)
+              _buildAvailabilityNotice(availabilityState.notice!),
+            Expanded(
+              child: Stack(
           children: [
             dashboardState.isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -146,7 +151,31 @@ class _ProviderHomeScreenState extends ConsumerState<ProviderHomeScreen> {
           ],
         ),
       ),
-      desktop: ProviderHomeScreenDesktop(),
+    ],
+  ),
+),
+desktop: ProviderHomeScreenDesktop(),
+    );
+  }
+
+  Widget _buildAvailabilityNotice(String message) {
+    return Material(
+      color: Colors.amber.shade50,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Icon(Icons.wifi_tethering_off, size: 18, color: Colors.orange.shade800),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(fontSize: 12.5, color: Colors.orange.shade900, height: 1.35),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

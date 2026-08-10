@@ -193,6 +193,11 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
               ],
             ),
           ),
+          if (availabilityState.notice != null) ...[
+            const SizedBox(height: 8),
+            Text(availabilityState.notice!,
+                style: TextStyle(fontSize: 12, color: Colors.amber.shade200)),
+          ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,

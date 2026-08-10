@@ -32,6 +32,7 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
   Widget build(BuildContext context) {
     final jobState = ref.watch(providerJobProvider);
     final dashboardState = ref.watch(dashboardSummaryProvider);
+    final availabilityState = ref.watch(availabilityProvider);
 
     return Scaffold(
       body: Row(
@@ -39,9 +40,11 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
           _buildSidebar(),
           Expanded(
             child: Column(
-              children: [
-                _buildTopBar(),
-                Expanded(
+          children: [
+            _buildTopBar(),
+            if (availabilityState.notice != null)
+              _buildAvailabilityNotice(availabilityState.notice!),
+            Expanded(
                   child: dashboardState.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : Container(
@@ -235,6 +238,26 @@ class _ProviderHomeScreenDesktopState extends ConsumerState<ProviderHomeScreenDe
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvailabilityNotice(String message) {
+    return Container(
+      width: double.infinity,
+      color: Colors.amber.shade50,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      child: Row(
+        children: [
+          Icon(Icons.wifi_tethering_off, size: 18, color: Colors.orange.shade800),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(fontSize: 12.5, color: Colors.orange.shade900, height: 1.35),
+            ),
+          ),
+        ],
       ),
     );
   }
