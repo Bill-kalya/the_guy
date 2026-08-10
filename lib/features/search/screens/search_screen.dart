@@ -10,6 +10,7 @@ import '../../../shared/constants/kenya_towns.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../shared/widgets/provider_badge.dart';
 import '../../../core/themes/colors.dart';
+import '../../../core/utils/location_utils.dart';
 import '../../jobs/screens/request_service_screen.dart';
 
 /// Supermarket-style service discovery: category buttons on top, and below a
@@ -663,6 +664,32 @@ class SearchResultsScreen extends ConsumerStatefulWidget {
 class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
   KenyaTown? _selectedTown;
 
+  Future<void> _openLocationSettings() async {
+    final opened = await LocationUtils.openLocationSettings();
+    if (!opened) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Enable location'),
+          content: const Text(
+            'Click the lock or site-settings icon in your browser address bar, '
+            'allow location access for this site, then try again.',
+            style: TextStyle(fontSize: 14, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Got it'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    await ref.read(locationProvider.notifier).getCurrentLocation();
+  }
+
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
@@ -677,7 +704,9 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         appBar: AppBar(title: Text(widget.query)),
         body: _LocationPicker(
           isLoading: locationState.isLoading,
+          permissionBlocked: locationState.permissionBlocked,
           onUseGps: () => ref.read(locationProvider.notifier).getCurrentLocation(),
+          onOpenSettings: _openLocationSettings,
           onSelectTown: (town) => setState(() => _selectedTown = town),
         ),
       );
@@ -720,12 +749,16 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
 
 class _LocationPicker extends StatelessWidget {
   final bool isLoading;
+  final bool permissionBlocked;
   final VoidCallback onUseGps;
+  final VoidCallback onOpenSettings;
   final ValueChanged<KenyaTown> onSelectTown;
 
   const _LocationPicker({
     required this.isLoading,
+    this.permissionBlocked = false,
     required this.onUseGps,
+    required this.onOpenSettings,
     required this.onSelectTown,
   });
 
@@ -739,19 +772,31 @@ class _LocationPicker extends StatelessWidget {
         const Text('We could not get your location',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),
-        const Text('Enable GPS or select a town to find providers near you',
-            style: TextStyle(color: Colors.grey)),
+        Text(
+          permissionBlocked
+              ? 'Location is blocked. Enable it in your browser or device settings'
+              : 'Enable GPS or select a town to find providers near you',
+          style: const TextStyle(color: Colors.grey),
+        ),
         const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: OutlinedButton.icon(
+        if (permissionBlocked) ...[
+          OutlinedButton.icon(
+            onPressed: isLoading ? null : onOpenSettings,
+            icon: const Icon(Icons.settings),
+            label: const Text('Open settings'),
+          ),
+          TextButton(
+            onPressed: isLoading ? null : onUseGps,
+            child: const Text('Try again'),
+          ),
+        ] else
+          OutlinedButton.icon(
             onPressed: isLoading ? null : onUseGps,
             icon: isLoading
                 ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.gps_fixed),
             label: const Text('Use my location'),
           ),
-        ),
         const SizedBox(height: 16),
         const Align(
           alignment: Alignment.centerLeft,

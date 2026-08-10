@@ -100,6 +100,36 @@ class LocationUtils {
     return true;
   }
 
+  /// True when the platform or browser has stopped asking and further requests
+  /// will silently fail — the classic "Enable does nothing" state. On native
+  /// that is `deniedForever`; on web, a `denied` result after the prompt was
+  /// already attempted means the browser is refusing without asking again.
+  static Future<bool> isLocationBlocked() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.deniedForever) return true;
+      if (kIsWeb && permission == LocationPermission.denied) return true;
+      return false;
+    } catch (e) {
+      debugPrint('LocationUtils: isLocationBlocked check failed: $e');
+      return false;
+    }
+  }
+
+  /// Open the OS app settings so the user can re-grant location access.
+  /// Browsers can't be deep-linked, so this returns false on web and the UI
+  /// should fall back to showing instructions instead.
+  static Future<bool> openLocationSettings() async {
+    if (kIsWeb) return false;
+    try {
+      await Geolocator.openAppSettings();
+      return true;
+    } catch (e) {
+      debugPrint('LocationUtils: openAppSettings failed: $e');
+      return false;
+    }
+  }
+
   /// Get current location.
   ///
   /// Browsers (and laptops without GPS) can't reliably deliver GPS-level fixes,

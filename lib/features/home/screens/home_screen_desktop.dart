@@ -9,6 +9,7 @@ import '../providers/nearby_providers_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/auth_state.dart';
 import '../../../core/network/websocket_service.dart';
+import '../../../core/utils/location_utils.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../core/themes/colors.dart';
 import '../../../shared/constants/service_categories.dart';
@@ -55,6 +56,36 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     // and don't fire geolocation while a dead session is being torn down.
     if (!ref.read(authProvider).isAuthenticated) return;
     await ref.read(locationProvider.notifier).getCurrentLocation();
+  }
+
+  Future<void> _openLocationSettings() async {
+    final opened = await LocationUtils.openLocationSettings();
+    if (!opened) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Enable location'),
+          content: const Text(
+            'Click the lock or site-settings icon in your browser address bar, '
+            'allow location access for this site, then try again.',
+            style: TextStyle(fontSize: 14, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _getLocation();
+              },
+              child: const Text('Retry'),
+            ),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ],
+        ),
+      );
+      return;
+    }
+    _getLocation();
   }
 
   void _connectWebSocket() async {
@@ -316,9 +347,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 alignment: WrapAlignment.center,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: _getLocation,
-                    icon: const Icon(Icons.gps_fixed),
-                    label: const Text('Try Again'),
+                    onPressed: locationState.permissionBlocked ? _openLocationSettings : _getLocation,
+                    icon: Icon(locationState.permissionBlocked ? Icons.settings : Icons.gps_fixed),
+                    label: Text(locationState.permissionBlocked ? 'Open Settings' : 'Try Again'),
                   ),
                   OutlinedButton.icon(
                     onPressed: _chooseTownManually,
@@ -1051,6 +1082,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                             position: locationState.currentPosition,
                             providers: providers,
                             isLoading: false,
+                            onEnableLocation: locationState.permissionBlocked
+                                ? _openLocationSettings
+                                : _getLocation,
                           ),
                         );
                       },

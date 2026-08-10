@@ -59,8 +59,22 @@ class LocationNotifier extends Notifier<LocationState> {
         isLoading: false,
         error: null,
         notice: null,
+        permissionBlocked: false,
       );
     } else {
+      // The platform/browser stopped asking (deniedForever, or web denied
+      // after the failed attempt) — surface a settings action instead of an
+      // "Enable" button that silently does nothing.
+      if (await LocationUtils.isLocationBlocked()) {
+        state = state.copyWith(
+          isLoading: false,
+          permissionBlocked: true,
+          error: 'Location access is blocked. Enable location in your '
+              'browser or device settings, then try again.',
+          notice: null,
+        );
+        return;
+      }
       // Fresh fix failed. If we have a usable location (cached from a previous
       // session, or the map already converged), keep the app working with it
       // instead of blocking the page with an error.
@@ -76,6 +90,7 @@ class LocationNotifier extends Notifier<LocationState> {
           isFresh: true,
           isLoading: false,
           error: null,
+          permissionBlocked: false,
           notice: 'Using your last known location. '
               'Enable location for a more accurate match.',
         );
@@ -85,6 +100,7 @@ class LocationNotifier extends Notifier<LocationState> {
           error: 'Unable to determine your location. '
               'Please check location permissions and try again.',
           notice: null,
+          permissionBlocked: false,
         );
       }
     }
@@ -117,6 +133,7 @@ class LocationNotifier extends Notifier<LocationState> {
       isFresh: true,
       isLoading: false,
       error: null,
+      permissionBlocked: false,
       notice: 'Showing providers near ${town.name} (${town.county}).',
     );
   }
@@ -164,6 +181,7 @@ class LocationNotifier extends Notifier<LocationState> {
       isLoading: false,
       error: null,
       notice: null,
+      permissionBlocked: false,
     );
   }
 
@@ -195,6 +213,7 @@ class LocationState {
   final String? error;
   final String? notice;
   final bool isFresh;
+  final bool permissionBlocked;
 
   LocationState({
     this.currentPosition,
@@ -202,6 +221,7 @@ class LocationState {
     this.error,
     this.notice,
     this.isFresh = false,
+    this.permissionBlocked = false,
   });
 
   factory LocationState.initial() {
@@ -214,6 +234,7 @@ class LocationState {
     Object? error = _unset,
     Object? notice = _unset,
     bool? isFresh,
+    bool? permissionBlocked,
   }) {
     return LocationState(
       currentPosition: currentPosition ?? this.currentPosition,
@@ -221,6 +242,7 @@ class LocationState {
       error: identical(error, _unset) ? this.error : error as String?,
       notice: identical(notice, _unset) ? this.notice : notice as String?,
       isFresh: isFresh ?? this.isFresh,
+      permissionBlocked: permissionBlocked ?? this.permissionBlocked,
     );
   }
 

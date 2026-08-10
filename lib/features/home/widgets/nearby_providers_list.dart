@@ -11,6 +11,7 @@ class NearbyProvidersList extends StatelessWidget {
   final List<NearbyProviderModel>? providers;
   final bool isLoading;
   final String? error;
+  final VoidCallback? onEnableLocation;
 
   const NearbyProvidersList({
     super.key,
@@ -18,6 +19,7 @@ class NearbyProvidersList extends StatelessWidget {
     this.providers,
     this.isLoading = false,
     this.error,
+    this.onEnableLocation,
   });
 
   @override
@@ -58,6 +60,14 @@ class NearbyProvidersList extends StatelessWidget {
               const Icon(Icons.location_off, size: 32, color: Colors.grey),
               const SizedBox(height: 8),
               const Text('Enable location to see nearby providers'),
+              if (onEnableLocation != null) ...[
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: onEnableLocation,
+                  icon: const Icon(Icons.gps_fixed, size: 18),
+                  label: const Text('Enable location'),
+                ),
+              ],
             ],
           ),
         ),

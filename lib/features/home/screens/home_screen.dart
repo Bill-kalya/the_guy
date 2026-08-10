@@ -11,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../admin/presentation/widgets/admin_mode_banner.dart';
 import '../../jobs/screens/request_service_screen.dart';
 import '../../../core/network/websocket_service.dart';
+import '../../../core/utils/location_utils.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../core/themes/colors.dart';
 import '../../../shared/widgets/responsive_layout.dart';
@@ -182,7 +183,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               if (position == null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: _buildLocationPrompt(),
+                  child: _buildLocationPrompt(locationState),
                 ),
             ],
           ),
@@ -282,7 +283,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildLocationPrompt() {
+  Widget _buildLocationPrompt(LocationState locationState) {
     return Material(
       color: Colors.white,
       elevation: 2,
@@ -293,17 +294,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             const Icon(Icons.location_off, color: Colors.orange, size: 20),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Enable location to see nearby providers',
-                style: TextStyle(fontSize: 13),
+                locationState.permissionBlocked
+                    ? 'Location is blocked. Enable it in your settings'
+                    : 'Enable location to see nearby providers',
+                style: const TextStyle(fontSize: 13),
               ),
             ),
-            TextButton(onPressed: _getLocation, child: const Text('Enable')),
+            TextButton(
+              onPressed: locationState.permissionBlocked
+                  ? _openLocationSettings
+                  : _getLocation,
+              child: Text(locationState.permissionBlocked ? 'Settings' : 'Enable'),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _openLocationSettings() async {
+    final opened = await LocationUtils.openLocationSettings();
+    if (!opened) {
+      // Browsers can't be deep-linked; walk the user through the site icon.
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Enable location'),
+          content: const Text(
+            'Click the lock or site-settings icon in your browser address bar, '
+            'allow location access for this site, then try again.',
+            style: TextStyle(fontSize: 14, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _getLocation();
+              },
+              child: const Text('Retry'),
+            ),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ],
+        ),
+      );
+      return;
+    }
+    _getLocation();
   }
 
   void _onProviderTap(NearbyProviderModel provider) {

@@ -48,6 +48,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
   double? _latitude;
   double? _longitude;
   String? _locationError;
+  bool _locationBlocked = false;
   bool _locationLoading = false;
 
   bool _initialized = false;
@@ -153,7 +154,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
 
   // ── Location ──────────────────────────────────────────
   Future<void> _captureLocation() async {
-    setState(() => _locationLoading = true);
+    setState(() { _locationLoading = true; _locationBlocked = false; });
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -169,7 +170,7 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
         }
       }
       if (permission == LocationPermission.deniedForever) {
-        setState(() { _locationError = 'Location permission permanently denied'; _locationLoading = false; });
+        setState(() { _locationError = 'Location access is blocked. Enable it in your device settings'; _locationBlocked = true; _locationLoading = false; });
         return;
       }
       Position pos = await Geolocator.getCurrentPosition(
@@ -187,6 +188,18 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     } catch (e) {
       setState(() { _locationError = 'Failed to get location: $e'; _locationLoading = false; });
     }
+  }
+
+  Future<void> _openLocationSettings() async {
+    if (kIsWeb) {
+      // Browsers can't be deep-linked; retry so the browser prompt appears.
+      setState(() { _locationBlocked = false; _locationError = null; });
+      await _captureLocation();
+      return;
+    }
+    await Geolocator.openAppSettings();
+    setState(() { _locationBlocked = false; _locationError = null; });
+    await _captureLocation();
   }
 
   // ── Submit ────────────────────────────────────────────
@@ -800,6 +813,17 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
               ],
             ),
           ),
+          if (_locationBlocked) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _openLocationSettings,
+                icon: const Icon(Icons.settings, size: 18),
+                label: const Text('Open settings'),
+              ),
+            ),
+          ],
         ],
       ],
     );
