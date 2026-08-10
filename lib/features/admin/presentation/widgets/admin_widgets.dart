@@ -74,10 +74,20 @@ class AdminPageHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E)),
+              ),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
-                Text(subtitle!, style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
+                Text(
+                  subtitle!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
+                ),
               ],
             ],
           ),

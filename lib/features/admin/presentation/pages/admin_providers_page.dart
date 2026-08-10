@@ -46,25 +46,22 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Expanded(
-                        child: AdminPageHeader(title: 'Service Providers', subtitle: 'Manage provider registrations and verification'),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: OutlinedButton.icon(
-                          onPressed: _showImportDialog,
-                          icon: const Icon(Icons.upload_file, size: 18),
-                          label: const Text('Import CSV'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
-                          ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final header = const AdminPageHeader(
+                        title: 'Service Providers',
+                        subtitle: 'Manage provider registrations and verification',
+                      );
+                      final importButton = OutlinedButton.icon(
+                        onPressed: _showImportDialog,
+                        icon: const Icon(Icons.upload_file, size: 18),
+                        label: const Text('Import CSV'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
                         ),
-                      ),
-                      IconButton(
+                      );
+                      final refreshButton = IconButton(
                         tooltip: 'Refresh',
                         onPressed: state.isLoading
                             ? null
@@ -72,8 +69,37 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
                         icon: state.isLoading
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.refresh),
-                      ),
-                    ],
+                      );
+                      if (constraints.maxWidth < 700) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            header,
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: importButton,
+                                ),
+                                refreshButton,
+                              ],
+                            ),
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: header),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: importButton,
+                          ),
+                          refreshButton,
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
                   _buildKpiCards(state),

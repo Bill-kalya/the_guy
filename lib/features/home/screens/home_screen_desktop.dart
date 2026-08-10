@@ -168,130 +168,138 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           constraints: const BoxConstraints(maxWidth: 1400),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            child: Row(
-              children: [
-                // Logo
-                Row(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 900;
+                return Row(
                   children: [
-                    Container(
-                      width: 40,
+                    // Logo
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            color: Colors.transparent,
+                          ),
+                          child: Image.asset('assets/icons/icon (2).png', fit: BoxFit.contain),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'The Guy',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (!compact) ...[
+                      const SizedBox(width: 48),
+                      // Nav Links
+                      Expanded(
+                        child: Row(
+                          children: [
+                            _navLink('Home', true, () {}),
+                            const SizedBox(width: 24),
+                            _navLink('Services', false, () => context.push('/search')),
+                            const SizedBox(width: 24),
+                            _navLink('How It Works', false, () {
+                              // Scroll to the How It Works section
+                            }),
+                            const SizedBox(width: 24),
+                            _navLink('Become a Provider', false, () {
+                              _requireAuthThen(context, () {
+                                context.push('/provider/register');
+                              });
+                            }),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                    // Search
+                    SizedBox(
+                      width: compact ? 160 : 240,
                       height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        color: Colors.transparent,
-                      ),
-                      child: Image.asset('assets/icons/icon (2).png', fit: BoxFit.contain),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'The Guy',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 48),
-                // Nav Links
-          Expanded(
-            child: Row(
-              children: [
-                _navLink('Home', true, () {}),
-                const SizedBox(width: 24),
-                _navLink('Services', false, () => context.push('/search')),
-                const SizedBox(width: 24),
-                _navLink('How It Works', false, () {
-                  // Scroll to the How It Works section
-                }),
-                const SizedBox(width: 24),
-                _navLink('Become a Provider', false, () {
-                  _requireAuthThen(context, () {
-                    context.push('/provider/register');
-                  });
-                }),
-              ],
-            ),
-          ),
-                // Search
-                SizedBox(
-                  width: 240,
-                  height: 40,
-                  child: TextField(
-                    controller: _topNavSearchController,
-                    style: const TextStyle(color: Colors.black),
-                    decoration: InputDecoration(
-                      hintText: 'Search services...',
-                      hintStyle: TextStyle(color: Colors.grey.shade500),
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    onSubmitted: _goToSearch,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Auth buttons or profile
-                if (isAuthenticated)
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Notifications coming soon')),
-                          );
-                        },
-                        tooltip: 'Notifications',
-                      ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () => context.push('/profile'),
-                        borderRadius: BorderRadius.circular(18),
-                        child: UserAvatar(
-                          imageUrl: authState.user?.avatar,
-                          name: authState.user?.name ?? 'User',
-                          radius: 18,
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () => context.push('/login'),
-                        child: const Text('Sign In'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () => context.push('/register'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
+                      child: TextField(
+                        controller: _topNavSearchController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: InputDecoration(
+                          hintText: 'Search services...',
+                          hintStyle: TextStyle(color: Colors.grey.shade500),
+                          prefixIcon: const Icon(Icons.search, size: 20),
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
                           ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
-                        child: const Text('Sign Up'),
+                        onSubmitted: _goToSearch,
                       ),
-                    ],
-                  ),
-              ],
+                    ),
+                    const SizedBox(width: 16),
+                    // Auth buttons or profile
+                    if (isAuthenticated)
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications_outlined),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Notifications coming soon')),
+                              );
+                            },
+                            tooltip: 'Notifications',
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => context.push('/profile'),
+                            borderRadius: BorderRadius.circular(18),
+                            child: UserAvatar(
+                              imageUrl: authState.user?.avatar,
+                              name: authState.user?.name ?? 'User',
+                              radius: 18,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: () => context.push('/login'),
+                            child: const Text('Sign In'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => context.push('/register'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Text('Sign Up'),
+                          ),
+                        ],
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -308,6 +316,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
           fontSize: 15,
@@ -800,13 +810,20 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
         constraints: const BoxConstraints(maxWidth: 1400),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Row(
-            children: [
-              _statCard(Icons.people, '${platformStats['totalProviders'] ?? 0}+', 'Providers', Colors.blue),
-              _statCard(Icons.work, _fmtCount(platformStats['totalJobs'] ?? 0), 'Jobs Done', Colors.green),
-              _statCard(Icons.star, '${platformStats['totalReviews'] ?? 0}', 'Reviews', Colors.amber),
-              _statCard(Icons.timer, '${platformStats['totalUsers'] ?? 0}+', 'Users', Colors.purple),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = ((constraints.maxWidth - 3 * 16) / 4).clamp(220.0, double.infinity);
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  _statCard(Icons.people, '${platformStats['totalProviders'] ?? 0}+', 'Providers', Colors.blue, cardWidth),
+                  _statCard(Icons.work, _fmtCount(platformStats['totalJobs'] ?? 0), 'Jobs Done', Colors.green, cardWidth),
+                  _statCard(Icons.star, '${platformStats['totalReviews'] ?? 0}', 'Reviews', Colors.amber, cardWidth),
+                  _statCard(Icons.timer, '${platformStats['totalUsers'] ?? 0}+', 'Users', Colors.purple, cardWidth),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -820,8 +837,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     return n.toString();
   }
 
-  Widget _statCard(IconData icon, String value, String label, MaterialColor color) {
-    return Expanded(
+  Widget _statCard(IconData icon, String value, String label, MaterialColor color, double width) {
+    return SizedBox(
+      width: width,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.all(24),
@@ -885,12 +903,21 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  children: ServiceCategories.featured.map((cat) {
-                    return Expanded(
-                      child: _serviceCategoryCard(cat.name, cat.icon, cat.color),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final n = ServiceCategories.featured.length;
+                    final cardWidth = ((constraints.maxWidth - (n - 1) * 16) / 4).clamp(180.0, 380.0);
+                    return Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: ServiceCategories.featured.map((cat) {
+                        return SizedBox(
+                          width: cardWidth,
+                          child: _serviceCategoryCard(cat.name, cat.icon, cat.color),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
+                  },
                 ),
               ],
             ),
