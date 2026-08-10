@@ -132,7 +132,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         fillColor: Colors.white,
         border: const OutlineInputBorder(),
         suffixIcon: IconButton(
-          icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility, color: Colors.black54),
           onPressed: () => setState(() => _obscureNew = !_obscureNew),
         ),
       ),
@@ -155,7 +155,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         fillColor: Colors.white,
         border: const OutlineInputBorder(),
         suffixIcon: IconButton(
-          icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility, color: Colors.black54),
           onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
         ),
       ),

@@ -148,6 +148,70 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   // ──────────────────────────────────────────
+  // Provider account claim (admin-imported providers)
+  // ──────────────────────────────────────────
+  /// Links the current user to an admin-imported provider using its claim code.
+  /// Returns the backend message on success, or throws with a user-friendly error.
+  Future<String> claimProviderAccount({
+    required String phone,
+    required String claimCode,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        Endpoints.providerClaim,
+        data: {
+          'phoneNumber': phone.trim(),
+          'claimCode': claimCode.trim(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Refresh profile so role/providerRegistered reflect the claim.
+        final profile = await _apiClient.get(Endpoints.userProfile);
+        if (profile.statusCode == 200) {
+          final userMap = profile.data is Map<String, dynamic>
+              ? profile.data as Map<String, dynamic>
+              : <String, dynamic>{};
+          final user = UserModel.fromJson(userMap);
+          await _secureStorage.saveUserData(user.toJson());
+          state = AuthState.authenticated(user);
+        }
+        _connectWebSocketLazy();
+        final msg = response.data is Map
+            ? ((response.data as Map)['message']?.toString() ??
+                'Provider account claimed successfully')
+            : 'Provider account claimed successfully';
+        return msg;
+      }
+
+      final message = response.data is Map
+          ? (response.data as Map)['message']?.toString()
+          : null;
+      throw AppException(
+        code: ErrorCodes.serverError,
+        message: message ?? 'Failed to claim provider account',
+      );
+    } on DioException catch (e) {
+      throw AppException(
+        code: ErrorCodes.serverError,
+        message: _extractClaimError(e) ?? 'Failed to claim provider account',
+      );
+    }
+  }
+
+  String? _extractClaimError(DioException e) {
+    final data = e.response?.data;
+    if (data is Map) {
+      final message = data['message']?.toString();
+      if (message != null && message.trim().isNotEmpty) return message;
+    }
+    if (e.response?.statusCode == 403) {
+      return 'You are not allowed to claim this provider account';
+    }
+    return null;
+  }
+
+  // ──────────────────────────────────────────
   // Login
   // ──────────────────────────────────────────
   Future<void> loginWithEmail(String email, String password) async {

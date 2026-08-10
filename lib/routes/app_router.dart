@@ -44,6 +44,7 @@ import '../features/provider/presentation/screens/active_jobs_screen.dart';
 import '../features/provider/presentation/screens/earnings_screen.dart';
 import '../features/provider/presentation/screens/provider_profile_screen.dart';
 import '../features/provider/presentation/screens/provider_registration_screen.dart';
+import '../features/provider/presentation/screens/provider_claim_screen.dart';
 import '../features/provider/presentation/screens/wallet_screen.dart';
 import '../features/provider/presentation/widgets/provider_shell_screen.dart';
 
@@ -106,7 +107,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Providers who haven't completed registration go to register screen
       if (isAuthenticated && effectiveRole == 'provider' && !isImpersonating) {
         final providerRegistered = authState.user?.providerRegistered ?? false;
-        if (!providerRegistered && location != '/provider/register') {
+        if (!providerRegistered &&
+            location != '/provider/register' &&
+            location != '/provider/claim') {
           return '/provider/register';
         }
         if (providerRegistered && location == '/provider/register') {
@@ -422,6 +425,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'provider-register',
         path: '/provider/register',
         builder: (context, state) => const ProviderRegistrationScreen(),
+      ),
+      GoRoute(
+        name: 'provider-claim',
+        path: '/provider/claim',
+        builder: (context, state) => const ProviderClaimScreen(),
       ),
       GoRoute(
         name: 'incoming-job',

@@ -806,36 +806,39 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _buildServiceCategories() {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1400),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Popular Services',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+    return ColoredBox(
+      color: Colors.white,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Popular Services',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Find what you need from our trusted professionals',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: ServiceCategories.featured.map((cat) {
-                  return Expanded(
-                    child: _serviceCategoryCard(cat.name, cat.icon, cat.color),
-                  );
-                }).toList(),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'Find what you need from our trusted professionals',
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: ServiceCategories.featured.map((cat) {
+                    return Expanded(
+                      child: _serviceCategoryCard(cat.name, cat.icon, cat.color),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1002,22 +1005,24 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     AsyncValue<List<NearbyProviderModel>> nearbyProvidersAsync,
     Map<String, ProviderLocationUpdate> liveLocations,
   ) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1400),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nearby Providers',
+    return ColoredBox(
+      color: Colors.white,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Nearby Providers',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -1114,6 +1119,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

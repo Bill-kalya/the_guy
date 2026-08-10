@@ -404,6 +404,13 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () => context.push('/provider/claim'),
+            child: const Text('Already registered? Enter claim code'),
+          ),
+        ),
         Text('What service do you offer?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
         const SizedBox(height: 6),
         Text('Choose one category. One provider = one service.', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),

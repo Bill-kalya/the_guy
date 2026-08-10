@@ -36,6 +36,7 @@ class _TheGuyAppState extends ConsumerState<TheGuyApp> {
           title: 'The Guy',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
+          themeMode: ThemeMode.light,
           routerConfig: router,
           debugShowCheckedModeBanner: false,
         );

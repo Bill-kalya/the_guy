@@ -175,7 +175,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         suffixIcon: IconButton(
-          icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: Colors.black54),
           onPressed: onToggle,
         ),
       ),

@@ -85,6 +85,7 @@ class Endpoints {
 
   // Providers
   static const String nearbyProviders = '/api/providers/nearby';
+  static const String providerClaim = '/api/providers/claim';
   static const String providerRegister = '/api/providers/register';
   static const String providerMe = '/api/providers/me';
   static const String providerMeCompletion = '/api/providers/me/completion';
