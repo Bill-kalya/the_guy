@@ -48,7 +48,7 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
                 children: [
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final header = const AdminPageHeader(
+                      final header = AdminPageHeader(
                         title: 'Service Providers',
                         subtitle: 'Manage provider registrations and verification',
                       );
@@ -70,21 +70,21 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.refresh),
                       );
-                      if (constraints.maxWidth < 700) {
+                      final actions = Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          importButton,
+                          refreshButton,
+                        ],
+                      );
+                      if (constraints.maxWidth < 760) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             header,
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: importButton,
-                                ),
-                                refreshButton,
-                              ],
-                            ),
+                            actions,
                           ],
                         );
                       }
@@ -92,11 +92,8 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(child: header),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: importButton,
-                          ),
-                          refreshButton,
+                          const SizedBox(width: 12),
+                          actions,
                         ],
                       );
                     },

@@ -69,15 +69,18 @@ class AdminPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        Flexible(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                softWrap: false,
                 style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E)),
               ),
               if (subtitle != null) ...[
@@ -92,7 +95,10 @@ class AdminPageHeader extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) trailing!,
+        if (trailing != null) ...[
+          const SizedBox(width: 12),
+          trailing!,
+        ],
       ],
     );
   }

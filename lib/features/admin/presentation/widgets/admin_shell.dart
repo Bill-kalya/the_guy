@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,20 +83,20 @@ class _AdminShellState extends ConsumerState<AdminShell> {
 
   @override
   Widget build(BuildContext context) {
-    final shell = ResponsiveLayout(
-      mobile: _buildMobileLayout(),
-      desktop: _buildDesktopLayout(),
-    );
-
-    return Stack(
-      children: [
-        shell,
-        if (_searchOpen)
-          GestureDetector(
-            onTap: () => setState(() => _searchOpen = false),
-            child: const AdminSearchOverlay(),
-          ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final shell = constraints.maxWidth < 1000 ? _buildMobileLayout() : _buildDesktopLayout();
+        return Stack(
+          children: [
+            shell,
+            if (_searchOpen)
+              GestureDetector(
+                onTap: () => setState(() => _searchOpen = false),
+                child: const AdminSearchOverlay(),
+              ),
+          ],
+        );
+      },
     );
   }
 

@@ -762,10 +762,6 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final text = Text(
-                'Need help urgently? Get matched with nearby professionals instantly.',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
-              );
               final button = ElevatedButton(
                 onPressed: () {
                   _requireAuthThen(context, () {
@@ -780,7 +776,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 ),
                 child: const Text('Get Help Now', style: TextStyle(fontWeight: FontWeight.w600)),
               );
-              if (constraints.maxWidth < 520) {
+              if (constraints.maxWidth < 640) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -788,7 +784,14 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       children: [
                         Icon(Icons.flash_on, color: Colors.orange.shade800, size: 36),
                         const SizedBox(width: 12),
-                        Expanded(child: text),
+                        Expanded(
+                          child: Text(
+                            'Need help urgently? Get matched with nearby professionals instantly.',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -800,7 +803,15 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 children: [
                   Icon(Icons.flash_on, color: Colors.orange.shade800, size: 36),
                   const SizedBox(width: 16),
-                  Expanded(child: text),
+                  Expanded(
+                    child: Text(
+                      'Need help urgently? Get matched with nearby professionals instantly.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   button,
                 ],
               );
@@ -998,30 +1009,46 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 48),
-                Row(
-                  children: [
-                    _stepCard(
-                      '1',
-                      'Request a Service',
-                      'Tell us what you need and when. Our smart matching finds the best provider for you.',
-                      Icons.edit_note,
-                      Colors.blue,
-                    ),
-                    _stepCard(
-                      '2',
-                      'Get Matched',
-                      'Receive offers from verified providers near you. Compare ratings, prices, and availability.',
-                      Icons.people_alt,
-                      Colors.green,
-                    ),
-                    _stepCard(
-                      '3',
-                      'Job Done',
-                      'Track your service in real-time, pay securely, and rate your experience.',
-                      Icons.celebration,
-                      Colors.amber,
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cardWidth = (constraints.maxWidth - 32).clamp(240.0, 320.0);
+                    return Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        SizedBox(
+                          width: cardWidth,
+                          child: _stepCard(
+                            '1',
+                            'Request a Service',
+                            'Tell us what you need and when. Our smart matching finds the best provider for you.',
+                            Icons.edit_note,
+                            Colors.blue,
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          child: _stepCard(
+                            '2',
+                            'Get Matched',
+                            'Receive offers from verified providers near you. Compare ratings, prices, and availability.',
+                            Icons.people_alt,
+                            Colors.green,
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          child: _stepCard(
+                            '3',
+                            'Job Done',
+                            'Track your service in real-time, pay securely, and rate your experience.',
+                            Icons.celebration,
+                            Colors.amber,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -1032,60 +1059,58 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _stepCard(String step, String title, String description, IconData icon, MaterialColor color) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: color.shade600,
+              borderRadius: BorderRadius.circular(28),
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: color.shade600,
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Center(
-                child: Text(
-                  step,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+            child: Center(
+              child: Text(
+                step,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Icon(icon, size: 40, color: color.shade400),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+          ),
+          const SizedBox(height: 16),
+          Icon(icon, size: 40, color: color.shade400),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
-            const SizedBox(height: 8),
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, color: Colors.grey.shade600, height: 1.5),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15, color: Colors.grey.shade600, height: 1.5),
+          ),
+        ],
       ),
     );
   }
