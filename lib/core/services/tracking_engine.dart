@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -149,8 +150,8 @@ class TrackingEngine {
 
   Future<void> _startGpsStream() async {
     _positionSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
+      locationSettings: LocationSettings(
+        accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
         distanceFilter: 10,
       ),
     ).listen(_onPositionChanged);

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/utils/location_utils.dart';
 import '../../../core/storage/shared_prefs.dart';
+import '../../../shared/constants/kenya_towns.dart';
 
 final locationProvider = NotifierProvider<LocationNotifier, LocationState>(
   LocationNotifier.new,
@@ -57,17 +58,67 @@ class LocationNotifier extends Notifier<LocationState> {
         isFresh: true,
         isLoading: false,
         error: null,
+        notice: null,
       );
     } else {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Unable to get location. Please enable GPS.',
-      );
+      // Fresh fix failed. If we have a usable location (cached from a previous
+      // session, or the map already converged), keep the app working with it
+      // instead of blocking the page with an error.
+      final cached = state.currentPosition;
+      if (cached != null) {
+        // Try the platform's last-known fix as a better fallback than the
+        // stored preference.
+        final lastKnown = await LocationUtils.getLastKnownPosition();
+        final fallback = lastKnown ?? cached;
+        _sharedPrefs.setLastLocation(fallback.latitude, fallback.longitude);
+        state = state.copyWith(
+          currentPosition: fallback,
+          isFresh: true,
+          isLoading: false,
+          error: null,
+          notice: 'Using your last known location. '
+              'Enable location for a more accurate match.',
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Unable to determine your location. '
+              'Please check location permissions and try again.',
+          notice: null,
+        );
+      }
     }
 
     // Keep listening for finer fixes so the map converges on the true
     // location instead of freezing at the first (possibly coarse) one.
     _startWatching();
+  }
+
+  /// User picked a town manually — treat it as the active location so the
+  /// marketplace keeps working even when browser geolocation is unavailable.
+  void selectTown(KenyaTown town) {
+    _streamSub?.cancel();
+    _streamSub = null;
+    final position = Position(
+      latitude: town.latitude,
+      longitude: town.longitude,
+      timestamp: DateTime.now(),
+      accuracy: 0,
+      altitude: 0,
+      heading: 0,
+      speed: 0,
+      speedAccuracy: 0,
+      altitudeAccuracy: 0,
+      headingAccuracy: 0,
+    );
+    _sharedPrefs.setLastLocation(town.latitude, town.longitude);
+    state = state.copyWith(
+      currentPosition: position,
+      isFresh: true,
+      isLoading: false,
+      error: null,
+      notice: 'Showing providers near ${town.name} (${town.county}).',
+    );
   }
 
   void _startWatching() {
@@ -112,6 +163,7 @@ class LocationNotifier extends Notifier<LocationState> {
       isFresh: true,
       isLoading: false,
       error: null,
+      notice: null,
     );
   }
 
@@ -141,12 +193,14 @@ class LocationState {
   final Position? currentPosition;
   final bool isLoading;
   final String? error;
+  final String? notice;
   final bool isFresh;
 
   LocationState({
     this.currentPosition,
     this.isLoading = false,
     this.error,
+    this.notice,
     this.isFresh = false,
   });
 
@@ -157,14 +211,18 @@ class LocationState {
   LocationState copyWith({
     Position? currentPosition,
     bool? isLoading,
-    String? error,
+    Object? error = _unset,
+    Object? notice = _unset,
     bool? isFresh,
   }) {
     return LocationState(
       currentPosition: currentPosition ?? this.currentPosition,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: identical(error, _unset) ? this.error : error as String?,
+      notice: identical(notice, _unset) ? this.notice : notice as String?,
       isFresh: isFresh ?? this.isFresh,
     );
   }
+
+  static const Object _unset = Object();
 }

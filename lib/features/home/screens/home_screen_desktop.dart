@@ -12,6 +12,7 @@ import '../../../core/network/websocket_service.dart';
 import '../../../shared/models/nearby_provider_model.dart';
 import '../../../core/themes/colors.dart';
 import '../../../shared/constants/service_categories.dart';
+import '../../../shared/constants/kenya_towns.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../widgets/download_app_section.dart';
 import '../providers/platform_stats_provider.dart';
@@ -296,15 +297,38 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 
     if (locationState.error != null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.location_off, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(locationState.error!),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _getLocation, child: const Text('Retry')),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.location_off, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                locationState.error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _getLocation,
+                    icon: const Icon(Icons.gps_fixed),
+                    label: const Text('Try Again'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _chooseTownManually,
+                    icon: const Icon(Icons.location_city),
+                    label: const Text('Choose Location Manually'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -312,6 +336,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     return SingleChildScrollView(
       child: Column(
         children: [
+          if (locationState.notice != null) _buildLocationNotice(locationState.notice!),
           _buildHeroSection(),
           _buildUrgentHelpBanner(),
           _buildStatsSection(),
@@ -326,6 +351,57 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           const DownloadAppSection(),
           _buildFooter(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLocationNotice(String notice) {
+    return Container(
+      width: double.infinity,
+      color: AppColors.primaryLight,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              notice,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: AppColors.primaryDark),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _chooseTownManually() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Choose your location'),
+        content: SizedBox(
+          width: 360,
+          height: 420,
+          child: ListView.builder(
+            itemCount: kenyaTowns.length,
+            itemBuilder: (context, i) {
+              final town = kenyaTowns[i];
+              return ListTile(
+                leading: const Icon(Icons.location_city, color: Colors.grey),
+                title: Text(town.name),
+                subtitle: Text(town.county),
+                onTap: () {
+                  ref.read(locationProvider.notifier).selectTown(town);
+                  ref.invalidate(nearbyProvidersProvider);
+                  Navigator.pop(dialogContext);
+                },
+              );
+            },
+          ),
+        ),
       ),
     );
   }

@@ -172,7 +172,12 @@ class _ProviderRegistrationScreenState extends ConsumerState<ProviderRegistratio
         setState(() { _locationError = 'Location permission permanently denied'; _locationLoading = false; });
         return;
       }
-      Position pos = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+      Position pos = await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(
+          accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 20),
+        ),
+      ).timeout(const Duration(seconds: 20));
       setState(() {
         _latitude = pos.latitude;
         _longitude = pos.longitude;

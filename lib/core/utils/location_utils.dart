@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
@@ -69,32 +71,86 @@ class LocationUtils {
 
   // Check if location permission is granted
   static Future<bool> checkLocationPermission() async {
-    LocationPermission permission = await Geolocator.checkPermission();
+    LocationPermission permission;
+    try {
+      permission = await Geolocator.checkPermission();
+    } catch (e) {
+      debugPrint('LocationUtils: checkPermission failed: $e');
+      return false;
+    }
 
     if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+      try {
+        permission = await Geolocator.requestPermission();
+      } catch (e) {
+        debugPrint('LocationUtils: requestPermission failed: $e');
+        return false;
+      }
       if (permission == LocationPermission.denied) {
+        debugPrint('LocationUtils: permission denied by user');
         return false;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
+      debugPrint('LocationUtils: permission denied forever');
       return false;
     }
 
     return true;
   }
 
-  // Get current location (with a timeout so GPS hangs can't block the app)
+  /// Get current location.
+  ///
+  /// Browsers (and laptops without GPS) can't reliably deliver GPS-level fixes,
+  /// so on web we ask for a medium accuracy fix and give it much longer before
+  /// giving up. Every failure is logged so the real cause (permission denied,
+  /// timeout, service disabled, network) is visible in the console instead of
+  /// being reported as "GPS off".
   static Future<Position?> getCurrentLocation() async {
     final hasPermission = await checkLocationPermission();
     if (!hasPermission) return null;
 
+    final settings = LocationSettings(
+      // High accuracy on native (GPS); medium on web where browsers fall back
+      // to WiFi/IP positioning and often time out waiting for a GPS lock.
+      accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+      timeLimit: const Duration(seconds: 20),
+    );
+
     try {
-      return await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(accuracy: LocationAccuracy.high),
-      ).timeout(const Duration(seconds: 12));
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: settings,
+      ).timeout(const Duration(seconds: 20));
+      debugPrint('LocationUtils: fix acquired '
+          '(${position.latitude}, ${position.longitude}) '
+          'accuracy=${position.accuracy}m');
+      return position;
+    } on TimeoutException catch (e) {
+      debugPrint('LocationUtils: location request timed out: $e');
+    } on Exception catch (e) {
+      debugPrint('LocationUtils: location request failed '
+          '(${e.runtimeType}): $e');
     } catch (e) {
+      debugPrint('LocationUtils: unexpected location error '
+          '(${e.runtimeType}): $e');
+    }
+    return null;
+  }
+
+  /// Return the most recently cached fix (native only; browsers don't retain
+  /// one across sessions). Used as a fallback when a fresh fix fails.
+  static Future<Position?> getLastKnownPosition() async {
+    if (kIsWeb) return null;
+    try {
+      final position = await Geolocator.getLastKnownPosition();
+      if (position != null) {
+        debugPrint('LocationUtils: using last known position '
+            '(${position.latitude}, ${position.longitude})');
+      }
+      return position;
+    } catch (e) {
+      debugPrint('LocationUtils: getLastKnownPosition failed: $e');
       return null;
     }
   }

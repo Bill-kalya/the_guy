@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -85,7 +86,7 @@ class _LocationPickerState extends State<LocationPicker> {
       children: [
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.the_guy',
+          userAgentPackageName: 'ke.co.theguy.app',
         ),
       ],
     );
@@ -200,8 +201,11 @@ class _LocationPickerState extends State<LocationPicker> {
 
     try {
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-      );
+        locationSettings: LocationSettings(
+          accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 20),
+        ),
+      ).timeout(const Duration(seconds: 20));
 
       final location = LatLng(position.latitude, position.longitude);
       _selectedLocation = location;
@@ -209,6 +213,7 @@ class _LocationPickerState extends State<LocationPicker> {
 
       _mapController.move(location, 15.0);
     } catch (e) {
+      debugPrint('LocationPicker: unable to get location ($e)');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Unable to get current location')),
