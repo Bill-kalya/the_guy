@@ -43,11 +43,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _getLocation() async {
-    // The landing page is public; don't prompt anonymous visitors for GPS,
-    // and don't fire geolocation while a dead session is being torn down.
+    // The landing page is public; don't prompt anonymous visitors for GPS
+    // on page load, and don't fire geolocation while a dead session is being
+    // torn down.
     if (!ref.read(authProvider).isAuthenticated) return;
-    await ref.read(locationProvider.notifier).getCurrentLocation();
+    await _requestLocation();
   }
+
+  /// Explicit user action ("Enable" / "Try again" / "Near me"): always fires,
+  /// even for anonymous visitors who tapped the button themselves.
+  Future<void> _enableLocation() => _requestLocation();
+
+  Future<void> _requestLocation() =>
+      ref.read(locationProvider.notifier).getCurrentLocation();
 
   @override
   void dispose() {
@@ -227,7 +235,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _refreshNearby() {
-    _getLocation();
+    _enableLocation();
     ref.invalidate(nearbyProvidersProvider);
   }
 
@@ -305,7 +313,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             TextButton(
               onPressed: locationState.permissionBlocked
                   ? _openLocationSettings
-                  : _getLocation,
+                  : _enableLocation,
               child: Text(locationState.permissionBlocked ? 'Settings' : 'Enable'),
             ),
           ],
@@ -332,7 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                _getLocation();
+                _enableLocation();
               },
               child: const Text('Retry'),
             ),
@@ -342,7 +350,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
       return;
     }
-    _getLocation();
+    _enableLocation();
   }
 
   void _onProviderTap(NearbyProviderModel provider) {

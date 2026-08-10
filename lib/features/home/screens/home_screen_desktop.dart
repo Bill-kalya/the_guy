@@ -52,11 +52,19 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   void _getLocation() async {
-    // The landing page is public; don't prompt anonymous visitors for GPS,
-    // and don't fire geolocation while a dead session is being torn down.
+    // The landing page is public; don't prompt anonymous visitors for GPS
+    // on page load, and don't fire geolocation while a dead session is being
+    // torn down.
     if (!ref.read(authProvider).isAuthenticated) return;
-    await ref.read(locationProvider.notifier).getCurrentLocation();
+    await _requestLocation();
   }
+
+  /// Explicit user action ("Enable" / "Try again" / "Near me"): always fires,
+  /// even for anonymous visitors who tapped the button themselves.
+  Future<void> _enableLocation() => _requestLocation();
+
+  Future<void> _requestLocation() =>
+      ref.read(locationProvider.notifier).getCurrentLocation();
 
   Future<void> _openLocationSettings() async {
     final opened = await LocationUtils.openLocationSettings();
@@ -75,7 +83,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                _getLocation();
+                _enableLocation();
               },
               child: const Text('Retry'),
             ),
@@ -85,7 +93,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       );
       return;
     }
-    _getLocation();
+    _enableLocation();
   }
 
   void _connectWebSocket() async {
@@ -122,7 +130,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   void _refreshNearby() {
-    _getLocation();
+    _enableLocation();
     ref.invalidate(nearbyProvidersProvider);
   }
 
@@ -357,7 +365,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 alignment: WrapAlignment.center,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: locationState.permissionBlocked ? _openLocationSettings : _getLocation,
+                    onPressed: locationState.permissionBlocked ? _openLocationSettings : _enableLocation,
                     icon: Icon(locationState.permissionBlocked ? Icons.settings : Icons.gps_fixed),
                     label: Text(locationState.permissionBlocked ? 'Open Settings' : 'Try Again'),
                   ),
@@ -1171,7 +1179,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                             isLoading: false,
                             onEnableLocation: locationState.permissionBlocked
                                 ? _openLocationSettings
-                                : _getLocation,
+                                : _enableLocation,
                           ),
                         );
                       },
