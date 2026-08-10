@@ -540,7 +540,11 @@ class AuthNotifier extends Notifier<AuthState> {
   // ──────────────────────────────────────────
   Future<void> logout() async {
     try {
-      await _apiClient.post(Endpoints.logout);
+      final refreshToken = await _secureStorage.getRefreshToken();
+      await _apiClient.post(
+        Endpoints.logout,
+        data: refreshToken != null ? {'refreshToken': refreshToken} : null,
+      );
     } catch (_) {}
     await _secureStorage.clearAll();
     await ref.read(webSocketServiceProvider).disconnect();

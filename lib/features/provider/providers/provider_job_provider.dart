@@ -94,8 +94,10 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
       );
 
       if (response.statusCode == 200) {
-        final updatedJob = ProviderJob.fromJson(response.data);
-        state = state.copyWith(activeJob: updatedJob);
+        final current = state.activeJob;
+        if (current != null && current.id == jobId) {
+          state = state.copyWith(activeJob: current.copyWith(status: status));
+        }
       }
     } catch (e) {
       ErrorHandler.logError('Error updating job status', e);
@@ -121,15 +123,58 @@ class ProviderJobNotifier extends Notifier<ProviderJobState> {
       );
 
       if (response.statusCode == 200) {
+        // The backend returns {success, message, data: JobResponseDTO}.
+        // Keep the local job model and just surface the new lifecycle state.
+        Map<String, dynamic>? payload;
         final result = response.data;
-        if (result is Map<String, dynamic> && result.containsKey('data')) {
-          final updatedJob = ProviderJob.fromJson(result['data']);
-          state = state.copyWith(activeJob: updatedJob);
+        if (result is Map<String, dynamic> &&
+            result['data'] is Map<String, dynamic>) {
+          payload = result['data'] as Map<String, dynamic>;
+        }
+
+        final current = state.activeJob;
+        if (current != null && current.id == jobId) {
+          state = state.copyWith(
+            activeJob: current.copyWith(
+              status: 'awaiting_confirmation',
+              completionNotes:
+                  payload?['completionNotes'] as String? ?? current.completionNotes,
+              completionPhotos: payload?['completionPhotos'] is List
+                  ? List<String>.from(payload!['completionPhotos'] as List)
+                  : current.completionPhotos,
+              completionLatitude:
+                  (payload?['completionLatitude'] as num?)?.toDouble() ??
+                      current.completionLatitude,
+              completionLongitude:
+                  (payload?['completionLongitude'] as num?)?.toDouble() ??
+                      current.completionLongitude,
+              confirmationDeadline:
+                  payload?['confirmationDeadline'] as String? ??
+                      current.confirmationDeadline,
+            ),
+          );
         }
       }
     } catch (e) {
       ErrorHandler.logError('Error completing job', e);
     }
+  }
+
+  /// Marks the active job completed when the customer confirms (or the backend
+  /// auto-confirms) and escrow is released.
+  void markActiveJobCompleted(Object? jobId) {
+    final current = state.activeJob;
+    if (current == null) return;
+    if (jobId != null && current.id != jobId.toString()) return;
+    state = state.copyWith(activeJob: current.copyWith(status: 'completed'));
+  }
+
+  /// Marks the active job cancelled/disputed so it drops out of the active list.
+  void markActiveJobCancelled(Object? jobId) {
+    final current = state.activeJob;
+    if (current == null) return;
+    if (jobId != null && current.id != jobId.toString()) return;
+    state = state.copyWith(activeJob: current.copyWith(status: 'cancelled'));
   }
 
   Future<void> startJob(String jobId) async {

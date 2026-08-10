@@ -334,21 +334,68 @@ class _ActiveJobScreenState extends ConsumerState<ActiveJobScreen> {
 
   Widget _buildActionButtons(JobStatus status) {
     switch (status) {
-      case JobStatus.completed:
-        return ElevatedButton(
-          onPressed: () => context.push('/payment/${widget.jobId}'),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
-          ),
-          child: const Text('Proceed to Payment'),
-        );
+      case JobStatus.accepted:
+      case JobStatus.enRoute:
+      case JobStatus.arrived:
+      case JobStatus.inProgress:
+        return _buildEscrowPaymentButton();
 
       case JobStatus.awaitingConfirmation:
         return _buildCompletionReview();
 
+      case JobStatus.completed:
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.green.shade200),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.verified, color: Colors.green),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Job completed. Payment was held in escrow and released to the provider.',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        );
+
       default:
         return const SizedBox();
     }
+  }
+
+  Widget _buildEscrowPaymentButton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ElevatedButton.icon(
+          onPressed: () => context.push('/payment/${widget.jobId}'),
+          icon: const Icon(Icons.lock_outline),
+          label: const Text('Pay Now — Fund Escrow'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue.shade700,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Pay to secure your job. Funds are held in escrow and released to the '
+          'provider only after you confirm the work is done.',
+          style: TextStyle(fontSize: 13, color: Colors.grey),
+        ),
+      ],
+    );
   }
 
   Widget _buildCompletionReview() {

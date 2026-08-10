@@ -170,6 +170,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
+      // Only admins may access /admin/* (when not impersonating)
+      if (isAuthenticated && !isImpersonating && location.startsWith('/admin')) {
+        final role = authState.user?.role ?? 'customer';
+        if (role != 'admin') {
+          if (role == 'provider') {
+            return '/provider/home';
+          }
+          return '/';
+        }
+      }
+
       // When impersonating, block /admin routes — redirect to appropriate dashboard
       if (isImpersonating && location.startsWith('/admin')) {
         if (effectiveRole == 'provider') {

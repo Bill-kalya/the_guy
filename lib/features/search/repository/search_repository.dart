@@ -92,7 +92,11 @@ class SearchApiService {
     if (data == null) return SearchResult(query: req.query, totalResults: 0, providers: []);
 
     if (data is Map<String, dynamic>) {
-      return SearchResult.fromJson(data);
+      // Backend wraps results in {success, message, data: {query, totalResults, providers}}
+      final payload = data['data'];
+      if (payload is Map<String, dynamic>) {
+        return SearchResult.fromJson(payload);
+      }
     }
 
     return SearchResult(query: req.query, totalResults: 0, providers: []);

@@ -6,6 +6,7 @@ import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../storage/secure_storage.dart';
 import 'endpoints.dart';
 import '../../features/jobs/providers/job_provider.dart';
+import '../../features/provider/providers/provider_job_provider.dart';
 import '../../features/chat/providers/chat_provider.dart';
 import '../../features/home/providers/nearby_providers_provider.dart';
 import '../../shared/models/nearby_provider_model.dart';
@@ -155,6 +156,16 @@ class WebSocketService {
           onIncomingJob?.call(data['job']);
         } else if (data['type'] == 'JOB_UPDATE') {
           onJobStatusUpdate?.call(data['job']);
+        } else if (data['type'] == 'JOB_PAYMENT_RELEASED' ||
+            data['type'] == 'JOB_COMPLETED') {
+          _ref
+              .read(providerJobProvider.notifier)
+              .markActiveJobCompleted(data['jobId']);
+        } else if (data['type'] == 'JOB_CANCELLED' ||
+            data['type'] == 'JOB_DISPUTED') {
+          _ref
+              .read(providerJobProvider.notifier)
+              .markActiveJobCancelled(data['jobId']);
         }
       } else if (destination.startsWith('/topic/chat/')) {
         final jobId = destination.split('/').last;
@@ -250,7 +261,10 @@ class WebSocketService {
       final type = data['type'];
       switch (type) {
         case 'JOB_MATCHED':
-          _ref.read(jobProvider.notifier).updateJobStatus(data['job']);
+          final job = data['job'];
+          if (job is Map<String, dynamic>) {
+            _ref.read(jobProvider.notifier).updateJobStatus(job);
+          }
           break;
         case 'JOB_ACCEPTED':
         case 'PROVIDER_ACCEPTED':
@@ -266,6 +280,20 @@ class WebSocketService {
           break;
         case 'JOB_STATUS_UPDATE':
           _ref.read(jobProvider.notifier).updateStatus(data['status']);
+          break;
+        case 'JOB_STARTED':
+          _ref.read(jobProvider.notifier).markInProgress();
+          break;
+        case 'JOB_AWAITING_CONFIRMATION':
+          _ref.read(jobProvider.notifier).setAwaitingConfirmation(data);
+          break;
+        case 'JOB_COMPLETED':
+        case 'JOB_AUTO_CONFIRMED':
+          _ref.read(jobProvider.notifier).markCompleted();
+          break;
+        case 'JOB_CANCELLED':
+        case 'JOB_DISPUTED':
+          _ref.read(jobProvider.notifier).markCancelled();
           break;
       }
     } catch (e) {

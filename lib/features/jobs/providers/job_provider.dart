@@ -58,12 +58,24 @@ class JobNotifier extends Notifier<JobState> {
   }
 
   void updateStatus(String newStatus) {
+    final normalized = newStatus
+        .toUpperCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
     state = state.copyWith(
       status: JobStatus.values.firstWhere(
-        (e) => e.toString() == newStatus,
+        (e) => e.name.toUpperCase() == normalized,
         orElse: () => JobStatus.matching,
       ),
     );
+  }
+
+  void markInProgress() {
+    state = state.copyWith(status: JobStatus.inProgress);
+  }
+
+  void markCompleted() {
+    state = state.copyWith(status: JobStatus.completed);
   }
 
   void setAwaitingConfirmation(Map<String, dynamic> jobData) {
