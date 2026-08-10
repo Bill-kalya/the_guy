@@ -325,7 +325,12 @@ class AdminTableHeader extends StatelessWidget {
           final flex = flexes != null && i < flexes!.length ? flexes![i] : 1;
           return Expanded(
             flex: flex,
-            child: Text(columns[i], style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade600)),
+            child: Text(
+              columns[i],
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade600),
+            ),
           );
         }),
       ),

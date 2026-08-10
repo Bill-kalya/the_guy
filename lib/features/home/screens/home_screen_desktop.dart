@@ -457,227 +457,262 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           constraints: const BoxConstraints(maxWidth: 1400),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 80),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Find Trusted\nService Providers\nNear You',
-                        style: TextStyle(
-                          fontSize: 52,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          height: 1.15,
-                          letterSpacing: -1,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Connect with verified professionals for home, business, and personal services anywhere in Kenya.',
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.white.withValues(alpha: 0.85),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 1000;
+                final illustration = _heroIllustration(platformStats);
+                return compact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.check_circle, color: Colors.green.shade300, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Verified professionals',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 15),
-                          ),
-                          const SizedBox(width: 24),
-                          Icon(Icons.check_circle, color: Colors.green.shade300, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Real-time tracking',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 15),
-                          ),
-                          const SizedBox(width: 24),
-                          Icon(Icons.check_circle, color: Colors.green.shade300, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Secure payments',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 15),
-                          ),
+                          _heroLeftColumn(compact: true),
+                          const SizedBox(height: 48),
+                          SizedBox(width: double.infinity, child: illustration),
                         ],
-                      ),
-                      const SizedBox(height: 36),
-                      // Search bar
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: IntrinsicHeight(
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: TextField(
-                                  controller: _heroSearchController,
-                                  style: const TextStyle(color: Colors.black),
-                                  decoration: InputDecoration(
-                                    hintText: 'What service do you need?',
-                                    hintStyle: TextStyle(color: Colors.grey.shade500),
-                                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                                    border: InputBorder.none,
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                  onSubmitted: _goToSearch,
-                                ),
-                              ),
-                              Container(
-                                width: 1,
-                                color: Colors.grey.shade200,
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: TextField(
-                                  style: const TextStyle(color: Colors.black),
-                                  decoration: InputDecoration(
-                                    hintText: 'Location',
-                                    hintStyle: TextStyle(color: Colors.grey.shade500),
-                                    prefixIcon: const Icon(Icons.location_on_outlined, color: Colors.grey),
-                                    border: InputBorder.none,
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                width: 1,
-                                color: Colors.grey.shade200,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    _requireAuthThen(context, () {
-                                      context.push('/request-service');
-                                    });
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 32,
-                                      vertical: 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Get a Guy',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ),
-                            ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: _heroLeftColumn(compact: false),
                           ),
-                        ),
-                      ),
-                      // Category chips
-                      const SizedBox(height: 20),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: ServiceCategories.popular.map((cat) {
-                          return _heroCategoryChip(cat.icon, cat.name);
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 48),
-                // Hero illustration area
-                Expanded(
-                  flex: 4,
-                  child: Container(
-                    height: 400,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      color: Colors.white.withValues(alpha: 0.08),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.people_alt_outlined,
-                          size: 80,
-                          color: Colors.white.withValues(alpha: 0.4),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          '${platformStats['totalProviders'] ?? 0}+ Providers Available',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '24/7 Service • Nairobi • Mombasa • Kisumu',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            3,
-                            (i) => Padding(
-                              padding: EdgeInsets.only(left: i > 0 ? -8 : 0),
-                              child: CircleAvatar(
-                                radius: 20,
-                                backgroundColor: AppColors.primary.withValues(alpha: 0.5),
-                                child: Icon(Icons.person, color: Colors.white, size: 20),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Join ${platformStats['totalUsers'] ?? 0}+ users on The Guy',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+                          const SizedBox(width: 48),
+                          Expanded(flex: 4, child: illustration),
+                        ],
+                      );
+              },
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _heroLeftColumn({required bool compact}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Find Trusted\nService Providers\nNear You',
+          style: TextStyle(
+            fontSize: compact ? 36 : 52,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            height: 1.15,
+            letterSpacing: -1,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Connect with verified professionals for home, business, and personal services anywhere in Kenya.',
+          style: TextStyle(
+            fontSize: compact ? 17 : 20,
+            color: Colors.white.withValues(alpha: 0.85),
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 24,
+          runSpacing: 10,
+          children: [
+            _heroCheck('Verified professionals'),
+            _heroCheck('Real-time tracking'),
+            _heroCheck('Secure payments'),
+          ],
+        ),
+        const SizedBox(height: 36),
+        _heroSearchBar(),
+        const SizedBox(height: 20),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: ServiceCategories.popular.map((cat) {
+            return _heroCategoryChip(cat.icon, cat.name);
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _heroCheck(String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.check_circle, color: Colors.green.shade300, size: 18),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 15),
+        ),
+      ],
+    );
+  }
+
+  Widget _heroSearchBar() {
+    final searchField = _heroSearchField(
+      hintText: 'What service do you need?',
+      prefixIcon: Icons.search,
+      controller: _heroSearchController,
+      onSubmitted: _goToSearch,
+    );
+    final locationField = _heroSearchField(
+      hintText: 'Location',
+      prefixIcon: Icons.location_on_outlined,
+    );
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stacked = constraints.maxWidth < 680;
+          final button = _heroGetAGuyButton(expand: stacked);
+          if (stacked) {
+            return Column(
+              children: [
+                searchField,
+                Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
+                locationField,
+                Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
+                button,
+              ],
+            );
+          }
+          return IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(flex: 3, child: searchField),
+                Container(width: 1, color: Colors.grey.shade200),
+                Expanded(flex: 2, child: locationField),
+                Container(width: 1, color: Colors.grey.shade200),
+                button,
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _heroSearchField({
+    required String hintText,
+    required IconData prefixIcon,
+    TextEditingController? controller,
+    void Function(String)? onSubmitted,
+  }) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(color: Colors.black),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.grey.shade500),
+        prefixIcon: Icon(prefixIcon, color: Colors.grey),
+        border: InputBorder.none,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
+      ),
+      onSubmitted: onSubmitted,
+    );
+  }
+
+  Widget _heroGetAGuyButton({bool expand = false}) {
+    final button = ElevatedButton(
+      onPressed: () {
+        _requireAuthThen(context, () {
+          context.push('/request-service');
+        });
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 32,
+          vertical: 16,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: const Text(
+        'Get a Guy',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: expand ? SizedBox(width: double.infinity, child: button) : button,
+    );
+  }
+
+  Widget _heroIllustration(Map<String, dynamic> platformStats) {
+    return Container(
+      height: 400,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.white.withValues(alpha: 0.08),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.people_alt_outlined,
+            size: 80,
+            color: Colors.white.withValues(alpha: 0.4),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            '${platformStats['totalProviders'] ?? 0}+ Providers Available',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.white.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '24/7 Service • Nairobi • Mombasa • Kisumu',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              3,
+              (i) => Padding(
+                padding: EdgeInsets.only(left: i > 0 ? -8 : 0),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.5),
+                  child: Icon(Icons.person, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Join ${platformStats['totalUsers'] ?? 0}+ users on The Guy',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -707,17 +742,13 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.amber.shade300),
           ),
-          child: Row(
-            children: [
-              Icon(Icons.flash_on, color: Colors.orange.shade800, size: 36),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Text(
-                  'Need help urgently? Get matched with nearby professionals instantly.',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
-                ),
-              ),
-              ElevatedButton(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final text = Text(
+                'Need help urgently? Get matched with nearby professionals instantly.',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
+              );
+              final button = ElevatedButton(
                 onPressed: () {
                   _requireAuthThen(context, () {
                     context.push('/request-service');
@@ -730,8 +761,32 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text('Get Help Now', style: TextStyle(fontWeight: FontWeight.w600)),
-              ),
-            ],
+              );
+              if (constraints.maxWidth < 520) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.flash_on, color: Colors.orange.shade800, size: 36),
+                        const SizedBox(width: 12),
+                        Expanded(child: text),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    button,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Icon(Icons.flash_on, color: Colors.orange.shade800, size: 36),
+                  const SizedBox(width: 16),
+                  Expanded(child: text),
+                  button,
+                ],
+              );
+            },
           ),
         ),
       ),
