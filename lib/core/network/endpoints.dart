@@ -39,6 +39,11 @@ class Endpoints {
   static const String adminSafetyModerationQueue = '$adminBase/trust-safety/moderation-queue';
   static const String adminSafetyRiskScores = '$adminBase/trust-safety/risk-scores';
 
+  // Admin Verification
+  static const String adminVerificationPending = '$adminBase/verification/pending';
+  static String adminVerificationApprove(String docId) => '$adminBase/verification/$docId/approve';
+  static String adminVerificationReject(String docId) => '$adminBase/verification/$docId/reject';
+
   // Auth
   static const String register = '/api/auth/register';
   static const String login = '/api/auth/login';

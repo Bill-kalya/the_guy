@@ -318,6 +318,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
                 _sectionLabel('OPERATIONS'),
                 _navItem('finance', 'Finance', Icons.account_balance_rounded, '/admin/finance'),
                 _navItem('safety', 'Trust & Safety', Icons.shield_rounded, '/admin/trust-safety'),
+                _navItem('verification', 'Verification', Icons.verified_user_rounded, '/admin/verification'),
                 const SizedBox(height: 8),
                 _sectionLabel('SYSTEM'),
                 _navItem('analytics', 'Analytics', Icons.analytics_rounded, '/admin/analytics'),
@@ -467,6 +468,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
             ),
             _drawerItem('finance', 'Finance', Icons.account_balance_rounded, '/admin/finance'),
             _drawerItem('safety', 'Trust & Safety', Icons.shield_rounded, '/admin/trust-safety'),
+            _drawerItem('verification', 'Verification', Icons.verified_user_rounded, '/admin/verification'),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text('SYSTEM', style: TextStyle(color: Colors.grey, fontSize: 11, letterSpacing: 1.2)),

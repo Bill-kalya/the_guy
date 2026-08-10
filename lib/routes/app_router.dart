@@ -33,6 +33,7 @@ import '../features/admin/presentation/pages/admin_analytics_page.dart';
 import '../features/admin/presentation/pages/admin_jobs_page.dart';
 import '../features/admin/presentation/pages/admin_settings_page.dart';
 import '../features/admin/presentation/pages/trust_safety_center_page.dart';
+import '../features/admin/presentation/pages/admin_verification_page.dart';
 
 // Provider routes
 import '../features/provider/presentation/screens/provider_home_screen.dart';
@@ -215,6 +216,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'admin-trust-safety',
         path: '/admin/trust-safety',
         builder: (context, state) => const TrustSafetyCenterPage(),
+      ),
+      GoRoute(
+        name: 'admin-verification',
+        path: '/admin/verification',
+        builder: (context, state) => const AdminVerificationPage(),
       ),
       GoRoute(
         name: 'admin-profile',
