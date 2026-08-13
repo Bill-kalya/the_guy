@@ -540,7 +540,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           ],
         ),
         const SizedBox(height: 36),
-        _heroSearchBar(),
+        _heroSearchBar(forceRow: !compact),
         const SizedBox(height: 20),
         Wrap(
           spacing: 8,
@@ -567,7 +567,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     );
   }
 
-  Widget _heroSearchBar() {
+  Widget _heroSearchBar({bool forceRow = false}) {
     final searchField = _heroSearchField(
       hintText: 'What service do you need?',
       prefixIcon: Icons.search,
@@ -592,7 +592,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final stacked = constraints.maxWidth < 680;
+          final stacked = !forceRow && constraints.maxWidth < 680;
           final button = _heroGetAGuyButton(expand: stacked);
           if (stacked) {
             return Column(
