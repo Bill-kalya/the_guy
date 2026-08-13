@@ -1,19 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
+import '../../../../shared/providers/auto_refresh_mixin.dart';
 
 final adminFinanceProvider = NotifierProvider<AdminFinanceNotifier, AdminFinanceState>(
   AdminFinanceNotifier.new,
 );
 
-class AdminFinanceNotifier extends Notifier<AdminFinanceState> {
+class AdminFinanceNotifier extends Notifier<AdminFinanceState> with AutoRefreshMixin<AdminFinanceState> {
   late final ApiClient _api;
 
   @override
   AdminFinanceState build() {
     _api = ref.watch(apiClientProvider);
+    startAutoRefresh();
     return AdminFinanceState.initial();
   }
+
+  @override
+  Future<void> autoRefresh() => loadAll();
 
   Future<void> loadAll() async {
     state = state.copyWith(isLoading: true, error: null);

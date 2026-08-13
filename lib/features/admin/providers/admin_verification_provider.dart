@@ -1,19 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
+import '../../../../shared/providers/auto_refresh_mixin.dart';
 
 final adminVerificationProvider = NotifierProvider<AdminVerificationNotifier, AdminVerificationState>(
   AdminVerificationNotifier.new,
 );
 
-class AdminVerificationNotifier extends Notifier<AdminVerificationState> {
+class AdminVerificationNotifier extends Notifier<AdminVerificationState> with AutoRefreshMixin<AdminVerificationState> {
   late final ApiClient _apiClient;
 
   @override
   AdminVerificationState build() {
     _apiClient = ref.watch(apiClientProvider);
+    startAutoRefresh();
     return AdminVerificationState.initial();
   }
+
+  @override
+  Future<void> autoRefresh() => loadPending();
 
   Future<void> loadPending({int page = 0, int size = 20}) async {
     state = state.copyWith(isLoading: true);

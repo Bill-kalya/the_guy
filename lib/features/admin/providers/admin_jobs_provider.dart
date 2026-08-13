@@ -1,19 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
+import '../../../../shared/providers/auto_refresh_mixin.dart';
 
 final adminJobsProvider = NotifierProvider<AdminJobsNotifier, AdminJobsState>(
   AdminJobsNotifier.new,
 );
 
-class AdminJobsNotifier extends Notifier<AdminJobsState> {
+class AdminJobsNotifier extends Notifier<AdminJobsState> with AutoRefreshMixin<AdminJobsState> {
   late final ApiClient _api;
 
   @override
   AdminJobsState build() {
     _api = ref.watch(apiClientProvider);
+    startAutoRefresh();
     return AdminJobsState.initial();
   }
+
+  @override
+  Future<void> autoRefresh() => loadAll();
 
   Future<void> loadAll() async {
     state = state.copyWith(isLoading: true, error: null);

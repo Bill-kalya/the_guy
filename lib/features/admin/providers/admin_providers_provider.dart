@@ -2,19 +2,24 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/endpoints.dart';
+import '../../../../shared/providers/auto_refresh_mixin.dart';
 
 final adminProvidersProvider = NotifierProvider<AdminProvidersNotifier, AdminProvidersState>(
   AdminProvidersNotifier.new,
 );
 
-class AdminProvidersNotifier extends Notifier<AdminProvidersState> {
+class AdminProvidersNotifier extends Notifier<AdminProvidersState> with AutoRefreshMixin<AdminProvidersState> {
   late final ApiClient _api;
 
   @override
   AdminProvidersState build() {
     _api = ref.watch(apiClientProvider);
+    startAutoRefresh();
     return AdminProvidersState.initial();
   }
+
+  @override
+  Future<void> autoRefresh() => loadAll();
 
   Future<void> loadAll() async {
     state = state.copyWith(isLoading: true, error: null);
