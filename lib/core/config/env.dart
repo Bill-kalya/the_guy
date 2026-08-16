@@ -27,6 +27,12 @@ class Env {
     defaultValue: '',
   );
 
+  // Stripe (Card Payments)
+  static const String stripePublishableKey = String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+    defaultValue: 'pk_test_51U58I0QjreTRSEClQlrVHY2yNbgCBlqX6BhPUYIRDyPo9G0VUyznF82N3bsGnpWKduflzSeOdXX2K30JAnHMeSYo00ETIUHrds',
+  );
+
   // Environment type
   static const bool isProduction = bool.fromEnvironment(
     'IS_PRODUCTION',

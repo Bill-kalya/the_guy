@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/config/env.dart';
@@ -13,6 +14,11 @@ void main() async {
 
   if (Env.isDevelopment) {
     debugPrint('🚀 The Guy app starting in development mode');
+  }
+
+  if (Env.stripePublishableKey.isNotEmpty) {
+    Stripe.publishableKey = Env.stripePublishableKey;
+    await Stripe.instance.applySettings();
   }
 
   final prefs = await SharedPreferences.getInstance();

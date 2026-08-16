@@ -25,7 +25,7 @@ class PaymentNotifier extends Notifier<PaymentState> {
   }
 
   Future<void> initiateMpesaPayment(String jobId, {String phoneNumber = ''}) async {
-    state = state.copyWith(isProcessing: true, error: null);
+    state = state.copyWith(isProcessing: true, error: null, selectedMethod: 'MPESA');
 
     try {
       final response = await _apiClient.post(
@@ -55,6 +55,45 @@ class PaymentNotifier extends Notifier<PaymentState> {
         error: 'Failed to initiate payment. Please try again.',
       );
     }
+  }
+
+  Future<void> initiateCardPayment(String jobId) async {
+    state = state.copyWith(isProcessing: true, error: null, selectedMethod: 'CARD');
+
+    try {
+      final response = await _apiClient.post(
+        Endpoints.initiateMpesa, // Same endpoint, different method param
+        data: {
+          'jobId': jobId,
+          'method': 'CARD',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        state = state.copyWith(
+          isProcessing: false,
+          paymentId: data['paymentId'],
+          amount: (data['amount'] ?? 0).toDouble(),
+          clientSecret: data['clientSecret'],
+          status: 'awaiting_card_input',
+        );
+      }
+    } catch (e) {
+      ErrorHandler.logError('Card payment initiation failed', e);
+      state = state.copyWith(
+        isProcessing: false,
+        error: 'Failed to initiate card payment. Please try again.',
+      );
+    }
+  }
+
+  void setSelectedMethod(String method) {
+    state = state.copyWith(selectedMethod: method, error: null);
+  }
+
+  void setCardProcessing() {
+    state = state.copyWith(status: 'card_processing');
   }
 
   void _startPolling(String paymentId) {
@@ -136,6 +175,8 @@ class PaymentState {
   final String status;
   final String? error;
   final double amount;
+  final String? clientSecret;
+  final String? selectedMethod;
 
   PaymentState({
     this.isProcessing = false,
@@ -144,6 +185,8 @@ class PaymentState {
     this.status = 'pending',
     this.error,
     this.amount = 0.0,
+    this.clientSecret,
+    this.selectedMethod,
   });
 
   factory PaymentState.initial() {
@@ -157,6 +200,8 @@ class PaymentState {
     String? status,
     String? error,
     double? amount,
+    String? clientSecret,
+    String? selectedMethod,
   }) {
     return PaymentState(
       isProcessing: isProcessing ?? this.isProcessing,
@@ -165,6 +210,8 @@ class PaymentState {
       status: status ?? this.status,
       error: error ?? this.error,
       amount: amount ?? this.amount,
+      clientSecret: clientSecret ?? this.clientSecret,
+      selectedMethod: selectedMethod ?? this.selectedMethod,
     );
   }
 

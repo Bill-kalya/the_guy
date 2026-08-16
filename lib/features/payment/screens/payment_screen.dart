@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import '../providers/payment_provider.dart';
 import '../../../shared/widgets/loading_widget.dart';
 import '../../../core/themes/colors.dart';
@@ -45,14 +46,30 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     children: [
                       _buildPaymentSummary(paymentState.amount),
                       const SizedBox(height: 24),
-                      _buildPhoneInput(),
-                      const SizedBox(height: 16),
-                      _buildMpesaSection(),
+                      _buildMethodSelector(paymentNotifier, paymentState),
                       const SizedBox(height: 24),
-                      _buildPaymentButton(paymentNotifier),
+                      if (paymentState.selectedMethod == 'MPESA') ...[
+                        _buildPhoneInput(),
+                        const SizedBox(height: 16),
+                        _buildMpesaInfo(),
+                        const SizedBox(height: 24),
+                        _buildMpesaButton(paymentNotifier),
+                      ],
+                      if (paymentState.selectedMethod == 'CARD') ...[
+                        _buildCardInfo(),
+                        const SizedBox(height: 24),
+                        _buildCardButton(paymentNotifier),
+                      ],
                       if (paymentState.status == 'pending_verification')
-                        _buildPendingVerification(),
-                      if (paymentState.error != null)
+                        _buildPendingVerification('Check your phone to complete payment. Waiting for confirmation...'),
+                      if (paymentState.status == 'card_processing')
+                        _buildPendingVerification('Processing card payment...'),
+                      if (paymentState.status == 'completed')
+                        _buildSuccessBanner(),
+                      if (paymentState.status == 'failed')
+                        _buildFailedBanner(paymentState.error),
+                      if (paymentState.error != null &&
+                          paymentState.status != 'failed')
                         _buildErrorBanner(paymentState.error!),
                     ],
                   ),
@@ -103,6 +120,40 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     );
   }
 
+  Widget _buildMethodSelector(PaymentNotifier notifier, PaymentState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Payment Method',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _MethodOption(
+                icon: Icons.phone_android,
+                label: 'M-Pesa',
+                isSelected: state.selectedMethod == 'MPESA',
+                onTap: () => notifier.setSelectedMethod('MPESA'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _MethodOption(
+                icon: Icons.credit_card,
+                label: 'Card (Stripe)',
+                isSelected: state.selectedMethod == 'CARD',
+                onTap: () => notifier.setSelectedMethod('CARD'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildPhoneInput() {
     return TextField(
       controller: _phoneController,
@@ -123,7 +174,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     );
   }
 
-  Widget _buildMpesaSection() {
+  Widget _buildMpesaInfo() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -168,7 +219,46 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     );
   }
 
-  Widget _buildPaymentButton(PaymentNotifier notifier) {
+  Widget _buildCardInfo() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Icon(Icons.credit_card, color: Colors.white, size: 24),
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'CARD (STRIPE)',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text('Pay securely with credit or debit card',
+                    style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMpesaButton(PaymentNotifier notifier) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -185,7 +275,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               : phone.startsWith('254')
                   ? '+$phone'
                   : '+254${phone.substring(1)}';
-          notifier.initiateMpesaPayment(widget.jobId, phoneNumber: normalizedPhone);
+          notifier.initiateMpesaPayment(widget.jobId,
+              phoneNumber: normalizedPhone);
         },
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 50),
@@ -196,7 +287,57 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     );
   }
 
-  Widget _buildPendingVerification() {
+  Widget _buildCardButton(PaymentNotifier notifier) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () async {
+          try {
+            await notifier.initiateCardPayment(widget.jobId);
+            final newState = ref.read(paymentProvider);
+
+            if (newState.clientSecret != null) {
+              await Stripe.instance.initPaymentSheet(
+                paymentSheetParameters: SetupPaymentSheetParameters(
+                  paymentIntentClientSecret: newState.clientSecret!,
+                  merchantDisplayName: 'The Guy',
+                ),
+              );
+              await Stripe.instance.presentPaymentSheet();
+
+              notifier.setCardProcessing();
+              notifier.checkPaymentStatus();
+            }
+          } on StripeException catch (e) {
+            if (e.error.code != FailureCode.Canceled) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Card payment failed: ${e.error.message}')),
+                );
+              }
+              notifier.reset();
+            }
+          } catch (e) {
+            if (!e.toString().contains('canceled')) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Card payment failed: $e')),
+                );
+              }
+              notifier.reset();
+            }
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 50),
+          backgroundColor: Colors.blue.shade700,
+        ),
+        child: const Text('Pay with Card', style: TextStyle(fontSize: 16)),
+      ),
+    );
+  }
+
+  Widget _buildPendingVerification(String message) {
     return Container(
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(16),
@@ -208,17 +349,62 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         children: [
           const CircularProgressIndicator(strokeWidth: 2),
           const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'Check your phone to complete payment. Waiting for confirmation...',
-              style: TextStyle(fontSize: 14),
-            ),
+          Expanded(
+            child: Text(message, style: const TextStyle(fontSize: 14)),
           ),
           TextButton(
             onPressed: () {
               ref.read(paymentProvider.notifier).checkPaymentStatus();
             },
             child: const Text('Check'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuccessBanner() {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.green.shade200),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.green),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Payment successful! Funds are held in escrow.',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFailedBanner(String? error) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade700),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              error ?? 'Payment failed. Please try again.',
+              style: TextStyle(color: Colors.red.shade700),
+            ),
           ),
         ],
       ),
@@ -242,6 +428,56 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             child: Text(message, style: TextStyle(color: Colors.red.shade700)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MethodOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MethodOption({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? Colors.blue.shade50 : null,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: isSelected ? Colors.blue : Colors.grey,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? Colors.blue : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
