@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'routes/app_router.dart';
 import 'core/themes/app_theme.dart';
+import 'core/network/fcm_service.dart';
 import 'features/auth/providers/auth_provider.dart';
 
 class TheGuyApp extends ConsumerStatefulWidget {
@@ -21,6 +22,7 @@ class _TheGuyAppState extends ConsumerState<TheGuyApp> {
 
   void _checkAuthAndInitialize() async {
     await ref.read(authProvider.notifier).checkAuthStatus();
+    ref.read(fcmServiceProvider).initialize();
   }
 
   @override

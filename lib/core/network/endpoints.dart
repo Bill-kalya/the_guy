@@ -120,6 +120,12 @@ class Endpoints {
   static const String sendMessage = '/api/chat/send';
   static const String markAsRead = '/api/chat/read';
 
+  // Notifications
+  static const String notifications = '/api/notifications';
+  static const String notificationsUnreadCount = '/api/notifications/unread-count';
+  static const String notificationsMarkRead = '/api/notifications/mark-read';
+  static const String notificationsFcmToken = '/api/notifications/fcm-token';
+
   // Categories
   static const String categories = '/api/categories';
   static const String subCategories = '/api/categories/sub';

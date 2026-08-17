@@ -19,6 +19,7 @@ import '../features/jobs/screens/active_job_screen.dart';
 import '../features/jobs/screens/quote_response_screen.dart';
 import '../features/chat/screens/chat_screen.dart';
 import '../features/payment/screens/payment_screen.dart';
+import '../features/notifications/screens/notifications_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../shared/models/nearby_provider_model.dart';
@@ -381,6 +382,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'edit-profile',
         path: '/profile/edit',
         builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        name: 'notifications',
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
 
       // Provider shell (bottom nav for mobile)
