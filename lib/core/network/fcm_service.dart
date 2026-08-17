@@ -1,10 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/network/api_client.dart';
-import '../core/network/endpoints.dart';
-import '../core/storage/secure_storage.dart';
+import 'api_client.dart';
+import 'endpoints.dart';
+import '../storage/secure_storage.dart';
 
 final fcmServiceProvider = Provider<FcmService>((ref) {
   return FcmService(ref);
@@ -49,12 +49,12 @@ class FcmService {
         data: {'token': token, 'platform': _getPlatform()},
       );
     } catch (e) {
-      debugPrint('[FCM] Token registration failed: $e');
+      print('[FCM] Token registration failed: $e');
     }
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
-    debugPrint('[FCM] Foreground message: ${message.messageId}');
+    print('[FCM] Foreground message: ${message.messageId}');
     final data = message.data;
     final type = data['type'] ?? 'UNKNOWN';
 
@@ -66,7 +66,7 @@ class FcmService {
   }
 
   void _handleMessageOpenedApp(RemoteMessage message) {
-    debugPrint('[FCM] Message opened app: ${message.messageId}');
+    print('[FCM] Message opened app: ${message.messageId}');
     final data = message.data;
     final jobId = data['jobId'];
     if (jobId != null && jobId.toString().isNotEmpty) {
@@ -79,10 +79,7 @@ class FcmService {
   }
 
   String _getPlatform() {
-    return Theme.of(Widgets.platformDispatcher.views.first).platform ==
-            TargetPlatform.iOS
-        ? 'ios'
-        : 'android';
+    return Platform.isIOS ? 'ios' : 'android';
   }
 
   String _defaultTitle(String type) {
@@ -114,5 +111,5 @@ class FcmService {
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('[FCM] Background message: ${message.messageId}');
+  print('[FCM] Background message: ${message.messageId}');
 }

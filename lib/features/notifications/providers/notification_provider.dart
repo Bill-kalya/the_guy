@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/endpoints.dart';
@@ -22,7 +23,7 @@ class NotificationNotifier extends Notifier<NotificationState> {
     try {
       final response = await _apiClient.get(
         Endpoints.notifications,
-        queryParameters: {'page': page, 'size': 20},
+        params: {'page': page, 'size': 20},
       );
 
       if (response.statusCode == 200) {
