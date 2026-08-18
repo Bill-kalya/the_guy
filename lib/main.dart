@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -12,26 +13,40 @@ import 'core/storage/shared_prefs.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint('[FCM] Background message: ${message.messageId}');
+  print('[FCM] Background message: ${message.messageId}');
 }
 
 void main() async {
   final _now = DateTime.now();
-  debugPrint(
+  print(
       'BUILD: ${_now.year}-${_now.month.toString().padLeft(2, '0')}-${_now.day.toString().padLeft(2, '0')}-002');
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Env.isDevelopment) {
-    debugPrint('🚀 The Guy app starting in development mode');
+    print('🚀 The Guy app starting in development mode');
   }
 
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+    print('[FCM] Firebase initialized successfully');
+  } catch (e, st) {
+    print('[FCM] Firebase init error: $e');
+    print('[FCM] Stack trace: $st');
+  }
 
-  FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+  }
 
   if (Env.stripePublishableKey.isNotEmpty) {
-    Stripe.publishableKey = Env.stripePublishableKey;
-    await Stripe.instance.applySettings();
+    try {
+      Stripe.publishableKey = Env.stripePublishableKey;
+      await Stripe.instance.applySettings();
+      print('[Stripe] Initialized successfully');
+    } catch (e, st) {
+      print('[Stripe] Init error: $e');
+      print('[Stripe] Stack trace: $st');
+    }
   }
 
   final prefs = await SharedPreferences.getInstance();

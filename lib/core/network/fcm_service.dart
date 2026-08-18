@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_client.dart';
 import 'endpoints.dart';
@@ -17,27 +17,35 @@ class FcmService {
   FcmService(this._ref);
 
   Future<void> initialize() async {
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (kIsWeb) {
+      print('[FCM] Skipping FCM init on web');
+      return;
+    }
+    try {
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      final token = await _messaging.getToken();
-      if (token != null) {
-        await _registerToken(token);
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        final token = await _messaging.getToken();
+        if (token != null) {
+          await _registerToken(token);
+        }
+
+        _messaging.onTokenRefresh.listen(_registerToken);
+
+        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+
+        final initialMessage = await _messaging.getInitialMessage();
+        if (initialMessage != null) {
+          _handleMessageOpenedApp(initialMessage);
+        }
       }
-
-      _messaging.onTokenRefresh.listen(_registerToken);
-
-      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
-
-      final initialMessage = await _messaging.getInitialMessage();
-      if (initialMessage != null) {
-        _handleMessageOpenedApp(initialMessage);
-      }
+    } catch (e) {
+      print('[FCM] Initialize failed: $e');
     }
   }
 
@@ -79,7 +87,8 @@ class FcmService {
   }
 
   String _getPlatform() {
-    return Platform.isIOS ? 'ios' : 'android';
+    if (kIsWeb) return 'web';
+    return defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
   }
 
   String _defaultTitle(String type) {

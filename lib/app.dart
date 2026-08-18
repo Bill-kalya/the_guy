@@ -22,7 +22,11 @@ class _TheGuyAppState extends ConsumerState<TheGuyApp> {
 
   void _checkAuthAndInitialize() async {
     await ref.read(authProvider.notifier).checkAuthStatus();
-    ref.read(fcmServiceProvider).initialize();
+    try {
+      ref.read(fcmServiceProvider).initialize();
+    } catch (e) {
+      print('[App] FCM init failed: $e');
+    }
   }
 
   @override
