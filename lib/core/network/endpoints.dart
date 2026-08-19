@@ -182,6 +182,9 @@ class EndpointBuilder {
   static String adminReinstateProvider(String providerId) =>
       '${Endpoints.adminBase}/trust-safety/providers/$providerId/reinstate';
 
+  static String adminDemoteProvider(String providerId) =>
+      '${Endpoints.adminBase}/trust-safety/providers/$providerId/demote';
+
   static String trackingEta(String jobId) =>
       '/api/tracking/$jobId/eta';
 

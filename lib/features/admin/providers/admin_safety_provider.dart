@@ -150,6 +150,22 @@ class AdminSafetyNotifier extends Notifier<AdminSafetyState> with AutoRefreshMix
     }
     return false;
   }
+
+  Future<bool> demoteProvider(String providerId, {String reason = 'Demoted to customer by admin'}) async {
+    try {
+      final response = await _apiClient.post(
+        EndpointBuilder.adminDemoteProvider(providerId),
+        data: {'reason': reason},
+      );
+      if (response.statusCode == 200) {
+        await fetchModerationQueue();
+        return true;
+      }
+    } catch (e) {
+      state = state.copyWith(actionError: 'Failed to demote provider');
+    }
+    return false;
+  }
 }
 
 class AdminSafetyState {

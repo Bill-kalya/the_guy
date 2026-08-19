@@ -7,6 +7,7 @@ import '../widgets/admin_widgets.dart';
 import '../../../../core/themes/colors.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/admin_providers_provider.dart';
+import '../../providers/admin_safety_provider.dart';
 
 class AdminProvidersPage extends ConsumerStatefulWidget {
   const AdminProvidersPage({super.key});
@@ -19,7 +20,7 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
   String _statusFilter = 'All';
   final _searchController = TextEditingController();
 
-  static const _statusOptions = ['All', 'ACTIVE', 'SUSPENDED', 'BANNED'];
+  static const _statusOptions = ['All', 'ACTIVE', 'SUSPENDED', 'BANNED', 'INACTIVE'];
 
   @override
   void initState() {
@@ -227,6 +228,7 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
     final (statusLabel, statusColor) = switch (providerStatus) {
       'SUSPENDED' => ('Suspended', AppColors.error),
       'BANNED' => ('Banned', Colors.grey),
+      'INACTIVE' => ('Demoted', Colors.orange),
       _ => ('Active', AppColors.success),
     };
     final initials = name.toString().split(' ').map((w) => w[0]).take(2).join();
@@ -490,11 +492,16 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
   }
 
   Widget _buildProviderActionMenu(dynamic p) {
+    final providerStatus = (p['providerStatus'] ?? 'ACTIVE').toString().toUpperCase();
+    final canDemote = providerStatus == 'ACTIVE' || providerStatus == 'SUSPENDED';
+
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert, color: Colors.grey.shade400, size: 20),
       onSelected: (value) => _handleProviderAction(value, p),
       itemBuilder: (context) => [
         const PopupMenuItem(value: 'view_as', child: _ProviderMenuAction(icon: Icons.remove_red_eye, label: 'View as Provider', isHighlight: true)),
+        if (canDemote)
+          const PopupMenuItem(value: 'demote', child: _ProviderMenuAction(icon: Icons.person_remove, label: 'Demote to User', isDestructive: true)),
       ],
     );
   }
@@ -520,6 +527,42 @@ class _AdminProvidersPageState extends ConsumerState<AdminProvidersPage> {
       if (confirmed == true && mounted && userId.toString().isNotEmpty) {
         await ref.read(authProvider.notifier).impersonateUser(userId.toString());
         if (mounted) context.go('/provider/home');
+      }
+    } else if (action == 'demote') {
+      final name = p['fullName'] ?? 'this provider';
+      final providerId = (p['id'] ?? '').toString();
+      if (providerId.isEmpty) return;
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Demote Provider'),
+          content: Text(
+            'Remove $name from being a provider and convert them back to a normal user?\n\n'
+            'They will no longer be able to receive jobs or appear in provider search results.',
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('Demote $name', style: const TextStyle(color: AppColors.error)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true && mounted) {
+        final success = await ref.read(adminSafetyProvider.notifier).demoteProvider(providerId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(success ? '$name has been demoted to a customer' : 'Failed to demote $name'),
+              backgroundColor: success ? AppColors.success : AppColors.error,
+            ),
+          );
+          if (success) {
+            await ref.read(adminProvidersProvider.notifier).loadAll();
+          }
+        }
       }
     }
   }
