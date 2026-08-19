@@ -477,7 +477,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
             padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 80),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final compact = constraints.maxWidth < 1000;
+                final compact = constraints.maxWidth < 1024;
                 final illustration = _heroIllustration(platformStats);
                 return compact
                     ? Column(
@@ -489,6 +489,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         ],
                       )
                     : Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
                             flex: 5,
@@ -516,7 +517,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
             fontSize: compact ? 36 : 52,
             fontWeight: FontWeight.bold,
             color: Colors.white,
-            height: 1.15,
+            height: 1.23,
             letterSpacing: -1,
           ),
         ),
@@ -605,7 +606,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
               ],
             );
           }
-          return IntrinsicHeight(
+          return SizedBox(
+            height: 56,
             child: Row(
               children: [
                 Expanded(flex: 3, child: searchField),
@@ -677,7 +679,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 
   Widget _heroIllustration(Map<String, dynamic> platformStats) {
     return Container(
-      height: 400,
+      height: 460,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: Colors.white.withValues(alpha: 0.08),
