@@ -29,6 +29,7 @@ class HomeScreenDesktop extends ConsumerStatefulWidget {
 class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   final _topNavSearchController = TextEditingController();
   final _heroSearchController = TextEditingController();
+  final _howItWorksKey = GlobalKey();
 
   @override
   void initState() {
@@ -36,6 +37,13 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getLocation();
       _connectWebSocket();
+
+      ref.listenManual<AsyncValue<List<NearbyProviderModel>>>(
+        nearbyProvidersProvider,
+        (_, next) {
+          next.whenData(_subscribeToProviders);
+        },
+      );
     });
   }
 
@@ -44,6 +52,14 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     _topNavSearchController.dispose();
     _heroSearchController.dispose();
     super.dispose();
+  }
+
+  void _subscribeToProviders(List<NearbyProviderModel> providers) {
+    if (providers.isEmpty) return;
+    final wsService = ref.read(webSocketServiceProvider);
+    wsService.subscribeToNearbyProviders(
+      providers.map((p) => p.id).toList(),
+    );
   }
 
   void _goToSearch(String q) {
@@ -226,7 +242,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                             ),
                             const SizedBox(width: 24),
                             _navLink('How It Works', false, () {
-                              // Scroll to the How It Works section
+                              Scrollable.ensureVisible(
+                                _howItWorksKey.currentContext!,
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.easeInOut,
+                              );
                             }),
                             const SizedBox(width: 24),
                             _navLink('Become a Provider', false, () {
@@ -355,58 +375,6 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     AsyncValue<List<NearbyProviderModel>> nearbyProvidersAsync,
     Map<String, ProviderLocationUpdate> liveLocations,
   ) {
-    if (locationState.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (locationState.error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.location_off, size: 64, color: Colors.grey),
-              const SizedBox(height: 16),
-              Text(
-                locationState.error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, color: Colors.grey),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: locationState.permissionBlocked
-                        ? _openLocationSettings
-                        : _enableLocation,
-                    icon: Icon(
-                      locationState.permissionBlocked
-                          ? Icons.settings
-                          : Icons.gps_fixed,
-                    ),
-                    label: Text(
-                      locationState.permissionBlocked
-                          ? 'Open Settings'
-                          : 'Try Again',
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _chooseTownManually,
-                    icon: const Icon(Icons.location_city),
-                    label: const Text('Choose Location Manually'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -416,12 +384,12 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           _buildUrgentHelpBanner(),
           _buildStatsSection(),
           _buildServiceCategories(),
-          _buildHowItWorks(),
           _buildNearbySection(
             locationState,
             nearbyProvidersAsync,
             liveLocations,
           ),
+          _buildHowItWorks(),
           _buildBecomeProviderSection(isAuthenticated),
           const DownloadAppSection(),
           _buildFooter(),
@@ -629,10 +597,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       controller: _heroSearchController,
       onSubmitted: _goToSearch,
     );
-    final locationField = _heroSearchField(
-      hintText: 'Your location',
-      prefixIcon: Icons.location_on_outlined,
-    );
+    final locationField = _heroLocationField();
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -702,12 +667,56 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     );
   }
 
+  Widget _heroLocationField() {
+    final location = ref.watch(locationProvider);
+
+    String label;
+    if (location.currentPosition != null) {
+      if (location.notice != null && location.notice!.contains('near')) {
+        label = location.notice!.replaceAll('Showing providers near ', '');
+      } else if (location.isFresh) {
+        label = 'Current location';
+      } else {
+        label = 'Location set';
+      }
+    } else {
+      label = 'Choose your location';
+    }
+
+    return InkWell(
+      onTap: () => _chooseTownManually(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            const Icon(Icons.location_on_outlined, color: Colors.grey),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.black87, fontSize: 15),
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _heroGetAGuyButton({bool expand = false}) {
     final button = ElevatedButton(
       onPressed: () {
-        _requireAuthThen(context, () {
-          context.push('/request-service');
-        });
+        final query = _heroSearchController.text.trim();
+        if (query.isNotEmpty) {
+          context.push('/search?q=${Uri.encodeComponent(query)}');
+        } else {
+          _requireAuthThen(context, () {
+            context.push('/request-service');
+          });
+        }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
@@ -716,7 +725,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: const Text(
-        'Get a Guy',
+        'Find a Guy',
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
@@ -727,66 +736,170 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   }
 
   Widget _heroIllustration(Map<String, dynamic> platformStats) {
+    final providers =
+        ref.watch(nearbyProvidersProvider).valueOrNull ?? [];
+    final providerCount =
+        platformStats['totalProviders'] ?? providers.length;
+
     return Container(
       height: 460,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: Colors.white.withValues(alpha: 0.1),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 30,
+            offset: const Offset(0, 14),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.location_pin,
-              size: 72,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Services Across Kenya',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: Colors.white.withValues(alpha: 0.95),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.grey.shade100, Colors.white],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
             ),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
+          ),
+          Positioned.fill(
+            child: CustomPaint(painter: _HeroMapPainter()),
+          ),
+          const Positioned(
+            top: 110,
+            left: 110,
+            child: _HeroProviderMarker(icon: Icons.plumbing),
+          ),
+          const Positioned(
+            top: 190,
+            right: 110,
+            child: _HeroProviderMarker(icon: Icons.electrical_services),
+          ),
+          const Positioned(
+            bottom: 130,
+            left: 170,
+            child: _HeroProviderMarker(icon: Icons.cleaning_services),
+          ),
+          const Positioned(
+            bottom: 90,
+            right: 160,
+            child: _HeroProviderMarker(icon: Icons.build),
+          ),
+          Positioned(
+            top: 24,
+            left: 24,
+            right: 24,
+            child: Row(
               children: [
-                _heroLocationChip('Nairobi'),
-                _heroLocationChip('Mombasa'),
-                _heroLocationChip('Kisumu'),
-                _heroLocationChip('Nakuru'),
-                _heroLocationChip('Eldoret'),
+                const Icon(Icons.location_on, color: AppColors.primary),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Professionals near you',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'LIVE',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            left: 24,
+            right: 24,
+            bottom: 24,
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.people_alt_outlined,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$providerCount+ providers',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Ready to help across Kenya',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward, color: AppColors.primary),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _heroLocationChip(String label) {
-    return Chip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.9),
-          fontSize: 13,
-        ),
-      ),
-      backgroundColor: Colors.white.withValues(alpha: 0.12),
-      side: BorderSide.none,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: VisualDensity.compact,
     );
   }
 
@@ -1001,36 +1114,52 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     return SizedBox(
       width: width,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.grey.shade100),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 5),
             ),
           ],
-          border: Border.all(color: Colors.grey.shade100),
         ),
-        child: Column(
+        child: Row(
           children: [
-            Icon(icon, size: 36, color: color.shade600),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.shade50,
+                borderRadius: BorderRadius.circular(14),
               ),
+              child: Icon(icon, color: color.shade700, size: 26),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -1100,45 +1229,52 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     IconData icon,
     MaterialColor color,
   ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
-      decoration: BoxDecoration(
-        color: color.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.shade100),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.shade100,
-              borderRadius: BorderRadius.circular(12),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () {
+        context.push('/search?q=${Uri.encodeComponent(label)}');
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
+        decoration: BoxDecoration(
+          color: color.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.shade100),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 28, color: color.shade700),
             ),
-            child: Icon(icon, size: 28, color: color.shade700),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: Colors.black87,
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.black87,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'From KES 500',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              'From KES 500',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHowItWorks() {
     return Container(
+      key: _howItWorksKey,
       width: double.infinity,
       color: Colors.grey.shade50,
       child: Center(
@@ -1356,17 +1492,6 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       flex: 7,
                       child: nearbyProvidersAsync.when(
                         data: (providers) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (providers.isNotEmpty) {
-                              final wsService = ref.read(
-                                webSocketServiceProvider,
-                              );
-                              wsService.subscribeToNearbyProviders(
-                                providers.map((p) => p.id).toList(),
-                              );
-                            }
-                          });
-
                           return SizedBox(
                             height: 480,
                             child: NearbyProvidersList(
@@ -1554,7 +1679,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Average earnings: KES 45,000/month',
+                          'Get access to customers looking for your services',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 15,
                             color: Colors.green.shade600,
@@ -1582,125 +1708,163 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           constraints: const BoxConstraints(maxWidth: 1400),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow = constraints.maxWidth < 800;
+                final footerLinks = [
+                  _footerColumn('Company', [
+                    'About Us',
+                    'Careers',
+                    'Blog',
+                    'Press',
+                  ]),
+                  _footerColumn('Services', [
+                    ...ServiceCategories.popular.map((c) => c.name),
+                    'All Services',
+                  ]),
+                  _footerColumn('Support', [
+                    'Help Center',
+                    'Safety',
+                    'Terms of Service',
+                    'Privacy Policy',
+                  ]),
+                ];
+
+                return Column(
                   children: [
-                    Expanded(
-                      flex: 3,
-                      child: Column(
+                    if (narrow)
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.asset(
-                                    'assets/icons/icon (2).png',
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'The Guy',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Connecting you with verified professionals for home, business, and personal services.',
-                            style: TextStyle(
-                              color: Colors.grey.shade400,
-                              fontSize: 14,
-                              height: 1.5,
-                            ),
+                          _footerBrand(),
+                          const SizedBox(height: 32),
+                          Wrap(
+                            spacing: 32,
+                            runSpacing: 24,
+                            children: footerLinks,
                           ),
                         ],
+                      )
+                    else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 3, child: _footerBrand()),
+                          const SizedBox(width: 48),
+                          ...footerLinks,
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 48),
-                    _footerColumn('Company', [
-                      'About Us',
-                      'Careers',
-                      'Blog',
-                      'Press',
-                    ]),
-                    const SizedBox(width: 48),
-                    _footerColumn('Services', [
-                      ...ServiceCategories.popular.map((c) => c.name),
-                      'All Services',
-                    ]),
-                    const SizedBox(width: 48),
-                    _footerColumn('Support', [
-                      'Help Center',
-                      'Safety',
-                      'Terms of Service',
-                      'Privacy Policy',
-                    ]),
-                  ],
-                ),
-                const SizedBox(height: 40),
-                Divider(color: Colors.grey.shade800),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '© 2024 The Guy. All rights reserved.',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 14,
+                    const SizedBox(height: 40),
+                    Divider(color: Colors.grey.shade800),
+                    const SizedBox(height: 24),
+                    if (narrow)
+                      Column(
+                        children: [
+                          Text(
+                            '© 2024 The Guy. All rights reserved.',
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _footerSocialIcons(),
+                        ],
+                      )
+                    else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '© 2024 The Guy. All rights reserved.',
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          _footerSocialIcons(),
+                        ],
                       ),
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.facebook,
-                            color: Colors.grey.shade400,
-                            size: 22,
-                          ),
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.camera_alt_outlined,
-                            color: Colors.grey.shade400,
-                            size: 22,
-                          ),
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.alternate_email,
-                            color: Colors.grey.shade400,
-                            size: 22,
-                          ),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
                   ],
-                ),
-              ],
+                );
+              },
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _footerBrand() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/icons/icon (2).png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'The Guy',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Connecting you with verified professionals for home, business, and personal services.',
+          style: TextStyle(
+            color: Colors.grey.shade400,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _footerSocialIcons() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(Icons.facebook, color: Colors.grey.shade400, size: 22),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.camera_alt_outlined,
+            color: Colors.grey.shade400,
+            size: 22,
+          ),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.alternate_email,
+            color: Colors.grey.shade400,
+            size: 22,
+          ),
+          onPressed: () {},
+        ),
+      ],
     );
   }
 
@@ -1732,4 +1896,64 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       ),
     );
   }
+}
+
+class _HeroProviderMarker extends StatelessWidget {
+  final IconData icon;
+  const _HeroProviderMarker({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Icon(icon, color: Colors.white, size: 22),
+    );
+  }
+}
+
+class _HeroMapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey.shade200
+      ..strokeWidth = 1;
+
+    final gridSpacing = 48.0;
+    for (double x = 0; x < size.width; x += gridSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += gridSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    final roadPaint = Paint()
+      ..color = Colors.grey.shade300
+      ..strokeWidth = 2;
+
+    canvas.drawLine(
+      Offset(0, size.height * 0.4),
+      Offset(size.width, size.height * 0.45),
+      roadPaint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.3, 0),
+      Offset(size.width * 0.35, size.height),
+      roadPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
