@@ -540,46 +540,65 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
   Widget _heroLeftColumn({required bool compact}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: const Text(
+            "Kenya's Trusted Service Marketplace",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
         Text(
-          'Find Trusted Service\nProviders Across Kenya',
+          'Find Trusted\nProfessionals\nNear You',
           style: TextStyle(
-            fontSize: compact ? 38 : 58,
-            fontWeight: FontWeight.w900,
+            fontSize: compact ? 42 : 64,
+            fontWeight: FontWeight.w800,
             color: Colors.white,
-            height: 1.12,
-            letterSpacing: -1.5,
+            height: 1.05,
           ),
         ),
         const SizedBox(height: 20),
-        Text(
-          'Plumbers, electricians, cleaners, tutors, mechanics and more.',
-          style: TextStyle(
-            fontSize: compact ? 17 : 21,
-            color: Colors.white.withValues(alpha: 0.9),
-            height: 1.5,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 650),
+          child: Text(
+            'Book verified plumbers, electricians, cleaners, tutors, mechanics and more across Kenya.',
+            style: TextStyle(
+              fontSize: compact ? 18 : 22,
+              color: Colors.white.withValues(alpha: 0.9),
+              height: 1.6,
+            ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         Wrap(
           spacing: 24,
-          runSpacing: 10,
+          runSpacing: 12,
           children: [
-            _heroCheck('Verified Professionals'),
+            _heroCheck('Verified Providers'),
             _heroCheck('Secure Payments'),
             _heroCheck('Real-time Tracking'),
-            _heroCheck('Nationwide Coverage'),
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 36),
         _heroSearchBar(forceRow: !compact),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: ServiceCategories.popular.map((cat) {
-            return _heroCategoryChip(cat.icon, cat.name);
-          }).toList(),
+          spacing: 10,
+          runSpacing: 10,
+          children: ServiceCategories.popular
+              .take(6)
+              .map((cat) => _heroCategoryChip(cat.icon, cat.name))
+              .toList(),
         ),
       ],
     );
@@ -642,7 +661,7 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
             );
           }
           return SizedBox(
-            height: 56,
+            height: 72,
             child: Row(
               children: [
                 Expanded(flex: 3, child: searchField),
@@ -721,45 +740,53 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.shield_outlined,
-              size: 64,
-              color: Colors.white.withValues(alpha: 0.6),
+              Icons.location_pin,
+              size: 72,
+              color: Colors.white.withValues(alpha: 0.8),
             ),
-            const SizedBox(height: 28),
-            _heroValueProp(Icons.verified_user, 'Verified Professionals'),
-            const SizedBox(height: 16),
-            _heroValueProp(Icons.lock_outline, 'Secure Payments'),
-            const SizedBox(height: 16),
-            _heroValueProp(Icons.location_on_outlined, 'Real-time Tracking'),
-            const SizedBox(height: 16),
-            _heroValueProp(Icons.public, 'Nationwide Coverage'),
+            const SizedBox(height: 24),
+            Text(
+              'Services Across Kenya',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.95),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                _heroLocationChip('Nairobi'),
+                _heroLocationChip('Mombasa'),
+                _heroLocationChip('Kisumu'),
+                _heroLocationChip('Nakuru'),
+                _heroLocationChip('Eldoret'),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _heroValueProp(IconData icon, String label) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: Colors.white, size: 20),
+  Widget _heroLocationChip(String label) {
+    return Chip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.9),
+          fontSize: 13,
         ),
-        const SizedBox(width: 14),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.95),
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
+      ),
+      backgroundColor: Colors.white.withValues(alpha: 0.12),
+      side: BorderSide.none,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
     );
   }
 
@@ -768,14 +795,13 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       avatar: Icon(icon, color: AppColors.primary, size: 16),
       label: Text(
         label,
-        style: TextStyle(
-          color: AppColors.primary,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
+        style: const TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.w500,
         ),
       ),
       backgroundColor: Colors.white,
-      side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+      side: BorderSide.none,
       onPressed: () => context.push('/search?q=${Uri.encodeComponent(label)}'),
     );
   }
