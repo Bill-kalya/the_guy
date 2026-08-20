@@ -18,6 +18,7 @@ import '../../../shared/widgets/user_avatar.dart';
 import '../widgets/download_app_section.dart';
 import '../providers/platform_stats_provider.dart';
 import '../../jobs/screens/request_service_screen.dart';
+
 class HomeScreenDesktop extends ConsumerStatefulWidget {
   const HomeScreenDesktop({super.key});
 
@@ -87,7 +88,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
               },
               child: const Text('Retry'),
             ),
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
           ],
         ),
       );
@@ -191,7 +195,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                             borderRadius: BorderRadius.circular(24),
                             color: Colors.transparent,
                           ),
-                          child: Image.asset('assets/icons/icon (2).png', fit: BoxFit.contain),
+                          child: Image.asset(
+                            'assets/icons/icon (2).png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Text(
@@ -212,7 +219,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                           children: [
                             _navLink('Home', true, () {}),
                             const SizedBox(width: 24),
-                            _navLink('Services', false, () => context.push('/search')),
+                            _navLink(
+                              'Services',
+                              false,
+                              () => context.push('/search'),
+                            ),
                             const SizedBox(width: 24),
                             _navLink('How It Works', false, () {
                               // Scroll to the How It Works section
@@ -247,7 +258,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: Colors.grey.shade300),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                          ),
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -263,7 +276,9 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                             icon: const Icon(Icons.notifications_outlined),
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Notifications coming soon')),
+                                const SnackBar(
+                                  content: Text('Notifications coming soon'),
+                                ),
                               );
                             },
                             tooltip: 'Notifications',
@@ -365,9 +380,19 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 alignment: WrapAlignment.center,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: locationState.permissionBlocked ? _openLocationSettings : _enableLocation,
-                    icon: Icon(locationState.permissionBlocked ? Icons.settings : Icons.gps_fixed),
-                    label: Text(locationState.permissionBlocked ? 'Open Settings' : 'Try Again'),
+                    onPressed: locationState.permissionBlocked
+                        ? _openLocationSettings
+                        : _enableLocation,
+                    icon: Icon(
+                      locationState.permissionBlocked
+                          ? Icons.settings
+                          : Icons.gps_fixed,
+                    ),
+                    label: Text(
+                      locationState.permissionBlocked
+                          ? 'Open Settings'
+                          : 'Try Again',
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _chooseTownManually,
@@ -385,7 +410,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          if (locationState.notice != null) _buildLocationNotice(locationState.notice!),
+          if (locationState.notice != null)
+            _buildLocationNotice(locationState.notice!),
           _buildHeroSection(),
           _buildUrgentHelpBanner(),
           _buildStatsSection(),
@@ -461,7 +487,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.primaryDark, AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
+          colors: [
+            AppColors.primaryDark,
+            AppColors.primary,
+            AppColors.primary.withValues(alpha: 0.7),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -512,35 +542,36 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Find Trusted\nService Providers\nNear You',
+          'Find Trusted Service\nProviders Across Kenya',
           style: TextStyle(
-            fontSize: compact ? 36 : 52,
-            fontWeight: FontWeight.bold,
+            fontSize: compact ? 38 : 58,
+            fontWeight: FontWeight.w900,
             color: Colors.white,
-            height: 1.23,
-            letterSpacing: -1,
+            height: 1.12,
+            letterSpacing: -1.5,
           ),
         ),
         const SizedBox(height: 20),
         Text(
-          'Connect with verified professionals for home, business, and personal services anywhere in Kenya.',
+          'Plumbers, electricians, cleaners, tutors, mechanics and more.',
           style: TextStyle(
-            fontSize: compact ? 17 : 20,
-            color: Colors.white.withValues(alpha: 0.85),
+            fontSize: compact ? 17 : 21,
+            color: Colors.white.withValues(alpha: 0.9),
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Wrap(
           spacing: 24,
           runSpacing: 10,
           children: [
-            _heroCheck('Verified professionals'),
-            _heroCheck('Real-time tracking'),
-            _heroCheck('Secure payments'),
+            _heroCheck('Verified Professionals'),
+            _heroCheck('Secure Payments'),
+            _heroCheck('Real-time Tracking'),
+            _heroCheck('Nationwide Coverage'),
           ],
         ),
-        const SizedBox(height: 36),
+        const SizedBox(height: 32),
         _heroSearchBar(forceRow: !compact),
         const SizedBox(height: 20),
         Wrap(
@@ -558,11 +589,15 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.check_circle, color: Colors.green.shade300, size: 18),
+        Icon(Icons.check_circle, color: Colors.green.shade300, size: 20),
         const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 15),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.95),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -570,13 +605,13 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
 
   Widget _heroSearchBar({bool forceRow = false}) {
     final searchField = _heroSearchField(
-      hintText: 'What service do you need?',
+      hintText: 'What service do you need today?',
       prefixIcon: Icons.search,
       controller: _heroSearchController,
       onSubmitted: _goToSearch,
     );
     final locationField = _heroSearchField(
-      hintText: 'Location',
+      hintText: 'Your location',
       prefixIcon: Icons.location_on_outlined,
     );
     return Container(
@@ -658,13 +693,8 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 32,
-          vertical: 16,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: const Text(
         'Get a Guy',
@@ -682,66 +712,70 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
       height: 460,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Colors.white.withValues(alpha: 0.08),
+        color: Colors.white.withValues(alpha: 0.1),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.people_alt_outlined,
-            size: 80,
-            color: Colors.white.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            '${platformStats['totalProviders'] ?? 0}+ Providers Available',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.white.withValues(alpha: 0.7),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '24/7 Service • Nairobi • Mombasa • Kisumu',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withValues(alpha: 0.5),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              3,
-              (i) => Padding(
-                padding: EdgeInsets.only(left: i > 0 ? -8 : 0),
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.5),
-                  child: Icon(Icons.person, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Join ${platformStats['totalUsers'] ?? 0}+ users on The Guy',
-            style: TextStyle(
-              fontSize: 13,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.shield_outlined,
+              size: 64,
               color: Colors.white.withValues(alpha: 0.6),
             ),
-          ),
-        ],
+            const SizedBox(height: 28),
+            _heroValueProp(Icons.verified_user, 'Verified Professionals'),
+            const SizedBox(height: 16),
+            _heroValueProp(Icons.lock_outline, 'Secure Payments'),
+            const SizedBox(height: 16),
+            _heroValueProp(Icons.location_on_outlined, 'Real-time Tracking'),
+            const SizedBox(height: 16),
+            _heroValueProp(Icons.public, 'Nationwide Coverage'),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _heroValueProp(IconData icon, String label) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+        const SizedBox(width: 14),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.95),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _heroCategoryChip(IconData icon, String label) {
     return ActionChip(
-      avatar: Icon(icon, color: Colors.white, size: 16),
-      label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 13)),
-      backgroundColor: Colors.white.withValues(alpha: 0.15),
+      avatar: Icon(icon, color: AppColors.primary, size: 16),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: AppColors.primary,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      backgroundColor: Colors.white,
+      side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
       onPressed: () => context.push('/search?q=${Uri.encodeComponent(label)}'),
     );
   }
@@ -773,10 +807,18 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange.shade700,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: const Text('Get Help Now', style: TextStyle(fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Get Help Now',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               );
               if (constraints.maxWidth < 640) {
                 return Column(
@@ -784,14 +826,35 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.flash_on, color: Colors.orange.shade800, size: 36),
+                        Icon(
+                          Icons.flash_on,
+                          color: Colors.orange.shade800,
+                          size: 36,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            'Need help urgently? Get matched with nearby professionals instantly.',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Need help right now?',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Emergency plumbers, electricians and mechanics available 24/7.',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -806,11 +869,28 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   Icon(Icons.flash_on, color: Colors.orange.shade800, size: 36),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Text(
-                      'Need help urgently? Get matched with nearby professionals instantly.',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Need help right now?',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Emergency plumbers, electricians and mechanics available 24/7.',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -833,15 +913,42 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final cardWidth = ((constraints.maxWidth - 3 * 16) / 4).clamp(220.0, double.infinity);
+              final cardWidth = ((constraints.maxWidth - 3 * 16) / 4).clamp(
+                220.0,
+                double.infinity,
+              );
               return Wrap(
                 spacing: 16,
                 runSpacing: 16,
                 children: [
-                  _statCard(Icons.people, '${platformStats['totalProviders'] ?? 0}+', 'Providers', Colors.blue, cardWidth),
-                  _statCard(Icons.work, _fmtCount(platformStats['totalJobs'] ?? 0), 'Jobs Done', Colors.green, cardWidth),
-                  _statCard(Icons.star, '${platformStats['totalReviews'] ?? 0}', 'Reviews', Colors.amber, cardWidth),
-                  _statCard(Icons.timer, '${platformStats['totalUsers'] ?? 0}+', 'Users', Colors.purple, cardWidth),
+                  _statCard(
+                    Icons.people,
+                    '${platformStats['totalProviders'] ?? 0}+',
+                    'Providers',
+                    Colors.blue,
+                    cardWidth,
+                  ),
+                  _statCard(
+                    Icons.work,
+                    _fmtCount(platformStats['totalJobs'] ?? 0),
+                    'Jobs Done',
+                    Colors.green,
+                    cardWidth,
+                  ),
+                  _statCard(
+                    Icons.star,
+                    '${platformStats['totalReviews'] ?? 0}',
+                    'Reviews',
+                    Colors.amber,
+                    cardWidth,
+                  ),
+                  _statCard(
+                    Icons.timer,
+                    '${platformStats['totalUsers'] ?? 0}+',
+                    'Users',
+                    Colors.purple,
+                    cardWidth,
+                  ),
                 ],
               );
             },
@@ -858,7 +965,13 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     return n.toString();
   }
 
-  Widget _statCard(IconData icon, String value, String label, MaterialColor color, double width) {
+  Widget _statCard(
+    IconData icon,
+    String value,
+    String label,
+    MaterialColor color,
+    double width,
+  ) {
     return SizedBox(
       width: width,
       child: Container(
@@ -927,14 +1040,22 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final n = ServiceCategories.featured.length;
-                    final cardWidth = ((constraints.maxWidth - (n - 1) * 16) / 4).clamp(180.0, 380.0);
+                    final cardWidth =
+                        ((constraints.maxWidth - (n - 1) * 16) / 4).clamp(
+                          180.0,
+                          380.0,
+                        );
                     return Wrap(
                       spacing: 16,
                       runSpacing: 16,
                       children: ServiceCategories.featured.map((cat) {
                         return SizedBox(
                           width: cardWidth,
-                          child: _serviceCategoryCard(cat.name, cat.icon, cat.color),
+                          child: _serviceCategoryCard(
+                            cat.name,
+                            cat.icon,
+                            cat.color,
+                          ),
                         );
                       }).toList(),
                     );
@@ -948,7 +1069,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     );
   }
 
-  Widget _serviceCategoryCard(String label, IconData icon, MaterialColor color) {
+  Widget _serviceCategoryCard(
+    String label,
+    IconData icon,
+    MaterialColor color,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 6),
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
@@ -1013,7 +1138,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                 const SizedBox(height: 48),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final cardWidth = (constraints.maxWidth - 32).clamp(240.0, 320.0);
+                    final cardWidth = (constraints.maxWidth - 32).clamp(
+                      240.0,
+                      320.0,
+                    );
                     return Wrap(
                       spacing: 16,
                       runSpacing: 16,
@@ -1060,7 +1188,13 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
     );
   }
 
-  Widget _stepCard(String step, String title, String description, IconData icon, MaterialColor color) {
+  Widget _stepCard(
+    String step,
+    String title,
+    String description,
+    IconData icon,
+    MaterialColor color,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.all(32),
@@ -1110,7 +1244,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
           Text(
             description,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 15, color: Colors.grey.shade600, height: 1.5),
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey.shade600,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -1140,103 +1278,111 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       children: [
                         Text(
                           'Nearby Providers',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Professionals available near your location',
-                        style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                      ),
-                    ],
-                  ),
-                  TextButton.icon(
-                    onPressed: () => context.push('/search'),
-                    icon: const Text('View All'),
-                    label: const Icon(Icons.arrow_forward, size: 18),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: Container(
-                      height: 480,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: MapWidget(
-                          position: locationState.currentPosition,
-                          providers: nearbyProvidersAsync.valueOrNull,
-                          liveLocations: liveLocations,
-                          onProviderTap: _openProviderDetail,
-                          onNearMe: _refreshNearby,
+                        const SizedBox(height: 8),
+                        Text(
+                          'Professionals available near your location',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: () => context.push('/search'),
+                      icon: const Text('View All'),
+                      label: const Icon(Icons.arrow_forward, size: 18),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Container(
+                        height: 480,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: MapWidget(
+                            position: locationState.currentPosition,
+                            providers: nearbyProvidersAsync.valueOrNull,
+                            liveLocations: liveLocations,
+                            onProviderTap: _openProviderDetail,
+                            onNearMe: _refreshNearby,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    flex: 7,
-                    child: nearbyProvidersAsync.when(
-                      data: (providers) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (providers.isNotEmpty) {
-                            final wsService = ref.read(webSocketServiceProvider);
-                            wsService.subscribeToNearbyProviders(
-                              providers.map((p) => p.id).toList(),
-                            );
-                          }
-                        });
+                    const SizedBox(width: 24),
+                    Expanded(
+                      flex: 7,
+                      child: nearbyProvidersAsync.when(
+                        data: (providers) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (providers.isNotEmpty) {
+                              final wsService = ref.read(
+                                webSocketServiceProvider,
+                              );
+                              wsService.subscribeToNearbyProviders(
+                                providers.map((p) => p.id).toList(),
+                              );
+                            }
+                          });
 
-                        return SizedBox(
+                          return SizedBox(
+                            height: 480,
+                            child: NearbyProvidersList(
+                              position: locationState.currentPosition,
+                              providers: providers,
+                              isLoading: false,
+                              onEnableLocation: locationState.permissionBlocked
+                                  ? _openLocationSettings
+                                  : _enableLocation,
+                            ),
+                          );
+                        },
+                        loading: () => SizedBox(
                           height: 480,
                           child: NearbyProvidersList(
                             position: locationState.currentPosition,
-                            providers: providers,
-                            isLoading: false,
-                            onEnableLocation: locationState.permissionBlocked
-                                ? _openLocationSettings
-                                : _enableLocation,
+                            isLoading: true,
                           ),
-                        );
-                      },
-                      loading: () => SizedBox(
-                        height: 480,
-                        child: NearbyProvidersList(
-                          position: locationState.currentPosition,
-                          isLoading: true,
                         ),
-                      ),
-                      error: (error, stack) => SizedBox(
-                        height: 480,
-                        child: NearbyProvidersList(
-                          position: locationState.currentPosition,
-                          // While waiting for a fresh GPS fix, show loading
-                          // instead of an error flash.
-                          isLoading: error.toString().contains('Waiting for GPS fix'),
-                          error: error.toString().contains('Waiting for GPS fix')
-                              ? null
-                              : error.toString(),
+                        error: (error, stack) => SizedBox(
+                          height: 480,
+                          child: NearbyProvidersList(
+                            position: locationState.currentPosition,
+                            // While waiting for a fresh GPS fix, show loading
+                            // instead of an error flash.
+                            isLoading: error.toString().contains(
+                              'Waiting for GPS fix',
+                            ),
+                            error:
+                                error.toString().contains('Waiting for GPS fix')
+                                ? null
+                                : error.toString(),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -1278,25 +1424,55 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Icon(Icons.check, color: Colors.green.shade600, size: 20),
+                          Icon(
+                            Icons.check,
+                            color: Colors.green.shade600,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
-                          Text('Set your own rates', style: TextStyle(color: Colors.green.shade700, fontSize: 15)),
+                          Text(
+                            'Set your own rates',
+                            style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontSize: 15,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.check, color: Colors.green.shade600, size: 20),
+                          Icon(
+                            Icons.check,
+                            color: Colors.green.shade600,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
-                          Text('Work when you want', style: TextStyle(color: Colors.green.shade700, fontSize: 15)),
+                          Text(
+                            'Work when you want',
+                            style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontSize: 15,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.check, color: Colors.green.shade600, size: 20),
+                          Icon(
+                            Icons.check,
+                            color: Colors.green.shade600,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
-                          Text('Get paid instantly', style: TextStyle(color: Colors.green.shade700, fontSize: 15)),
+                          Text(
+                            'Get paid instantly',
+                            style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontSize: 15,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -1311,7 +1487,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.shade600,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -1333,7 +1512,11 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.work_history, size: 64, color: Colors.green.shade400),
+                        Icon(
+                          Icons.work_history,
+                          size: 64,
+                          color: Colors.green.shade400,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Join ${platformStats['totalProviders'] ?? 0}+ Active Providers',
@@ -1346,7 +1529,10 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                         const SizedBox(height: 8),
                         Text(
                           'Average earnings: KES 45,000/month',
-                          style: TextStyle(fontSize: 15, color: Colors.green.shade600),
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.green.shade600,
+                          ),
                         ),
                       ],
                     ),
@@ -1421,11 +1607,24 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                       ),
                     ),
                     const SizedBox(width: 48),
-                    _footerColumn('Company', ['About Us', 'Careers', 'Blog', 'Press']),
+                    _footerColumn('Company', [
+                      'About Us',
+                      'Careers',
+                      'Blog',
+                      'Press',
+                    ]),
                     const SizedBox(width: 48),
-                    _footerColumn('Services', [...ServiceCategories.popular.map((c) => c.name), 'All Services']),
+                    _footerColumn('Services', [
+                      ...ServiceCategories.popular.map((c) => c.name),
+                      'All Services',
+                    ]),
                     const SizedBox(width: 48),
-                    _footerColumn('Support', ['Help Center', 'Safety', 'Terms of Service', 'Privacy Policy']),
+                    _footerColumn('Support', [
+                      'Help Center',
+                      'Safety',
+                      'Terms of Service',
+                      'Privacy Policy',
+                    ]),
                   ],
                 ),
                 const SizedBox(height: 40),
@@ -1436,20 +1635,35 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
                   children: [
                     Text(
                       '© 2024 The Guy. All rights reserved.',
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 14,
+                      ),
                     ),
                     Row(
                       children: [
                         IconButton(
-                          icon: Icon(Icons.facebook, color: Colors.grey.shade400, size: 22),
+                          icon: Icon(
+                            Icons.facebook,
+                            color: Colors.grey.shade400,
+                            size: 22,
+                          ),
                           onPressed: () {},
                         ),
                         IconButton(
-                          icon: Icon(Icons.camera_alt_outlined, color: Colors.grey.shade400, size: 22),
+                          icon: Icon(
+                            Icons.camera_alt_outlined,
+                            color: Colors.grey.shade400,
+                            size: 22,
+                          ),
                           onPressed: () {},
                         ),
                         IconButton(
-                          icon: Icon(Icons.alternate_email, color: Colors.grey.shade400, size: 22),
+                          icon: Icon(
+                            Icons.alternate_email,
+                            color: Colors.grey.shade400,
+                            size: 22,
+                          ),
                           onPressed: () {},
                         ),
                       ],
@@ -1479,13 +1693,15 @@ class _HomeScreenDesktopState extends ConsumerState<HomeScreenDesktop> {
             ),
           ),
           const SizedBox(height: 16),
-          ...items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(
-                  item,
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                ),
-              )),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                item,
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+              ),
+            ),
+          ),
         ],
       ),
     );
